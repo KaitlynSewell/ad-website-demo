@@ -451,7 +451,6 @@
                     var count = cluster.getChildCount();
                     // Size scales logarithmically with count
                     var size = Math.round(Math.min(54, 22 + Math.log(count + 1) * 6));
-                    var fontSize = Math.max(9, Math.min(13, Math.floor(size / 3.2)));
                     var half = size / 2;
                     var shapeEl;
                     if (cfg.shape === 'circle') {
@@ -461,9 +460,6 @@
                     }
                     var html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
                                shapeEl +
-                               '<text x="' + half + '" y="' + half + '" text-anchor="middle" dominant-baseline="central" ' +
-                               'fill="white" font-size="' + fontSize + '" font-weight="bold" ' +
-                               'stroke="rgba(0,0,0,0.6)" stroke-width="2.5" paint-order="stroke">' + count + '</text>' +
                                '</svg>';
                     return L.divIcon({
                         html: html,
