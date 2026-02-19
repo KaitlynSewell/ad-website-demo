@@ -123,6 +123,7 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .logo {
@@ -156,12 +157,11 @@ body {
 
 /* Sidebar toggle — right side of HOME button */
 .sidebar-toggle {
-    background: rgba(0, 0, 0, 0.12);
+    background: transparent;
     border: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.25);
     width: 34px;
     flex-shrink: 0;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -171,39 +171,24 @@ body {
 }
 
 .sidebar-toggle:hover {
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.2);
 }
 
-/* Tab button that appears at left edge when sidebar is hidden */
-.sidebar-show-btn {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    z-index: 1001;
-    background: #b0b5bc;
-    border: none;
-    border-radius: 0 6px 6px 0;
-    width: 22px;
-    height: 48px;
-    font-size: 14px;
-    cursor: pointer;
-    color: #2c3e50;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-
-.sidebar-show-btn:hover {
-    background: #9ba0a6;
-}
-
-.page-layout.sidebar-hidden .sidebar-show-btn {
-    display: flex;
-}
-
+/* When sidebar is hidden: collapse to toggle-width strip */
 .page-layout.sidebar-hidden .sidebar {
+    width: 34px;
+    overflow: hidden;
+}
+
+.page-layout.sidebar-hidden .sidebar .home-nav-item {
+    min-height: 48px;
+}
+
+.page-layout.sidebar-hidden .sidebar .home-nav-item a {
+    display: none;
+}
+
+.page-layout.sidebar-hidden .sidebar ul > li:not(.home-nav-item) {
     display: none;
 }
 
@@ -215,6 +200,7 @@ html.dark-mode body {
 
 html.dark-mode .page-heading {
     background-color: #1e3a6e;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 html.dark-mode .sidebar {
@@ -255,19 +241,10 @@ html.dark-mode .section-heading {
 }
 
 html.dark-mode .sidebar-toggle {
-    background: rgba(255, 255, 255, 0.15);
+    background: transparent;
     color: white;
 }
 
 html.dark-mode .sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-html.dark-mode .sidebar-show-btn {
-    background: #2c2c3e;
-    color: #e0e0e0;
-}
-
-html.dark-mode .sidebar-show-btn:hover {
-    background: #3a3a4e;
+    background: rgba(255, 255, 255, 0.15);
 }
