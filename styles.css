@@ -27,13 +27,33 @@ body {
 }
 
 .sidebar h2 {
-    padding: 12px 16px;
-    font-size: 16px;
-    border-bottom: 1px solid #bdc3c7;
+    padding: 4px 6px;
     margin: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    border-bottom: none;
+    min-height: 34px;
+}
+
+/* HOME link */
+.sidebar ul li:first-child a {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 14px 16px;
+    background-color: #7baee8;
+    color: white;
+}
+
+.sidebar ul li:first-child a:hover {
+    background-color: #8dbcf0;
+}
+
+.sidebar ul li:first-child a.active {
+    background-color: #7baee8;
+    color: white;
 }
 
 .sidebar ul {
