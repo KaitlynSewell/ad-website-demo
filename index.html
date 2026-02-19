@@ -241,7 +241,7 @@
     </h1>
     <div class="page-layout">
         <nav class="sidebar">
-            <h2>AD.Website.Demo</h2>
+            <h2>AD.Website.Demo<button class="sidebar-toggle" onclick="toggleSidebar()" title="Hide sidebar">&#9776;</button></h2>
             <ul>
                 <li><a href="index.html" class="active" data-i18n="nav-home">Home</a></li>
                 <li>
@@ -258,8 +258,8 @@
                 <li><a href="farms.html" data-i18n="nav-farms">Farms</a></li>
             </ul>
         </nav>
+        <button class="sidebar-show-btn" onclick="toggleSidebar()" title="Show sidebar">&#9776;</button>
         <div class="main-content">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
             <div id="map" style="position:relative;">
                 <div id="map-error">Map data requires an HTTP server. Open via <strong>http://localhost:5500/index.html</strong> — not as a local file.</div>
             </div>
