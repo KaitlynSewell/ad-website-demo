@@ -24,26 +24,32 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    position: relative;
 }
 
-/* HOME link */
-.sidebar ul li:first-child a {
+/* HOME row */
+.home-nav-item {
+    display: flex;
+    align-items: stretch;
+    background-color: #7baee8;
+}
+
+.home-nav-item a {
+    flex: 1;
     font-size: 18px;
     font-weight: bold;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     padding: 14px 16px;
-    background-color: #7baee8;
+    background-color: transparent;
     color: white;
 }
 
-.sidebar ul li:first-child a:hover {
-    background-color: #8dbcf0;
+.home-nav-item a:hover {
+    background-color: rgba(0, 0, 0, 0.08);
 }
 
-.sidebar ul li:first-child a.active {
-    background-color: #7baee8;
+.home-nav-item a.active {
+    background-color: transparent;
     color: white;
 }
 
@@ -148,17 +154,13 @@ body {
     width: 100%;
 }
 
-/* Sidebar toggle — overlaps top-right of HOME, above the text */
+/* Sidebar toggle — right side of HOME button */
 .sidebar-toggle {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 2;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.12);
     border: none;
-    border-radius: 0 0 0 4px;
-    width: 28px;
-    height: 28px;
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    width: 34px;
+    flex-shrink: 0;
     font-size: 15px;
     cursor: pointer;
     display: flex;
@@ -169,7 +171,7 @@ body {
 }
 
 .sidebar-toggle:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.25);
 }
 
 /* Tab button that appears at left edge when sidebar is hidden */

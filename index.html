@@ -241,9 +241,8 @@
     </h1>
     <div class="page-layout">
         <nav class="sidebar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Hide sidebar">&#9776;</button>
             <ul>
-                <li><a href="index.html" class="active" data-i18n="nav-home">Home</a></li>
+                <li class="home-nav-item"><a href="index.html" class="active" data-i18n="nav-home">Home</a><button class="sidebar-toggle" onclick="toggleSidebar()" title="Hide sidebar">&#9776;</button></li>
                 <li>
                     <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
