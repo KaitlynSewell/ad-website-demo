@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD.Website.Demo - Sources</title>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="translations.js"></script>
+    <style>
+        .sources-container {
+            padding: 0 20px 30px 20px;
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sources-section h3 {
+            font-size: 18px;
+            color: #2c3e50;
+            border-bottom: 2px solid #4169e1;
+            padding-bottom: 8px;
+            margin: 0 0 14px 0;
+        }
+
+        .sources-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sources-list li {
+            padding: 12px 14px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sources-list li .source-label {
+            font-weight: bold;
+        }
+
+        .sources-list li a {
+            color: #4169e1;
+            word-break: break-all;
+        }
+
+        .sources-list li a:hover {
+            text-decoration: underline;
+        }
+
+        html.dark-mode .sources-section h3 {
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .sources-list li {
+            background: #2c2c3e;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .sources-list li a {
+            color: #7a9ff0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-heading">
+        <div class="logo">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <path d="M18 2 C28 2 34 10 34 18 C34 26 26 34 18 34 C14 28 8 20 2 18 C8 8 14 2 18 2Z" fill="#2ec4b6" stroke="white" stroke-width="1"/>
+                <path d="M18 8 C18 8 18 28 18 28" stroke="white" stroke-width="1.5" fill="none"/>
+                <path d="M18 14 C14 12 10 14 10 14" stroke="white" stroke-width="1" fill="none"/>
+                <path d="M18 20 C22 18 26 20 26 20" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+            <span>Logo</span>
+        </div>
+        <span data-i18n="site-title">Anerobic Digestion Pathways</span>
+    </h1>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <h2>AD.Website.Demo</h2>
+            <ul>
+                <li><a href="index.html" data-i18n="nav-home">Home</a></li>
+                <li>
+                    <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
+                    <ul id="about-submenu" class="submenu">
+                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
+                <li><a href="settings.html" data-i18n="nav-settings">Settings</a></li>
+                <li><a href="sources.html" class="active" data-i18n="nav-sources">Sources</a></li>
+            </ul>
+        </nav>
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <h2 class="section-heading" data-i18n="sources-heading">Sources</h2>
+            <div class="sources-container">
+
+                <div class="sources-section" id="maps">
+                    <h3 data-i18n="sources-maps">Maps</h3>
+                    <ul class="sources-list">
+                        <li>
+                            <span class="source-label">OpenStreetMap — Street map tile layer</span>
+                            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">https://www.openstreetmap.org/copyright</a>
+                        </li>
+                        <li>
+                            <span class="source-label">Esri World Imagery — Satellite tile layer</span>
+                            <a href="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer" target="_blank" rel="noopener noreferrer">https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer</a>
+                        </li>
+                        <li>
+                            <span class="source-label">PublicaMundi MappingAPI — Iowa state border outline (GeoJSON)</span>
+                            <a href="https://github.com/PublicaMundi/MappingAPI/tree/master/data/geojson" target="_blank" rel="noopener noreferrer">https://github.com/PublicaMundi/MappingAPI/tree/master/data/geojson</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('sidebar') === 'hidden') {
+            document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        }
+        function toggleSidebar() {
+            var layout = document.querySelector('.page-layout');
+            layout.classList.toggle('sidebar-hidden');
+            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+        }
+    </script>
+</body>
+</html>

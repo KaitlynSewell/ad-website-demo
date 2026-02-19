@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD.Website.Demo - Settings</title>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="translations.js"></script>
+    <style>
+        .settings-section {
+            padding: 0 20px 20px 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .settings-section h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+
+        html.dark-mode .settings-section h3 {
+            color: #e0e0e0;
+        }
+
+        .theme-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .theme-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        html.dark-mode .theme-option {
+            background: #2c2c3e;
+            color: #e0e0e0;
+        }
+
+        .theme-option input[type="radio"] {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-heading">
+        <div class="logo">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <path d="M18 2 C28 2 34 10 34 18 C34 26 26 34 18 34 C14 28 8 20 2 18 C8 8 14 2 18 2Z" fill="#2ec4b6" stroke="white" stroke-width="1"/>
+                <path d="M18 8 C18 8 18 28 18 28" stroke="white" stroke-width="1.5" fill="none"/>
+                <path d="M18 14 C14 12 10 14 10 14" stroke="white" stroke-width="1" fill="none"/>
+                <path d="M18 20 C22 18 26 20 26 20" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+            <span>Logo</span>
+        </div>
+        <span data-i18n="site-title">Anerobic Digestion Pathways</span>
+    </h1>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <h2>AD.Website.Demo</h2>
+            <ul>
+                <li><a href="index.html" data-i18n="nav-home">Home</a></li>
+                <li>
+                    <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
+                    <ul id="about-submenu" class="submenu">
+                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
+                <li><a href="settings.html" class="active" data-i18n="nav-settings">Settings</a></li>
+                <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
+                <li><a href="farms.html" data-i18n="nav-farms">Farms</a></li>
+            </ul>
+        </nav>
+        <div class="main-content" style="flex-direction: column; align-items: center; justify-content: flex-start;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <h2 class="section-heading" data-i18n="settings-heading">Settings</h2>
+            <div class="settings-section">
+                <h3 data-i18n="settings-theme">Theme</h3>
+                <div class="theme-options">
+                    <label class="theme-option">
+                        <input type="radio" name="theme" value="light" checked />
+                        <span data-i18n="settings-light">Light</span>
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="theme" value="dark" />
+                        <span data-i18n="settings-dark">Dark</span>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3 data-i18n="settings-language">Language</h3>
+                <div class="theme-options">
+                    <label class="theme-option">
+                        <input type="radio" name="language" value="en" />
+                        English
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="language" value="es" />
+                        Español
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="language" value="fr" />
+                        Français
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="language" value="de" />
+                        Deutsch
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Apply saved theme on load
+        var savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.querySelector('input[name="theme"][value="dark"]').checked = true;
+        }
+
+        // Listen for theme changes
+        document.querySelectorAll('input[name="theme"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                if (this.value === 'dark') {
+                    document.documentElement.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+
+        // Apply saved language on load
+        var savedLang = localStorage.getItem('language') || 'en';
+        var langRadio = document.querySelector('input[name="language"][value="' + savedLang + '"]');
+        if (langRadio) langRadio.checked = true;
+
+        // Listen for language changes
+        document.querySelectorAll('input[name="language"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                localStorage.setItem('language', this.value);
+                applyTranslations(this.value);
+            });
+        });
+
+        // Sidebar toggle
+        if (localStorage.getItem('sidebar') === 'hidden') {
+            document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        }
+        function toggleSidebar() {
+            var layout = document.querySelector('.page-layout');
+            layout.classList.toggle('sidebar-hidden');
+            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+        }
+    </script>
+</body>
+</html>

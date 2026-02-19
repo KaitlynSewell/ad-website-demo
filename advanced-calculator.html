@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD.Website.Demo - Advanced Calculator</title>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="translations.js"></script>
+    <style>
+        .calc-container {
+            max-width: 820px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 10px 0 30px 0;
+        }
+
+        .calc-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            background: #eef0f8;
+            border-left: 4px solid #4169e1;
+            padding: 8px 12px;
+            margin: 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .calc-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .calc-grid.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .calc-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .calc-field label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .calc-field .unit {
+            font-size: 11px;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .calc-field input {
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .calc-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .calc-btn {
+            padding: 10px 24px;
+            background: #4169e1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .calc-btn:hover { background: #2a52cc; }
+
+        .calc-btn.secondary { background: #2c3e50; }
+        .calc-btn.secondary:hover { background: #1a252f; }
+
+        .calc-result {
+            background: #f7f7f7;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 16px 18px;
+            font-size: 13px;
+            color: #2c3e50;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }
+
+        .calc-result.empty {
+            display: block;
+        }
+
+        .calc-result p {
+            margin: 0;
+            color: #888;
+            font-style: italic;
+            grid-column: span 2;
+        }
+
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-item .result-label {
+            font-size: 11px;
+            color: #777;
+        }
+
+        .result-item .result-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .result-item.highlight .result-value {
+            color: #4169e1;
+            font-size: 18px;
+        }
+
+        .result-item.full-width {
+            grid-column: span 2;
+        }
+
+        /* Dark mode */
+        html.dark-mode .calc-section-title {
+            color: #e0e0e0;
+            background: #2a2a3e;
+        }
+
+        html.dark-mode .calc-field label { color: #bbb; }
+        html.dark-mode .calc-field .unit { color: #888; }
+
+        html.dark-mode .calc-field input {
+            background: #1a1a2e;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .calc-result {
+            background: #1a1a2e;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .result-item {
+            background: #2c2c3e;
+            border-color: #444;
+        }
+
+        html.dark-mode .result-item .result-label { color: #aaa; }
+        html.dark-mode .result-item .result-value { color: #e0e0e0; }
+        html.dark-mode .result-item.highlight .result-value { color: #7a9ff0; }
+
+    </style>
+</head>
+<body>
+    <h1 class="page-heading">
+        <div class="logo">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <path d="M18 2 C28 2 34 10 34 18 C34 26 26 34 18 34 C14 28 8 20 2 18 C8 8 14 2 18 2Z" fill="#2ec4b6" stroke="white" stroke-width="1"/>
+                <path d="M18 8 C18 8 18 28 18 28" stroke="white" stroke-width="1.5" fill="none"/>
+                <path d="M18 14 C14 12 10 14 10 14" stroke="white" stroke-width="1" fill="none"/>
+                <path d="M18 20 C22 18 26 20 26 20" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+            <span>Logo</span>
+        </div>
+        <span data-i18n="site-title">Anerobic Digestion Pathways</span>
+    </h1>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <h2>AD.Website.Demo</h2>
+            <ul>
+                <li><a href="index.html" data-i18n="nav-home">Home</a></li>
+                <li>
+                    <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
+                    <ul id="about-submenu" class="submenu">
+                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
+                <li><a href="settings.html" data-i18n="nav-settings">Settings</a></li>
+                <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
+                <li><a href="farms.html" data-i18n="nav-farms">Farms</a></li>
+            </ul>
+        </nav>
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <h2 class="section-heading" data-i18n="advcalc-heading">Advanced Calculator</h2>
+            <div class="calc-container">
+
+                <!-- Project Size & Performance -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Project Size &amp; Performance</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Generator Nameplate Capacity <span class="unit">(kW)</span></label>
+                            <input type="number" id="capacity" value="500" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Energy Content per Cubic Foot <span class="unit">(BTU/cf)</span></label>
+                            <input type="number" id="energy-content" value="550" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Electrical Conversion Efficiency <span class="unit">(%)</span></label>
+                            <input type="number" id="conv-efficiency" value="35" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Availability <span class="unit">(%)</span></label>
+                            <input type="number" id="availability" value="92" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Station Service / Parasitic Load <span class="unit">(%)</span></label>
+                            <input type="number" id="station-service" value="10" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Annual Production Degradation <span class="unit">(%)</span></label>
+                            <input type="number" id="degradation" value="0" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Project Useful Life <span class="unit">(years)</span></label>
+                            <input type="number" id="project-life" value="20" min="1" max="50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capital Costs -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Capital Costs</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Total Installed Cost <span class="unit">($/kW)</span></label>
+                            <input type="number" id="cost-per-kw" value="7500" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operations & Maintenance -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Operations &amp; Maintenance</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Fixed O&amp;M Expense, Yr 1 <span class="unit">($/kW-yr)</span></label>
+                            <input type="number" id="fixed-om" value="300" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Variable O&amp;M Expense, Yr 1 <span class="unit">(cents/kWh)</span></label>
+                            <input type="number" id="variable-om" value="3" min="0" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>O&amp;M Cost Inflation <span class="unit">(%/yr)</span></label>
+                            <input type="number" id="om-inflation" value="2" min="0" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Feedstock Expense <span class="unit">($/ton)</span></label>
+                            <input type="number" id="feedstock-cost" value="0" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Feedstock Quantity <span class="unit">(tons/yr)</span></label>
+                            <input type="number" id="feedstock-qty" value="10000" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Streams -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Revenue Streams</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Tipping Fee — Source #1 <span class="unit">($/ton)</span></label>
+                            <input type="number" id="tipping-fee-1" value="30" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Tipping Fee Quantity — Source #1 <span class="unit">(tons/yr)</span></label>
+                            <input type="number" id="tipping-qty-1" value="10000" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Tipping Fee — Source #2 <span class="unit">($/ton)</span></label>
+                            <input type="number" id="tipping-fee-2" value="0" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Tipping Fee Quantity — Source #2 <span class="unit">(tons/yr)</span></label>
+                            <input type="number" id="tipping-qty-2" value="0" min="0">
+                        </div>
+                        <div class="calc-field">
+                            <label>Energy / Tariff Price, Yr 1 <span class="unit">(cents/kWh)</span></label>
+                            <input type="number" id="energy-price" value="5" min="0" step="0.01">
+                        </div>
+                        <div class="calc-field">
+                            <label>Market Value Escalation Rate <span class="unit">(%/yr)</span></label>
+                            <input type="number" id="energy-escalation" value="3" min="0" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financing -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Financing</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Debt Percentage <span class="unit">(%)</span></label>
+                            <input type="number" id="debt-pct" value="55" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Debt Term <span class="unit">(years)</span></label>
+                            <input type="number" id="debt-term" value="13" min="1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Interest Rate on Term Debt <span class="unit">(%)</span></label>
+                            <input type="number" id="debt-rate" value="7" min="0" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>Target After-Tax Equity IRR <span class="unit">(%)</span></label>
+                            <input type="number" id="target-irr" value="12" min="0" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Federal Incentives -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Federal Incentives</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Investment Tax Credit (ITC) <span class="unit">(%)</span></label>
+                            <input type="number" id="itc-pct" value="30" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tax -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title">Tax</h3>
+                    <div class="calc-grid">
+                        <div class="calc-field">
+                            <label>Federal Income Tax Rate <span class="unit">(%)</span></label>
+                            <input type="number" id="fed-tax" value="35" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="calc-field">
+                            <label>State Income Tax Rate <span class="unit">(%)</span></label>
+                            <input type="number" id="state-tax" value="8.5" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="calc-section">
+                    <h3 class="calc-section-title" data-i18n="advcalc-results">Results</h3>
+                    <div class="calc-result empty" id="calc-result">
+                        <p>Enter values above and press Calculate.</p>
+                    </div>
+                </div>
+
+                <div class="calc-actions">
+                    <button class="calc-btn" onclick="calculate()" data-i18n="btn-calculate">Calculate</button>
+                    <button class="calc-btn secondary" onclick="clearFields()" data-i18n="btn-clear">Clear</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fmt(n, decimals) {
+            return n.toLocaleString('en-US', { maximumFractionDigits: decimals || 0 });
+        }
+
+        function fmtMoney(n) {
+            return '$' + fmt(n);
+        }
+
+        function calculate() {
+            var capacity       = parseFloat(document.getElementById('capacity').value)        || 0;
+            var convEff        = parseFloat(document.getElementById('conv-efficiency').value) / 100;
+            var availability   = parseFloat(document.getElementById('availability').value)    / 100;
+            var stationSvc     = parseFloat(document.getElementById('station-service').value) / 100;
+            var degradation    = parseFloat(document.getElementById('degradation').value)     / 100;
+            var projectLife    = parseInt(document.getElementById('project-life').value)      || 20;
+
+            var costPerKW      = parseFloat(document.getElementById('cost-per-kw').value)    || 0;
+
+            var fixedOM        = parseFloat(document.getElementById('fixed-om').value)       || 0;
+            var variableOM     = parseFloat(document.getElementById('variable-om').value)    || 0;
+            var omInflation    = parseFloat(document.getElementById('om-inflation').value)   / 100;
+            var feedstockCost  = parseFloat(document.getElementById('feedstock-cost').value) || 0;
+            var feedstockQty   = parseFloat(document.getElementById('feedstock-qty').value)  || 0;
+
+            var tippingFee1    = parseFloat(document.getElementById('tipping-fee-1').value)  || 0;
+            var tippingQty1    = parseFloat(document.getElementById('tipping-qty-1').value)  || 0;
+            var tippingFee2    = parseFloat(document.getElementById('tipping-fee-2').value)  || 0;
+            var tippingQty2    = parseFloat(document.getElementById('tipping-qty-2').value)  || 0;
+            var energyPrice    = parseFloat(document.getElementById('energy-price').value)   || 0;
+
+            var debtPct        = parseFloat(document.getElementById('debt-pct').value)       / 100;
+            var debtTerm       = parseInt(document.getElementById('debt-term').value)         || 1;
+            var debtRate       = parseFloat(document.getElementById('debt-rate').value)      / 100;
+            var targetIRR      = parseFloat(document.getElementById('target-irr').value)     / 100;
+
+            var itcPct         = parseFloat(document.getElementById('itc-pct').value)        / 100;
+            var fedTax         = parseFloat(document.getElementById('fed-tax').value)        / 100;
+            var stateTax       = parseFloat(document.getElementById('state-tax').value)      / 100;
+
+            // --- Year 1 Production ---
+            var production1 = capacity * 8760 * availability * (1 - stationSvc);
+
+            // --- Capital ---
+            var totalCost  = capacity * costPerKW;
+            var itcValue   = totalCost * itcPct;
+            var netCost    = totalCost - itcValue;
+            var debtAmt    = netCost * debtPct;
+            var equityAmt  = netCost * (1 - debtPct);
+
+            // Annual Debt Service (PMT)
+            var annualDebt = 0;
+            if (debtAmt > 0 && debtRate > 0 && debtTerm > 0) {
+                annualDebt = debtAmt * (debtRate * Math.pow(1 + debtRate, debtTerm)) / (Math.pow(1 + debtRate, debtTerm) - 1);
+            }
+
+            // --- Year 1 O&M ---
+            var yr1FixedOM     = capacity * fixedOM;
+            var yr1VariableOM  = production1 * (variableOM / 100);
+            var yr1Feedstock   = feedstockCost * feedstockQty;
+            var yr1TotalOM     = yr1FixedOM + yr1VariableOM + yr1Feedstock;
+
+            // --- Year 1 Revenue ---
+            var yr1Tipping     = tippingFee1 * tippingQty1 + tippingFee2 * tippingQty2;
+            var yr1Energy      = production1 * (energyPrice / 100);
+            var yr1TotalRev    = yr1Tipping + yr1Energy;
+
+            // --- LCOE via NPV approach ---
+            var effectiveTax   = 1 - (1 - fedTax) * (1 - stateTax);
+            var afterTaxDebt   = debtRate * (1 - effectiveTax);
+            var equityPct      = 1 - debtPct;
+            var wacc           = debtPct * afterTaxDebt + equityPct * targetIRR;
+            if (wacc <= 0) wacc = 0.08;
+
+            var npvProduction  = 0;
+            var npvOM          = 0;
+            var npvTipping     = 0;
+
+            for (var y = 1; y <= projectLife; y++) {
+                var prodY     = production1 * Math.pow(1 - degradation, y - 1);
+                var omY       = (capacity * fixedOM + prodY * (variableOM / 100) + yr1Feedstock) * Math.pow(1 + omInflation, y - 1);
+                var tippingY  = yr1Tipping;
+                var disc      = Math.pow(1 + wacc, y);
+
+                npvProduction += prodY / disc;
+                npvOM         += omY   / disc;
+                npvTipping    += tippingY / disc;
+            }
+
+            var lcoe = 0;
+            if (npvProduction > 0) {
+                lcoe = (netCost + npvOM - npvTipping) / npvProduction * 100;
+            }
+
+            // --- Render Results ---
+            var el = document.getElementById('calc-result');
+            el.classList.remove('empty');
+            el.innerHTML =
+                resultItem('Year 1 Energy Production', fmt(production1) + ' kWh', false) +
+                resultItem('Total Installed Cost', fmtMoney(totalCost), false) +
+                resultItem('Federal ITC Value', fmtMoney(itcValue), false) +
+                resultItem('Net Installed Cost (after ITC)', fmtMoney(netCost), false) +
+                resultItem('Debt Amount', fmtMoney(debtAmt), false) +
+                resultItem('Equity Amount', fmtMoney(equityAmt), false) +
+                resultItem('Annual Debt Service', fmtMoney(Math.round(annualDebt)), false) +
+                resultItem('Year 1 Tipping Fee Revenue', fmtMoney(Math.round(yr1Tipping)), false) +
+                resultItem('Year 1 Energy Revenue', fmtMoney(Math.round(yr1Energy)), false) +
+                resultItem('Year 1 Total O&M Costs', fmtMoney(Math.round(yr1TotalOM)), false) +
+                resultItem('WACC', (wacc * 100).toFixed(2) + '%', false) +
+                resultItem('Estimated LCOE', lcoe.toFixed(2) + ' cents/kWh', true, true);
+        }
+
+        function resultItem(label, value, highlight, fullWidth) {
+            var cls = 'result-item' + (highlight ? ' highlight' : '') + (fullWidth ? ' full-width' : '');
+            return '<div class="' + cls + '"><span class="result-label">' + label + '</span><span class="result-value">' + value + '</span></div>';
+        }
+
+        function clearFields() {
+            var defaults = {
+                'capacity': 500, 'energy-content': 550, 'conv-efficiency': 35,
+                'availability': 92, 'station-service': 10, 'degradation': 0,
+                'project-life': 20, 'cost-per-kw': 7500, 'fixed-om': 300,
+                'variable-om': 3, 'om-inflation': 2, 'feedstock-cost': 0,
+                'feedstock-qty': 10000, 'tipping-fee-1': 30, 'tipping-qty-1': 10000,
+                'tipping-fee-2': 0, 'tipping-qty-2': 0, 'energy-price': 5,
+                'energy-escalation': 3, 'debt-pct': 55, 'debt-term': 13,
+                'debt-rate': 7, 'target-irr': 12, 'itc-pct': 30,
+                'fed-tax': 35, 'state-tax': 8.5
+            };
+            Object.keys(defaults).forEach(function (id) {
+                document.getElementById(id).value = defaults[id];
+            });
+            var el = document.getElementById('calc-result');
+            el.classList.add('empty');
+            el.innerHTML = '<p>Enter values above and press Calculate.</p>';
+        }
+
+        if (localStorage.getItem('sidebar') === 'hidden') {
+            document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        }
+        function toggleSidebar() {
+            var layout = document.querySelector('.page-layout');
+            layout.classList.toggle('sidebar-hidden');
+            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+        }
+    </script>
+</body>
+</html>

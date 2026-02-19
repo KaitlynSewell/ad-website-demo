@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD.Website.Demo - Iowa Map</title>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="translations.js"></script>
+    <style>
+        #map {
+            width: 800px;
+            height: 600px;
+            max-width: calc(100vw - 220px - 260px - 60px);
+            max-height: calc(100vh - 80px - 40px);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-top.leaflet-left {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .legend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .legend h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .legend-clear-btn {
+            font-size: 11px;
+            padding: 2px 7px;
+            background: #e0e0e0;
+            border: 1px solid #bbb;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #444;
+            line-height: 1.4;
+        }
+
+        .legend-clear-btn:hover {
+            background: #c8c8c8;
+        }
+
+        html.dark-mode .legend-clear-btn {
+            background: #444;
+            border-color: #666;
+            color: #ddd;
+        }
+
+        html.dark-mode .legend-clear-btn:hover {
+            background: #555;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .legend-item input[type="checkbox"] {
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .legend-item svg {
+            flex-shrink: 0;
+        }
+
+        .legend-group {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
+        }
+
+        .legend-group.first {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        html.dark-mode .legend {
+            background: #2c2c3e;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .legend-group {
+            color: #aaa;
+            border-top-color: #555;
+        }
+
+        .page-layout.sidebar-hidden #map {
+            max-width: calc(100vw - 260px - 60px);
+        }
+
+        #map-error {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #fdf0ef;
+            border: 1px solid #e9b8b5;
+            color: #c0392b;
+            padding: 10px 16px;
+            border-radius: 5px;
+            font-size: 13px;
+            max-width: 420px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .calculator-panel {
+            width: 240px;
+            flex-shrink: 0;
+            background: white;
+            border-left: 1px solid #ccc;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+
+        .calculator-panel h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin: 0;
+        }
+
+        .calc-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .calc-field label {
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .calc-field input {
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .calc-btn {
+            padding: 8px;
+            background: #4169e1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .calc-btn:hover {
+            background: #2a52cc;
+        }
+
+        .advanced-calc-btn {
+            background: #2c3e50;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .advanced-calc-btn:hover {
+            background: #1a252f;
+        }
+
+        html.dark-mode .calculator-panel {
+            background: #2c2c3e;
+            border-left-color: #444;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .calculator-panel h3 {
+            color: #e0e0e0;
+            border-bottom-color: #444;
+        }
+
+        html.dark-mode .calc-field label {
+            color: #bbb;
+        }
+
+        html.dark-mode .calc-field input {
+            background: #1a1a2e;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-heading">
+        <div class="logo">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <path d="M18 2 C28 2 34 10 34 18 C34 26 26 34 18 34 C14 28 8 20 2 18 C8 8 14 2 18 2Z" fill="#2ec4b6" stroke="white" stroke-width="1"/>
+                <path d="M18 8 C18 8 18 28 18 28" stroke="white" stroke-width="1.5" fill="none"/>
+                <path d="M18 14 C14 12 10 14 10 14" stroke="white" stroke-width="1" fill="none"/>
+                <path d="M18 20 C22 18 26 20 26 20" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+            <span>Logo</span>
+        </div>
+        <span data-i18n="site-title">Anerobic Digestion Pathways</span>
+    </h1>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <h2>AD.Website.Demo</h2>
+            <ul>
+                <li><a href="index.html" class="active" data-i18n="nav-home">Home</a></li>
+                <li>
+                    <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
+                    <ul id="about-submenu" class="submenu">
+                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
+                <li><a href="settings.html" data-i18n="nav-settings">Settings</a></li>
+                <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
+                <li><a href="farms.html" data-i18n="nav-farms">Farms</a></li>
+            </ul>
+        </nav>
+        <div class="main-content">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <div id="map" style="position:relative;">
+                <div id="map-error">Map data requires an HTTP server. Open via <strong>http://localhost:5500/index.html</strong> — not as a local file.</div>
+            </div>
+        </div>
+        <div class="calculator-panel">
+            <h3>Calculator</h3>
+            <div class="calc-field">
+                <label for="calc-1">Prompt 1</label>
+                <input type="number" id="calc-1" placeholder="Enter value">
+            </div>
+            <div class="calc-field">
+                <label for="calc-2">Prompt 2</label>
+                <input type="number" id="calc-2" placeholder="Enter value">
+            </div>
+            <div class="calc-field">
+                <label for="calc-3">Prompt 3</label>
+                <input type="number" id="calc-3" placeholder="Enter value">
+            </div>
+            <div class="calc-field">
+                <label for="calc-4">Prompt 4</label>
+                <input type="number" id="calc-4" placeholder="Enter value">
+            </div>
+            <div class="calc-field">
+                <label for="calc-5">Prompt 5</label>
+                <input type="number" id="calc-5" placeholder="Enter value">
+            </div>
+            <button class="calc-btn" data-i18n="btn-calculate">Calculate</button>
+            <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced">Advanced Calculator</a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        var map = L.map('map', { zoomControl: false }).setView([41.88, -93.10], 7);
+
+        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        });
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 19
+        });
+
+        streetLayer.addTo(map);
+        var currentBaseLayer = 'street';
+
+        var MapToggleControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function () {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var btn = L.DomUtil.create('a', '', container);
+                btn.href = '#';
+                btn.title = 'Toggle map view';
+                btn.style.cssText = 'width:auto;padding:0 8px;font-size:11px;line-height:26px;white-space:nowrap;';
+                btn.textContent = 'Switch to Satellite';
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(btn, 'click', function (e) {
+                    L.DomEvent.preventDefault(e);
+                    if (currentBaseLayer === 'street') {
+                        map.removeLayer(streetLayer);
+                        map.addLayer(satelliteLayer);
+                        currentBaseLayer = 'satellite';
+                        btn.textContent = 'Switch to Street Map';
+                    } else {
+                        map.removeLayer(satelliteLayer);
+                        map.addLayer(streetLayer);
+                        currentBaseLayer = 'street';
+                        btn.textContent = 'Switch to Satellite';
+                    }
+                });
+                return container;
+            }
+        });
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        new MapToggleControl().addTo(map);
+
+        var layerGroups = {};
+        var layerCache = {};
+
+        var allKeys = ['corn','soybean','beef','dairy','swine','horses','turkeys','chickens','sheep',
+                       'census','paperfood','biodiesel','ethanol','wastewater',
+                       'utilities','powerplants','pipelines','landfill','digesters','lmop'];
+
+        var layerConfig = {
+            beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle' },
+            dairy:       { file: 'geojson/dairy.geojson',       color: '#4a90d9', shape: 'circle' },
+            swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle' },
+            horses:      { file: 'geojson/horses.geojson',      color: '#a0a0a0', shape: 'circle' },
+            turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle' },
+            chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle' },
+            sheep:       { file: 'geojson/sheep.geojson',       color: '#d2b48c', shape: 'circle' },
+            biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'square' },
+            ethanol:     { file: 'geojson/ethanol.geojson',     color: '#27ae60', shape: 'square' },
+            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'square' },
+            utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square' },
+            powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square' },
+            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#95a5a6' },
+            landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square' },
+            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'circle' },
+            lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle' }
+        };
+
+        function buildLegend() {
+            var div = document.createElement('div');
+            div.className = 'legend';
+            function li(id, svgHtml, label) {
+                return '<div class="legend-item"><input type="checkbox" id="' + id + '" checked />' + svgHtml + '<span>' + label + '</span></div>';
+            }
+            function tri(c) { return '<svg width="16" height="12" viewBox="0 0 16 12"><polygon points="8,0 16,12 0,12" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
+            function grp(t, f) { return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>'; }
+            div.innerHTML =
+                '<div class="legend-header"><h4>Legend</h4><button class="legend-clear-btn" id="legend-clear-btn">Clear All</button></div>' +
+                grp('Agricultural Residue', true) +
+                li('toggle-corn',        tri('#f5c518'),  'Corn Residue') +
+                li('toggle-soybean',     tri('#7bc47f'),  'Soybean Residue') +
+                grp('Feedlot Waste / Manure') +
+                li('toggle-beef',        circ('#c87533'), 'Beef Cattle') +
+                li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle') +
+                li('toggle-swine',       circ('#ff9eb5'), 'Swine') +
+                li('toggle-horses',      circ('#a0a0a0'), 'Horses') +
+                li('toggle-turkeys',     circ('#f4a460'), 'Turkeys') +
+                li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
+                li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
+                grp('Human Activity') +
+                li('toggle-census',      rect('#9b59b6'), 'Census Population') +
+                li('toggle-paperfood',   rect('#7f8c8d'), 'Paper / Food Mfg.') +
+                li('toggle-biodiesel',   rect('#1abc9c'), 'Biodiesel Plants') +
+                li('toggle-ethanol',     rect('#27ae60'), 'Ethanol Plants') +
+                li('toggle-wastewater',  rect('#3498db'), 'Wastewater Treatment') +
+                grp('Display Layers') +
+                li('toggle-utilities',   dash('#e67e22'), 'Electric / Gas Utilities') +
+                li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
+                li('toggle-pipelines',   dash('#95a5a6'), 'Gas Pipelines') +
+                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites') +
+                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
+                li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites');
+            div.querySelector('#legend-clear-btn').addEventListener('click', function () {
+                var btn = this;
+                if (btn.textContent === 'Clear All') {
+                    allKeys.forEach(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        if (cb && cb.checked) {
+                            cb.checked = false;
+                            toggleLayer(key, false);
+                        }
+                    });
+                    btn.textContent = 'Select All';
+                } else {
+                    allKeys.forEach(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        if (cb && !cb.checked) {
+                            cb.checked = true;
+                            toggleLayer(key, true);
+                        }
+                    });
+                    btn.textContent = 'Clear All';
+                }
+            });
+            L.DomEvent.disableScrollPropagation(div);
+            L.DomEvent.disableClickPropagation(div);
+            return div;
+        }
+
+        function makeMarkerIcon(cfg) {
+            var s = 10;
+            var html;
+            if (cfg.shape === 'circle') {
+                html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><circle cx="' + (s/2) + '" cy="' + (s/2) + '" r="' + (s/2-1) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
+            } else {
+                html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><rect x="1" y="1" width="' + (s-2) + '" height="' + (s-2) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
+            }
+            return L.divIcon({ html: html, className: '', iconSize: [s, s], iconAnchor: [s/2, s/2] });
+        }
+
+        function createClusterGroup(cfg) {
+            return L.markerClusterGroup({
+                // Cluster radius decreases smoothly as zoom increases — gradient ungrouping
+                maxClusterRadius: function (zoom) {
+                    return Math.max(5, 110 - zoom * 8);
+                },
+                disableClusteringAtZoom: 15,
+                iconCreateFunction: function (cluster) {
+                    var count = cluster.getChildCount();
+                    // Size scales logarithmically with count
+                    var size = Math.round(Math.min(54, 22 + Math.log(count + 1) * 6));
+                    var fontSize = Math.max(9, Math.min(13, Math.floor(size / 3.2)));
+                    var half = size / 2;
+                    var shapeEl;
+                    if (cfg.shape === 'circle') {
+                        shapeEl = '<circle cx="' + half + '" cy="' + half + '" r="' + (half - 1.5) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/>';
+                    } else {
+                        shapeEl = '<rect x="1.5" y="1.5" width="' + (size - 3) + '" height="' + (size - 3) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/>';
+                    }
+                    var html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+                               shapeEl +
+                               '<text x="' + half + '" y="' + half + '" text-anchor="middle" dominant-baseline="central" ' +
+                               'fill="white" font-size="' + fontSize + '" font-weight="bold" ' +
+                               'stroke="rgba(0,0,0,0.6)" stroke-width="2.5" paint-order="stroke">' + count + '</text>' +
+                               '</svg>';
+                    return L.divIcon({
+                        html: html,
+                        className: '',
+                        iconSize: [size, size],
+                        iconAnchor: [Math.round(half), Math.round(half)]
+                    });
+                },
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                chunkedLoading: true
+            });
+        }
+
+        function renderLayer(key, geojson) {
+            var cfg = layerConfig[key];
+            if (!layerGroups[key]) {
+                layerGroups[key] = cfg.line ? L.layerGroup() : createClusterGroup(cfg);
+                layerGroups[key].addTo(map);
+            } else {
+                layerGroups[key].clearLayers();
+            }
+            if (cfg.line) {
+                geojson.features.forEach(function (feature) {
+                    var coords = feature.geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+                    L.polyline(coords, { color: cfg.line, weight: 1.5, opacity: 0.7 }).addTo(layerGroups[key]);
+                });
+            } else {
+                var icon = makeMarkerIcon(cfg);
+                geojson.features.forEach(function (feature) {
+                    var c = feature.geometry.coordinates;
+                    var marker = L.marker([c[1], c[0]], { icon: icon });
+                    var p = feature.properties;
+                    var name = p.facName || p.Plant || p.Name || p.PLANT_NAME || p.COMPANY_NA || p.LandfillNa || '';
+                    var city = p.CityName || p.City || p.CITY || '';
+                    if (name || city) {
+                        marker.bindPopup('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''));
+                    }
+                    marker.addTo(layerGroups[key]);
+                });
+            }
+        }
+
+        function loadLayer(key) {
+            var cfg = layerConfig[key];
+            if (!cfg) return;
+            if (layerCache[key]) { renderLayer(key, layerCache[key]); return; }
+            fetch(cfg.file)
+                .then(function (r) { return r.json(); })
+                .then(function (data) { layerCache[key] = data; renderLayer(key, data); })
+                .catch(function (e) {
+                    console.warn('Layer load failed: ' + key, e);
+                    document.getElementById('map-error').style.display = 'block';
+                });
+        }
+
+        function toggleLayer(key, visible) {
+            if (visible) {
+                if (!layerCache[key] && layerConfig[key]) { loadLayer(key); return; }
+                if (layerGroups[key]) map.addLayer(layerGroups[key]);
+            } else {
+                if (layerGroups[key]) map.removeLayer(layerGroups[key]);
+            }
+        }
+
+        // Iowa state border
+        fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
+                if (iowa) {
+                    L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#555', weight: 2 } }).addTo(map);
+                }
+            });
+
+        // Legend as a Leaflet control
+        var LegendControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function () { return buildLegend(); }
+        });
+        new LegendControl().addTo(map);
+
+        // Attach legend checkbox listeners
+        allKeys.forEach(function (key) {
+            var cb = document.getElementById('toggle-' + key);
+            if (cb) cb.addEventListener('change', function () { toggleLayer(key, this.checked); });
+        });
+
+        // Load all data layers
+        allKeys.forEach(function (key) { if (layerConfig[key]) loadLayer(key); });
+
+        // Sidebar state
+        if (localStorage.getItem('sidebar') === 'hidden') {
+            document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        }
+        function toggleSidebar() {
+            var layout = document.querySelector('.page-layout');
+            layout.classList.toggle('sidebar-hidden');
+            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+            setTimeout(function () { map.invalidateSize(); }, 10);
+        }
+    </script>
+</body>
+</html>

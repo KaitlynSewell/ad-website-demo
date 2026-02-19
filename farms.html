@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD.Website.Demo - Farms & Facilities</title>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="translations.js"></script>
+    <style>
+        .farms-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+            padding: 0 20px 20px 0;
+            box-sizing: border-box;
+        }
+
+        .farms-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .farms-toolbar select {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #2c3e50;
+            min-width: 200px;
+        }
+
+        .farms-toolbar input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 220px;
+        }
+
+        .farms-count {
+            font-size: 13px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .farms-table-wrapper {
+            overflow: auto;
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .farms-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .farms-table th {
+            background: #4169e1;
+            color: white;
+            padding: 9px 12px;
+            text-align: left;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: sticky;
+            top: 0;
+        }
+
+        .farms-table th:hover {
+            background: #2a52cc;
+        }
+
+        .farms-table th.sorted-asc::after  { content: ' ▲'; font-size: 10px; }
+        .farms-table th.sorted-desc::after { content: ' ▼'; font-size: 10px; }
+
+        .farms-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #eee;
+            color: #2c3e50;
+        }
+
+        .farms-table tr:hover td {
+            background: #f0f4ff;
+        }
+
+        .farms-loading {
+            padding: 30px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .farms-error {
+            padding: 20px;
+            color: #c0392b;
+            font-size: 14px;
+            background: #fdf0ef;
+            border-radius: 5px;
+            border: 1px solid #e9b8b5;
+        }
+
+        .summary-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #e8edf8;
+            color: #2c3e50;
+            border: 1px solid #c5d0ea;
+            white-space: nowrap;
+        }
+
+        .chip strong {
+            color: #4169e1;
+        }
+
+        html.dark-mode .farms-toolbar select,
+        html.dark-mode .farms-toolbar input[type="text"] {
+            background: #1a1a2e;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .farms-table-wrapper {
+            border-color: #444;
+        }
+
+        html.dark-mode .farms-table td {
+            color: #e0e0e0;
+            border-bottom-color: #3a3a50;
+        }
+
+        html.dark-mode .farms-table tr:hover td {
+            background: #2a2a40;
+        }
+
+        html.dark-mode .farms-count {
+            color: #aaa;
+        }
+
+        html.dark-mode .chip {
+            background: #2c2c3e;
+            border-color: #444;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-heading">
+        <div class="logo">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <path d="M18 2 C28 2 34 10 34 18 C34 26 26 34 18 34 C14 28 8 20 2 18 C8 8 14 2 18 2Z" fill="#2ec4b6" stroke="white" stroke-width="1"/>
+                <path d="M18 8 C18 8 18 28 18 28" stroke="white" stroke-width="1.5" fill="none"/>
+                <path d="M18 14 C14 12 10 14 10 14" stroke="white" stroke-width="1" fill="none"/>
+                <path d="M18 20 C22 18 26 20 26 20" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+            <span>Logo</span>
+        </div>
+        <span data-i18n="site-title">Anerobic Digestion Pathways</span>
+    </h1>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <h2>AD.Website.Demo</h2>
+            <ul>
+                <li><a href="index.html" data-i18n="nav-home">Home</a></li>
+                <li>
+                    <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
+                    <ul id="about-submenu" class="submenu">
+                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                    </ul>
+                </li>
+                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
+                <li><a href="settings.html" data-i18n="nav-settings">Settings</a></li>
+                <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
+                <li><a href="farms.html" class="active" data-i18n="nav-farms">Farms</a></li>
+            </ul>
+        </nav>
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <h2 class="section-heading">Farms &amp; Facilities</h2>
+            <div class="farms-container">
+                <div class="summary-chips" id="summary-chips">
+                    <span class="chip">Beef Cattle <strong>2,085</strong></span>
+                    <span class="chip">Dairy Cattle <strong>305</strong></span>
+                    <span class="chip">Swine <strong>447</strong></span>
+                    <span class="chip">Horses <strong>65</strong></span>
+                    <span class="chip">Turkeys <strong>119</strong></span>
+                    <span class="chip">Chickens <strong>164</strong></span>
+                    <span class="chip">Sheep &amp; Goats <strong>64</strong></span>
+                    <span class="chip">Biodiesel Plants <strong>15</strong></span>
+                    <span class="chip">Ethanol Plants <strong>44</strong></span>
+                    <span class="chip">Wastewater Treatment <strong>1,099</strong></span>
+                    <span class="chip">Utilities <strong>186</strong></span>
+                    <span class="chip">Power Plants <strong>217</strong></span>
+                    <span class="chip">Landfill Sites <strong>88</strong></span>
+                    <span class="chip">Anaerobic Digesters <strong>203</strong></span>
+                    <span class="chip">LMOP Sites <strong>32</strong></span>
+                </div>
+                <div class="farms-toolbar">
+                    <select id="category-select" onchange="onCategoryChange()">
+                        <optgroup label="Feedlot Waste / Manure">
+                            <option value="beef">Beef Cattle (2,085)</option>
+                            <option value="dairy">Dairy Cattle (305)</option>
+                            <option value="swine">Swine (447)</option>
+                            <option value="horses">Horses (65)</option>
+                            <option value="turkeys">Turkeys (119)</option>
+                            <option value="chickens">Chickens (164)</option>
+                            <option value="sheep">Sheep &amp; Goats (64)</option>
+                        </optgroup>
+                        <optgroup label="Human Activity">
+                            <option value="biodiesel">Biodiesel Plants (15)</option>
+                            <option value="ethanol">Ethanol Plants (44)</option>
+                            <option value="wastewater">Wastewater Treatment (1,099)</option>
+                            <option value="utilities">Utilities (186)</option>
+                            <option value="powerplants">Power Plants (217)</option>
+                        </optgroup>
+                        <optgroup label="Display Layers">
+                            <option value="landfill">Landfill Sites (88)</option>
+                            <option value="digesters">Anaerobic Digesters (203)</option>
+                            <option value="lmop">LMOP Sites (32)</option>
+                        </optgroup>
+                    </select>
+                    <input type="text" id="search-input" placeholder="Search..." oninput="onSearch()" />
+                    <span class="farms-count" id="record-count"></span>
+                </div>
+                <div class="farms-table-wrapper">
+                    <div class="farms-loading" id="farms-loading">Loading data...</div>
+                    <table class="farms-table" id="farms-table" style="display:none;">
+                        <thead id="farms-thead"></thead>
+                        <tbody id="farms-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var categories = {
+            beef:        { file: 'geojson/beef.geojson',        cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleBeef',num:true}] },
+            dairy:       { file: 'geojson/dairy.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleDair',num:true}] },
+            swine:       { file: 'geojson/swine.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'Swine',num:true}] },
+            horses:      { file: 'geojson/horses.geojson',      cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Horses',num:true}] },
+            turkeys:     { file: 'geojson/turkeys.geojson',     cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Turkeys',num:true}] },
+            chickens:    { file: 'geojson/chickens.geojson',    cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Chickens',num:true}] },
+            sheep:       { file: 'geojson/sheep.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'SheepLGoat',num:true}] },
+            biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (MGb/yr)',p:'CapMGb',num:true}] },
+            ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (MGe/yr)',p:'CapMGe',num:true}] },
+            wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'Class',p:'Class'}] },
+            utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true}] },
+            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true}] },
+            landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons (FY2013)',p:'TonsFY2013',num:true}] },
+            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Animal Units',p:'AnimalUnit',num:true}] },
+            lmop:        { file: 'geojson/lmop.geojson',        cols: [{h:'Landfill Name',p:'LandfillNa'},{h:'City',p:'City'},{h:'Status',p:'Status'},{h:'Waste (Tons)',p:'TotWst_ton',num:true}] }
+        };
+
+        var cache = {};
+        var currentKey = 'beef';
+        var currentFeatures = [];
+        var sortColIdx = -1;
+        var sortDir = 1;
+
+        function onCategoryChange() {
+            currentKey = document.getElementById('category-select').value;
+            sortColIdx = -1;
+            sortDir = 1;
+            document.getElementById('search-input').value = '';
+            loadAndRender(currentKey);
+        }
+
+        function onSearch() {
+            renderTable();
+        }
+
+        function sortBy(idx) {
+            if (sortColIdx === idx) {
+                sortDir *= -1;
+            } else {
+                sortColIdx = idx;
+                sortDir = 1;
+            }
+            renderTable();
+        }
+
+        function loadAndRender(key) {
+            if (cache[key]) {
+                currentFeatures = cache[key];
+                renderTable();
+                return;
+            }
+            document.getElementById('farms-loading').style.display = 'block';
+            document.getElementById('farms-loading').textContent = 'Loading data...';
+            document.getElementById('farms-table').style.display = 'none';
+            fetch(categories[key].file)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    cache[key] = data.features;
+                    currentFeatures = data.features;
+                    renderTable();
+                })
+                .catch(function() {
+                    document.getElementById('farms-loading').textContent = 'Error loading data. Make sure the page is served via HTTP (http://localhost:5500), not opened as a file.';
+                });
+        }
+
+        function renderTable() {
+            var cat = categories[currentKey];
+            var search = document.getElementById('search-input').value.toLowerCase();
+
+            var rows = currentFeatures.filter(function(f) {
+                if (!search) return true;
+                return cat.cols.some(function(c) {
+                    return String(f.properties[c.p] || '').toLowerCase().indexOf(search) !== -1;
+                });
+            });
+
+            if (sortColIdx >= 0) {
+                var col = cat.cols[sortColIdx];
+                rows = rows.slice().sort(function(a, b) {
+                    var av = a.properties[col.p];
+                    var bv = b.properties[col.p];
+                    if (col.num) {
+                        av = parseFloat(av) || 0;
+                        bv = parseFloat(bv) || 0;
+                    } else {
+                        av = String(av || '').toLowerCase();
+                        bv = String(bv || '').toLowerCase();
+                    }
+                    return (av > bv ? 1 : av < bv ? -1 : 0) * sortDir;
+                });
+            }
+
+            document.getElementById('record-count').textContent = rows.length.toLocaleString() + ' records';
+
+            // Build header
+            var thead = '<tr>' + cat.cols.map(function(c, i) {
+                var cls = '';
+                if (i === sortColIdx) cls = sortDir === 1 ? ' class="sorted-asc"' : ' class="sorted-desc"';
+                return '<th' + cls + ' onclick="sortBy(' + i + ')">' + c.h + '</th>';
+            }).join('') + '</tr>';
+
+            // Build rows (cap at 2000 visible rows for performance)
+            var visible = rows.slice(0, 2000);
+            var tbody = visible.map(function(f) {
+                return '<tr>' + cat.cols.map(function(c) {
+                    var val = f.properties[c.p];
+                    if (val === null || val === undefined) val = '';
+                    if (c.num && val !== '') val = Number(val).toLocaleString();
+                    return '<td>' + val + '</td>';
+                }).join('') + '</tr>';
+            }).join('');
+
+            if (rows.length > 2000) {
+                tbody += '<tr><td colspan="' + cat.cols.length + '" style="text-align:center;color:#888;font-style:italic;">Showing first 2,000 of ' + rows.length.toLocaleString() + ' records. Use search to filter.</td></tr>';
+            }
+
+            document.getElementById('farms-thead').innerHTML = thead;
+            document.getElementById('farms-tbody').innerHTML = tbody;
+            document.getElementById('farms-loading').style.display = 'none';
+            document.getElementById('farms-table').style.display = 'table';
+        }
+
+        // Sidebar
+        if (localStorage.getItem('sidebar') === 'hidden') {
+            document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        }
+        function toggleSidebar() {
+            var layout = document.querySelector('.page-layout');
+            layout.classList.toggle('sidebar-hidden');
+            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+        }
+
+        // Load default category on page load
+        loadAndRender(currentKey);
+    </script>
+</body>
+</html>
