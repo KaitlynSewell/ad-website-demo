@@ -11,10 +11,10 @@
     <script src="translations.js"></script>
     <style>
         #map {
-            width: 800px;
-            height: 600px;
-            max-width: calc(100vw - 220px - 260px - 60px);
-            max-height: calc(100vh - 80px - 40px);
+            width: 100%;
+            height: calc(100vh - 80px - 16px);
+            max-width: calc(100vw - 220px - 240px - 20px);
+            max-height: calc(100vh - 80px - 16px);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
@@ -117,7 +117,7 @@
         }
 
         .page-layout.sidebar-hidden #map {
-            max-width: calc(100vw - 260px - 60px);
+            max-width: calc(100vw - 240px - 20px);
         }
 
         #map-error {
@@ -143,7 +143,7 @@
             flex-shrink: 0;
             background: white;
             border-left: 1px solid #ccc;
-            padding: 20px 16px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -369,7 +369,7 @@
             var div = document.createElement('div');
             div.className = 'legend';
             function li(id, svgHtml, label) {
-                return '<div class="legend-item"><input type="checkbox" id="' + id + '" checked />' + svgHtml + '<span>' + label + '</span></div>';
+                return '<div class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span>' + label + '</span></div>';
             }
             function tri(c) { return '<svg width="16" height="12" viewBox="0 0 16 12"><polygon points="8,0 16,12 0,12" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
@@ -377,7 +377,7 @@
             function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
             function grp(t, f) { return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>'; }
             div.innerHTML =
-                '<div class="legend-header"><h4>Legend</h4><button class="legend-clear-btn" id="legend-clear-btn">Clear All</button></div>' +
+                '<div class="legend-header"><h4>Legend</h4><button class="legend-clear-btn" id="legend-clear-btn">Select All</button></div>' +
                 grp('Agricultural Residue', true) +
                 li('toggle-corn',        tri('#f5c518'),  'Corn Residue') +
                 li('toggle-soybean',     tri('#7bc47f'),  'Soybean Residue') +
@@ -414,12 +414,14 @@
                     });
                     btn.textContent = 'Select All';
                 } else {
+                    // Stagger loads to avoid overwhelming the browser
+                    var toLoad = [];
                     allKeys.forEach(function (key) {
                         var cb = div.querySelector('#toggle-' + key);
-                        if (cb && !cb.checked) {
-                            cb.checked = true;
-                            toggleLayer(key, true);
-                        }
+                        if (cb && !cb.checked) { cb.checked = true; toLoad.push(key); }
+                    });
+                    toLoad.forEach(function (key, i) {
+                        setTimeout(function () { toggleLayer(key, true); }, i * 80);
                     });
                     btn.textContent = 'Clear All';
                 }
@@ -548,9 +550,6 @@
             var cb = document.getElementById('toggle-' + key);
             if (cb) cb.addEventListener('change', function () { toggleLayer(key, this.checked); });
         });
-
-        // Load all data layers
-        allKeys.forEach(function (key) { if (layerConfig[key]) loadLayer(key); });
 
         // Sidebar state
         if (localStorage.getItem('sidebar') === 'hidden') {
