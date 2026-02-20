@@ -121,10 +121,26 @@
             color: #2c3e50;
             border: 1px solid #c5d0ea;
             white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .chip:hover {
+            background: #d0daef;
+            border-color: #a0b0d8;
+        }
+
+        .chip.active {
+            background: #4169e1;
+            color: white;
+            border-color: #2a52cc;
         }
 
         .chip strong {
             color: #4169e1;
+        }
+
+        .chip.active strong {
+            color: white;
         }
 
         html.dark-mode .farms-toolbar select,
@@ -193,21 +209,21 @@
             <h2 class="section-heading">Farms &amp; Facilities</h2>
             <div class="farms-container">
                 <div class="summary-chips" id="summary-chips">
-                    <span class="chip">Beef Cattle <strong>2,085</strong></span>
-                    <span class="chip">Dairy Cattle <strong>305</strong></span>
-                    <span class="chip">Swine <strong>447</strong></span>
-                    <span class="chip">Horses <strong>65</strong></span>
-                    <span class="chip">Turkeys <strong>119</strong></span>
-                    <span class="chip">Chickens <strong>164</strong></span>
-                    <span class="chip">Sheep &amp; Goats <strong>64</strong></span>
-                    <span class="chip">Biodiesel Plants <strong>15</strong></span>
-                    <span class="chip">Ethanol Plants <strong>44</strong></span>
-                    <span class="chip">Wastewater Treatment <strong>1,099</strong></span>
-                    <span class="chip">Utilities <strong>186</strong></span>
-                    <span class="chip">Power Plants <strong>217</strong></span>
-                    <span class="chip">Landfill Sites <strong>88</strong></span>
-                    <span class="chip">Anaerobic Digesters <strong>203</strong></span>
-                    <span class="chip">LMOP Sites <strong>32</strong></span>
+                    <span class="chip" id="chip-beef"        onclick="selectCategory('beef')">Beef Cattle <strong>2,085</strong></span>
+                    <span class="chip" id="chip-dairy"       onclick="selectCategory('dairy')">Dairy Cattle <strong>305</strong></span>
+                    <span class="chip" id="chip-swine"       onclick="selectCategory('swine')">Swine <strong>447</strong></span>
+                    <span class="chip" id="chip-horses"      onclick="selectCategory('horses')">Horses <strong>65</strong></span>
+                    <span class="chip" id="chip-turkeys"     onclick="selectCategory('turkeys')">Turkeys <strong>119</strong></span>
+                    <span class="chip" id="chip-chickens"    onclick="selectCategory('chickens')">Chickens <strong>164</strong></span>
+                    <span class="chip" id="chip-sheep"       onclick="selectCategory('sheep')">Sheep &amp; Goats <strong>64</strong></span>
+                    <span class="chip" id="chip-biodiesel"   onclick="selectCategory('biodiesel')">Biodiesel Plants <strong>15</strong></span>
+                    <span class="chip" id="chip-ethanol"     onclick="selectCategory('ethanol')">Ethanol Plants <strong>44</strong></span>
+                    <span class="chip" id="chip-wastewater"  onclick="selectCategory('wastewater')">Wastewater Treatment <strong>1,099</strong></span>
+                    <span class="chip" id="chip-utilities"   onclick="selectCategory('utilities')">Utilities <strong>186</strong></span>
+                    <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')">Power Plants <strong>217</strong></span>
+                    <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')">Landfill Sites <strong>88</strong></span>
+                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')">Anaerobic Digesters <strong>203</strong></span>
+                    <span class="chip" id="chip-lmop"        onclick="selectCategory('lmop')">LMOP Sites <strong>32</strong></span>
                 </div>
                 <div class="farms-toolbar">
                     <select id="category-select" onchange="onCategoryChange()">
@@ -271,6 +287,14 @@
         var currentFeatures = [];
         var sortColIdx = -1;
         var sortDir = 1;
+
+        function selectCategory(key) {
+            document.getElementById('category-select').value = key;
+            document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
+            var chip = document.getElementById('chip-' + key);
+            if (chip) chip.classList.add('active');
+            onCategoryChange();
+        }
 
         function onCategoryChange() {
             currentKey = document.getElementById('category-select').value;
@@ -388,7 +412,7 @@
         }
 
         // Load default category on page load
-        loadAndRender(currentKey);
+        selectCategory(currentKey);
     </script>
 </body>
 </html>
