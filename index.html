@@ -251,7 +251,6 @@
                         <li><a href="about-digestion.html" data-i18n="nav-what">What is anaerobic digestion?</a></li>
                     </ul>
                 </li>
-                <li><a href="#" data-i18n="nav-contact">Contact</a></li>
                 <li><a href="settings.html" data-i18n="nav-settings">Settings</a></li>
                 <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
                 <li><a href="farms.html" data-i18n="nav-farms">Farms</a></li>
@@ -344,25 +343,25 @@
         var loadQueue = [];
         var MAX_CONCURRENT = 3;
 
+        // Web worker handles fetch + JSON.parse off the main thread
+        var worker = new Worker('geojson-worker.js');
+        worker.onmessage = function(e) {
+            var key = e.data.key;
+            if (e.data.error) {
+                console.warn('Layer load failed: ' + key, e.data.error);
+            } else {
+                layerCache[key] = e.data.data;
+                renderLayer(key, e.data.data);
+            }
+            activeLoads--;
+            processLoadQueue();
+        };
+
         function processLoadQueue() {
             while (activeLoads < MAX_CONCURRENT && loadQueue.length > 0) {
-                (function(key) {
-                    activeLoads++;
-                    var cfg = layerConfig[key];
-                    fetch(cfg.file)
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            layerCache[key] = data;
-                            renderLayer(key, data);
-                        })
-                        .catch(function(e) {
-                            console.warn('Layer load failed: ' + key, e);
-                        })
-                        .finally(function() {
-                            activeLoads--;
-                            processLoadQueue();
-                        });
-                })(loadQueue.shift());
+                activeLoads++;
+                var key = loadQueue.shift();
+                worker.postMessage({ key: key, file: layerConfig[key].file });
             }
         }
 
