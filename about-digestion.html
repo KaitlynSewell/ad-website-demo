@@ -40,18 +40,22 @@
             </ul>
         </nav>
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
             <h2 class="section-heading" data-i18n="about-digestion-heading">What is Anaerobic Digestion?</h2>
         </div>
     </div>
     <script>
         if (localStorage.getItem('sidebar') === 'hidden') {
             document.querySelector('.page-layout').classList.add('sidebar-hidden');
+            var t = document.getElementById('sidebar-toggle-btn');
+            if (t) t.innerHTML = '&#8594;';
         }
         function toggleSidebar() {
             var layout = document.querySelector('.page-layout');
             layout.classList.toggle('sidebar-hidden');
-            localStorage.setItem('sidebar', layout.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+            var hidden = layout.classList.contains('sidebar-hidden');
+            localStorage.setItem('sidebar', hidden ? 'hidden' : 'visible');
+            var t = document.getElementById('sidebar-toggle-btn');
+            if (t) t.innerHTML = hidden ? '&#8594;' : '&#8592;';
         }
     </script>
 </body>
