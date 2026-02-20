@@ -562,7 +562,7 @@
             .then(function (data) {
                 var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#555', weight: 2 } }).addTo(map);
+                    L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 2.5, opacity: 0.9 } }).addTo(map);
                 }
             });
 
