@@ -434,6 +434,11 @@
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites');
 
+            ['toggle-corn','toggle-soybean','toggle-census','toggle-paperfood'].forEach(function(id) {
+                var item = div.querySelector('#' + id);
+                if (item) item.parentElement.title = 'No items';
+            });
+
             function updateLegendButtons() {
                 var checkedCount = allKeys.filter(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
