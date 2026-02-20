@@ -433,15 +433,6 @@
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites') +
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites');
-            // Dim checkboxes for layers that don't have data files yet
-            ['toggle-corn','toggle-soybean','toggle-census','toggle-paperfood'].forEach(function(id) {
-                var item = div.querySelector('#' + id);
-                if (item) {
-                    item.disabled = true;
-                    item.parentElement.style.opacity = '0.4';
-                    item.parentElement.title = 'No items';
-                }
-            });
 
             function updateLegendButtons() {
                 var checkedCount = allKeys.filter(function (key) {
