@@ -161,6 +161,25 @@
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
             margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calc-panel-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #888;
+            padding: 0 2px;
+            line-height: 1;
+        }
+
+        .calc-panel-toggle:hover { color: #444; }
+
+        .calculator-panel.collapsed .calc-panel-body {
+            display: none;
         }
 
         .calc-field {
@@ -266,30 +285,32 @@
                 <div id="map-error">Map data requires an HTTP server. Open via <strong>http://localhost:5500/index.html</strong> — not as a local file.</div>
             </div>
         </div>
-        <div class="calculator-panel">
-            <h3>Calculator</h3>
-            <div class="calc-field">
-                <label for="calc-1">Prompt 1</label>
-                <input type="number" id="calc-1" placeholder="Enter value">
+        <div class="calculator-panel" id="calculator-panel">
+            <h3>Calculator <button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">▲</button></h3>
+            <div class="calc-panel-body">
+                <div class="calc-field">
+                    <label for="calc-1">Prompt 1</label>
+                    <input type="number" id="calc-1" placeholder="Enter value">
+                </div>
+                <div class="calc-field">
+                    <label for="calc-2">Prompt 2</label>
+                    <input type="number" id="calc-2" placeholder="Enter value">
+                </div>
+                <div class="calc-field">
+                    <label for="calc-3">Prompt 3</label>
+                    <input type="number" id="calc-3" placeholder="Enter value">
+                </div>
+                <div class="calc-field">
+                    <label for="calc-4">Prompt 4</label>
+                    <input type="number" id="calc-4" placeholder="Enter value">
+                </div>
+                <div class="calc-field">
+                    <label for="calc-5">Prompt 5</label>
+                    <input type="number" id="calc-5" placeholder="Enter value">
+                </div>
+                <button class="calc-btn" data-i18n="btn-calculate">Calculate</button>
+                <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced">Advanced Calculator</a>
             </div>
-            <div class="calc-field">
-                <label for="calc-2">Prompt 2</label>
-                <input type="number" id="calc-2" placeholder="Enter value">
-            </div>
-            <div class="calc-field">
-                <label for="calc-3">Prompt 3</label>
-                <input type="number" id="calc-3" placeholder="Enter value">
-            </div>
-            <div class="calc-field">
-                <label for="calc-4">Prompt 4</label>
-                <input type="number" id="calc-4" placeholder="Enter value">
-            </div>
-            <div class="calc-field">
-                <label for="calc-5">Prompt 5</label>
-                <input type="number" id="calc-5" placeholder="Enter value">
-            </div>
-            <button class="calc-btn" data-i18n="btn-calculate">Calculate</button>
-            <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced">Advanced Calculator</a>
         </div>
     </div>
 
@@ -627,6 +648,15 @@
             var t = document.getElementById('sidebar-toggle-btn');
             if (t) t.innerHTML = '&#8594;';
         }
+        function toggleCalcPanel() {
+            var panel = document.getElementById('calculator-panel');
+            var btn = document.getElementById('calc-panel-toggle');
+            var collapsed = panel.classList.toggle('collapsed');
+            btn.textContent = collapsed ? '▼' : '▲';
+            btn.title = collapsed ? 'Show calculator' : 'Hide calculator';
+            setTimeout(function () { map.invalidateSize(); }, 10);
+        }
+
         function toggleSidebar() {
             var layout = document.querySelector('.page-layout');
             layout.classList.toggle('sidebar-hidden');
