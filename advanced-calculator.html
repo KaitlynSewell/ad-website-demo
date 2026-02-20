@@ -26,6 +26,34 @@
             padding: 8px 12px;
             margin: 0;
             border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calc-section-title:hover {
+            background: #e2e6f5;
+        }
+
+        .calc-toggle-arrow {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .calc-section.collapsed .calc-toggle-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .calc-section-body {
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+            max-height: 1000px;
+        }
+
+        .calc-section.collapsed .calc-section-body {
+            max-height: 0;
         }
 
         .calc-section {
@@ -150,6 +178,10 @@
             background: #2a2a3e;
         }
 
+        html.dark-mode .calc-section-title:hover {
+            background: #32325a;
+        }
+
         html.dark-mode .calc-field label { color: #bbb; }
         html.dark-mode .calc-field .unit { color: #888; }
 
@@ -212,8 +244,8 @@
 
                 <!-- Project Size & Performance -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Project Size &amp; Performance</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Project Size &amp; Performance <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Generator Nameplate Capacity <span class="unit">(kW)</span></label>
                             <input type="number" id="capacity" value="500" min="0">
@@ -242,24 +274,24 @@
                             <label>Project Useful Life <span class="unit">(years)</span></label>
                             <input type="number" id="project-life" value="20" min="1" max="50">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Capital Costs -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Capital Costs</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Capital Costs <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Total Installed Cost <span class="unit">($/kW)</span></label>
                             <input type="number" id="cost-per-kw" value="7500" min="0">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Operations & Maintenance -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Operations &amp; Maintenance</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Operations &amp; Maintenance <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Fixed O&amp;M Expense, Yr 1 <span class="unit">($/kW-yr)</span></label>
                             <input type="number" id="fixed-om" value="300" min="0">
@@ -280,13 +312,13 @@
                             <label>Feedstock Quantity <span class="unit">(tons/yr)</span></label>
                             <input type="number" id="feedstock-qty" value="10000" min="0">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Revenue Streams -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Revenue Streams</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Revenue Streams <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Tipping Fee — Source #1 <span class="unit">($/ton)</span></label>
                             <input type="number" id="tipping-fee-1" value="30" min="0">
@@ -311,13 +343,13 @@
                             <label>Market Value Escalation Rate <span class="unit">(%/yr)</span></label>
                             <input type="number" id="energy-escalation" value="3" min="0" step="0.1">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Financing -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Financing</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Financing <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Debt Percentage <span class="unit">(%)</span></label>
                             <input type="number" id="debt-pct" value="55" min="0" max="100" step="0.1">
@@ -334,24 +366,24 @@
                             <label>Target After-Tax Equity IRR <span class="unit">(%)</span></label>
                             <input type="number" id="target-irr" value="12" min="0" step="0.1">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Federal Incentives -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Federal Incentives</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Federal Incentives <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Investment Tax Credit (ITC) <span class="unit">(%)</span></label>
                             <input type="number" id="itc-pct" value="30" min="0" max="100" step="0.1">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Tax -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title">Tax</h3>
-                    <div class="calc-grid">
+                    <h3 class="calc-section-title">Tax <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-grid">
                         <div class="calc-field">
                             <label>Federal Income Tax Rate <span class="unit">(%)</span></label>
                             <input type="number" id="fed-tax" value="35" min="0" max="100" step="0.1">
@@ -360,15 +392,15 @@
                             <label>State Income Tax Rate <span class="unit">(%)</span></label>
                             <input type="number" id="state-tax" value="8.5" min="0" max="100" step="0.1">
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <!-- Results -->
                 <div class="calc-section">
-                    <h3 class="calc-section-title" data-i18n="advcalc-results">Results</h3>
-                    <div class="calc-result empty" id="calc-result">
+                    <h3 class="calc-section-title" data-i18n="advcalc-results">Results <span class="calc-toggle-arrow">▼</span></h3>
+                    <div class="calc-section-body"><div class="calc-result empty" id="calc-result">
                         <p>Enter values above and press Calculate.</p>
-                    </div>
+                    </div></div>
                 </div>
 
                 <div class="calc-actions">
@@ -516,6 +548,12 @@
             el.classList.add('empty');
             el.innerHTML = '<p>Enter values above and press Calculate.</p>';
         }
+
+        document.querySelectorAll('.calc-section-title').forEach(function(title) {
+            title.addEventListener('click', function() {
+                this.closest('.calc-section').classList.toggle('collapsed');
+            });
+        });
 
         if (localStorage.getItem('sidebar') === 'hidden') {
             document.querySelector('.page-layout').classList.add('sidebar-hidden');
