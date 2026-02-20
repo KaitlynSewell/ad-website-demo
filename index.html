@@ -174,46 +174,41 @@
 
         .calculator-panel h3 {
             font-size: 16px;
-            color: #2c3e50;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 14px 10px 14px;
+            font-weight: bold;
+            color: white;
+            background-color: #c5ddf7;
+            border-bottom: 1px solid #b0b5bc;
+            padding: 0;
             margin: 0;
             display: flex;
-            align-items: center;
-            gap: 8px;
+            align-items: stretch;
             white-space: nowrap;
-            transition: background-color 0.25s ease, padding 0.25s ease;
-        }
-
-        .calculator-panel.collapsed h3 {
-            background-color: #c5ddf7;
-            border-bottom: none;
-            padding: 14px 0;
-            justify-content: center;
             min-height: 48px;
         }
 
-        .calculator-panel.collapsed h3 span {
-            display: none;
+        .calculator-panel h3 span {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            padding-left: 14px;
         }
 
         .calc-panel-toggle {
-            background: none;
+            background: transparent;
             border: none;
             cursor: pointer;
             font-size: 16px;
-            color: #888;
-            padding: 0;
-            line-height: 1;
+            color: white;
+            width: 34px;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
 
-        .calculator-panel.collapsed .calc-panel-toggle {
-            color: transparent;
-        }
-
-        .calc-panel-toggle:hover { color: #444; }
-        .calculator-panel.collapsed .calc-panel-toggle:hover { color: transparent; }
+        .calc-panel-toggle:hover { background: rgba(0, 0, 0, 0.2); }
 
         .calc-field {
             display: flex;
@@ -268,7 +263,6 @@
         }
 
         html.dark-mode .calculator-panel h3 {
-            color: #e0e0e0;
             border-bottom-color: #444;
         }
 
@@ -319,7 +313,7 @@
             </div>
         </div>
         <div class="calculator-panel" id="calculator-panel">
-            <h3><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">&#9654;</button><span>Calculator</span></h3>
+            <h3><span>Calculator</span><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Toggle calculator">&#8594;</button></h3>
             <div class="calc-panel-body">
                 <div class="calc-field">
                     <label for="calc-1">Prompt 1</label>
@@ -682,11 +676,7 @@
             if (t) t.innerHTML = '&#8594;';
         }
         function toggleCalcPanel() {
-            var panel = document.getElementById('calculator-panel');
-            var btn = document.getElementById('calc-panel-toggle');
-            var collapsed = panel.classList.toggle('collapsed');
-            btn.innerHTML = collapsed ? '&#9664;' : '&#9654;';
-            btn.title = collapsed ? 'Show calculator' : 'Hide calculator';
+            document.getElementById('calculator-panel').classList.toggle('collapsed');
             setTimeout(function () { map.invalidateSize(); }, 260);
         }
 
