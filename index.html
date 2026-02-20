@@ -48,6 +48,11 @@
             font-size: 14px;
         }
 
+        .legend-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
         .legend-clear-btn {
             font-size: 11px;
             padding: 2px 7px;
@@ -403,7 +408,7 @@
             function paper(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
             function grp(t, f) { return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>'; }
             div.innerHTML =
-                '<div class="legend-header"><h4>Legend</h4><button class="legend-clear-btn" id="legend-clear-btn">Select All</button></div>' +
+                '<div class="legend-header"><h4>Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none">Clear All</button></div></div>' +
                 grp('Agricultural Residue', true) +
                 li('toggle-corn',        blade('#f5c518'),  'Corn Residue') +
                 li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue') +
@@ -438,24 +443,47 @@
                 }
             });
 
-            div.querySelector('#legend-clear-btn').addEventListener('click', function () {
-                var btn = this;
-                if (btn.textContent === 'Clear All') {
-                    allKeys.forEach(function (key) {
-                        var cb = div.querySelector('#toggle-' + key);
-                        if (cb && cb.checked) {
-                            cb.checked = false;
-                            toggleLayer(key, false);
-                        }
-                    });
-                    btn.textContent = 'Select All';
+            function updateLegendButtons() {
+                var checkedCount = allKeys.filter(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    return cb && cb.checked;
+                }).length;
+                var selectBtn = div.querySelector('#legend-select-all-btn');
+                var clearBtn  = div.querySelector('#legend-clear-all-btn');
+                if (checkedCount === 0) {
+                    selectBtn.style.display = '';
+                    clearBtn.style.display  = 'none';
+                } else if (checkedCount === allKeys.length) {
+                    selectBtn.style.display = 'none';
+                    clearBtn.style.display  = '';
                 } else {
-                    allKeys.forEach(function (key) {
-                        var cb = div.querySelector('#toggle-' + key);
-                        if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
-                    });
-                    btn.textContent = 'Clear All';
+                    selectBtn.style.display = '';
+                    clearBtn.style.display  = '';
                 }
+            }
+
+            div.querySelector('#legend-select-all-btn').addEventListener('click', function () {
+                allKeys.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
+                });
+                updateLegendButtons();
+            });
+
+            div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
+                allKeys.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb && cb.checked) { cb.checked = false; toggleLayer(key, false); }
+                });
+                updateLegendButtons();
+            });
+
+            allKeys.forEach(function (key) {
+                var cb = div.querySelector('#toggle-' + key);
+                if (cb) cb.addEventListener('change', function () {
+                    toggleLayer(key, this.checked);
+                    updateLegendButtons();
+                });
             });
             L.DomEvent.disableScrollPropagation(div);
             L.DomEvent.disableClickPropagation(div);
@@ -596,12 +624,6 @@
             onAdd: function () { return buildLegend(); }
         });
         new LegendControl().addTo(map);
-
-        // Attach legend checkbox listeners
-        allKeys.forEach(function (key) {
-            var cb = document.getElementById('toggle-' + key);
-            if (cb) cb.addEventListener('change', function () { toggleLayer(key, this.checked); });
-        });
 
         // Sidebar state
         if (localStorage.getItem('sidebar') === 'hidden') {
