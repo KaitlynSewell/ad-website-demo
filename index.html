@@ -330,6 +330,7 @@
                         currentBaseLayer = 'street';
                         btn.textContent = 'Switch to Satellite';
                     }
+                    updateIowaBorder();
                 });
                 return container;
             }
@@ -379,7 +380,7 @@
             sheep:       { file: 'geojson/sheep.geojson',       color: '#d2b48c', shape: 'circle' },
             biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'square' },
             ethanol:     { file: 'geojson/ethanol.geojson',     color: '#27ae60', shape: 'square' },
-            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'square' },
+            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet' },
             utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square' },
             powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#95a5a6' },
@@ -398,12 +399,14 @@
             function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
+            function drop(c) { return '<svg width="12" height="16" viewBox="0 0 12 16"><path d="M6,0 C6,0 0,7 0,11 A6,6 0 0,0 12,11 C12,7 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function blade(c) { return '<svg width="10" height="16" viewBox="0 0 10 16"><path d="M5,0 C8,3 9,8 7,13 L5,16 L3,13 C1,8 2,3 5,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/><line x1="5" y1="1" x2="5" y2="14" stroke="rgba(0,0,0,0.2)" stroke-width="0.8"/></svg>'; }
             function grp(t, f) { return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>'; }
             div.innerHTML =
                 '<div class="legend-header"><h4>Legend</h4><button class="legend-clear-btn" id="legend-clear-btn">Select All</button></div>' +
                 grp('Agricultural Residue', true) +
-                li('toggle-corn',        tri('#f5c518'),  'Corn Residue') +
-                li('toggle-soybean',     tri('#7bc47f'),  'Soybean Residue') +
+                li('toggle-corn',        blade('#f5c518'),  'Corn Residue') +
+                li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue') +
                 grp('Feedlot Waste / Manure') +
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle') +
                 li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle') +
@@ -417,7 +420,7 @@
                 li('toggle-paperfood',   rect('#7f8c8d'), 'Paper / Food Mfg.') +
                 li('toggle-biodiesel',   rect('#1abc9c'), 'Biodiesel Plants') +
                 li('toggle-ethanol',     rect('#27ae60'), 'Ethanol Plants') +
-                li('toggle-wastewater',  rect('#3498db'), 'Wastewater Treatment') +
+                li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment') +
                 grp('Display Layers') +
                 li('toggle-utilities',   dash('#e67e22'), 'Electric / Gas Utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
@@ -464,6 +467,9 @@
             var html;
             if (cfg.shape === 'circle') {
                 html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><circle cx="' + (s/2) + '" cy="' + (s/2) + '" r="' + (s/2-1) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
+            } else if (cfg.shape === 'droplet') {
+                html = '<svg width="10" height="13" viewBox="0 0 10 13"><path d="M5,0 C5,0 0,6 0,9 A5,5 0 0,0 10,9 C10,6 5,0 5,0Z" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
+                return L.divIcon({ html: html, className: '', iconSize: [10, 13], iconAnchor: [5, 13] });
             } else {
                 html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><rect x="1" y="1" width="' + (s-2) + '" height="' + (s-2) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
             }
@@ -482,6 +488,13 @@
                     // Size scales logarithmically with count
                     var size = Math.round(Math.min(54, 22 + Math.log(count + 1) * 6));
                     var half = size / 2;
+                    if (cfg.shape === 'droplet') {
+                        var h = Math.round(size * 1.3);
+                        var cy = h - Math.round(half);
+                        var path = 'M' + half + ',0 C' + half + ',0 0,' + Math.round(cy * 0.65) + ' 0,' + cy + ' A' + half + ',' + half + ' 0 0,0 ' + size + ',' + cy + ' C' + size + ',' + Math.round(cy * 0.65) + ' ' + half + ',0 ' + half + ',0Z';
+                        var dHtml = '<svg width="' + size + '" height="' + h + '" viewBox="0 0 ' + size + ' ' + h + '"><path d="' + path + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/></svg>';
+                        return L.divIcon({ html: dHtml, className: '', iconSize: [size, h], iconAnchor: [Math.round(half), h] });
+                    }
                     var shapeEl;
                     if (cfg.shape === 'circle') {
                         shapeEl = '<circle cx="' + half + '" cy="' + half + '" r="' + (half - 1.5) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/>';
@@ -556,13 +569,22 @@
             }
         }
 
-        // Iowa state border
+        // Iowa state border — color adapts to active base layer
+        var iowaLayer = null;
+        function updateIowaBorder() {
+            if (!iowaLayer) return;
+            if (currentBaseLayer === 'satellite') {
+                iowaLayer.setStyle({ color: '#ffffff', weight: 2.5, opacity: 0.9 });
+            } else {
+                iowaLayer.setStyle({ color: '#555', weight: 2, opacity: 1 });
+            }
+        }
         fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 2.5, opacity: 0.9 } }).addTo(map);
+                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#555', weight: 2, opacity: 1 } }).addTo(map);
                 }
             });
 
