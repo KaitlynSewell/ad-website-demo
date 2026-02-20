@@ -339,6 +339,31 @@
 
         var layerGroups = {};
         var layerCache = {};
+        var activeLoads = 0;
+        var loadQueue = [];
+        var MAX_CONCURRENT = 3;
+
+        function processLoadQueue() {
+            while (activeLoads < MAX_CONCURRENT && loadQueue.length > 0) {
+                (function(key) {
+                    activeLoads++;
+                    var cfg = layerConfig[key];
+                    fetch(cfg.file)
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            layerCache[key] = data;
+                            renderLayer(key, data);
+                        })
+                        .catch(function(e) {
+                            console.warn('Layer load failed: ' + key, e);
+                        })
+                        .finally(function() {
+                            activeLoads--;
+                            processLoadQueue();
+                        });
+                })(loadQueue.shift());
+            }
+        }
 
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
                        'biodiesel','ethanol','wastewater',
@@ -422,14 +447,9 @@
                     });
                     btn.textContent = 'Select All';
                 } else {
-                    // Stagger loads to avoid overwhelming the browser
-                    var toLoad = [];
                     allKeys.forEach(function (key) {
                         var cb = div.querySelector('#toggle-' + key);
-                        if (cb && !cb.checked) { cb.checked = true; toLoad.push(key); }
-                    });
-                    toLoad.forEach(function (key, i) {
-                        setTimeout(function () { toggleLayer(key, true); }, i * 250);
+                        if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
                     });
                     btn.textContent = 'Clear All';
                 }
@@ -481,7 +501,9 @@
                 spiderfyOnMaxZoom: true,
                 showCoverageOnHover: false,
                 zoomToBoundsOnClick: true,
-                chunkedLoading: true
+                chunkedLoading: true,
+                chunkSize: 200,
+                chunkDelay: 100
             });
         }
 
@@ -518,13 +540,11 @@
             var cfg = layerConfig[key];
             if (!cfg) return;
             if (layerCache[key]) { renderLayer(key, layerCache[key]); return; }
-            fetch(cfg.file)
-                .then(function (r) { return r.json(); })
-                .then(function (data) { layerCache[key] = data; renderLayer(key, data); })
-                .catch(function (e) {
-                    console.warn('Layer load failed: ' + key, e);
-                    document.getElementById('map-error').style.display = 'block';
-                });
+            // Queue the fetch; max 3 concurrent loads to avoid browser overload
+            if (loadQueue.indexOf(key) === -1) {
+                loadQueue.push(key);
+                processLoadQueue();
+            }
         }
 
         function toggleLayer(key, visible) {
