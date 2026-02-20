@@ -156,6 +156,17 @@
             transition: width 0.25s ease;
         }
 
+        .calc-panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
+
+        .advanced-calc-btn {
+            margin-top: auto;
+        }
+
         .calculator-panel.collapsed {
             width: 34px;
             padding: 0;
@@ -331,11 +342,9 @@
                     <input type="number" id="calc-5" placeholder="Enter value">
                 </div>
                 <button class="calc-btn" data-i18n="btn-calculate">Calculate</button>
+                <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced">Advanced Calculator</a>
             </div>
         </div>
-    </div>
-    <div style="text-align:center; padding: 10px;">
-        <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced" style="display:inline-block; padding: 10px 28px; text-decoration:none;">Advanced Calculator</a>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
