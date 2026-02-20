@@ -152,7 +152,13 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
-            overflow-y: auto;
+            overflow: hidden;
+            transition: width 0.25s ease, padding 0.25s ease;
+        }
+
+        .calculator-panel.collapsed {
+            width: 28px;
+            padding: 12px 4px;
         }
 
         .calculator-panel h3 {
@@ -162,25 +168,23 @@
             padding-bottom: 10px;
             margin: 0;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
 
         .calc-panel-toggle {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 14px;
             color: #888;
-            padding: 0 2px;
+            padding: 0;
             line-height: 1;
+            flex-shrink: 0;
         }
 
         .calc-panel-toggle:hover { color: #444; }
-
-        .calculator-panel.collapsed .calc-panel-body {
-            display: none;
-        }
 
         .calc-field {
             display: flex;
@@ -286,7 +290,7 @@
             </div>
         </div>
         <div class="calculator-panel" id="calculator-panel">
-            <h3>Calculator <button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">▲</button></h3>
+            <h3><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">&#9654;</button><span>Calculator</span></h3>
             <div class="calc-panel-body">
                 <div class="calc-field">
                     <label for="calc-1">Prompt 1</label>
@@ -652,9 +656,9 @@
             var panel = document.getElementById('calculator-panel');
             var btn = document.getElementById('calc-panel-toggle');
             var collapsed = panel.classList.toggle('collapsed');
-            btn.textContent = collapsed ? '▼' : '▲';
+            btn.innerHTML = collapsed ? '&#9664;' : '&#9654;';
             btn.title = collapsed ? 'Show calculator' : 'Hide calculator';
-            setTimeout(function () { map.invalidateSize(); }, 10);
+            setTimeout(function () { map.invalidateSize(); }, 260);
         }
 
         function toggleSidebar() {
