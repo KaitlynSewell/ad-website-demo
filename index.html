@@ -387,7 +387,7 @@
             wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet' },
             utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square' },
             powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square' },
-            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#95a5a6' },
+            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#e8a838' },
             landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square' },
             digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'circle' },
             lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle' }
@@ -429,7 +429,7 @@
                 grp('Display Layers') +
                 li('toggle-utilities',   dash('#e67e22'), 'Electric / Gas Utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
-                li('toggle-pipelines',   dash('#95a5a6'), 'Gas Pipelines') +
+                li('toggle-pipelines',   dash('#e8a838'), 'Gas Pipelines') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites') +
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites');
@@ -559,7 +559,7 @@
             if (cfg.line) {
                 geojson.features.forEach(function (feature) {
                     var coords = feature.geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
-                    L.polyline(coords, { color: cfg.line, weight: 1.5, opacity: 0.7 }).addTo(layerGroups[key]);
+                    L.polyline(coords, { color: cfg.line, weight: 2.5, opacity: 0.9 }).addTo(layerGroups[key]);
                 });
             } else {
                 var icon = makeMarkerIcon(cfg);
@@ -604,9 +604,9 @@
         function updateIowaBorder() {
             if (!iowaLayer) return;
             if (currentBaseLayer === 'satellite') {
-                iowaLayer.setStyle({ color: '#ffffff', weight: 2.5, opacity: 0.9 });
+                iowaLayer.setStyle({ color: '#ffffff', weight: 1.5, opacity: 0.4 });
             } else {
-                iowaLayer.setStyle({ color: '#555', weight: 2, opacity: 1 });
+                iowaLayer.setStyle({ color: '#888', weight: 1.5, opacity: 0.4 });
             }
         }
         fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
@@ -614,7 +614,7 @@
             .then(function (data) {
                 var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#555', weight: 2, opacity: 1 } }).addTo(map);
+                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 1.5, opacity: 0.4 } }).addTo(map);
                 }
             });
 
