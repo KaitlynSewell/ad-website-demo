@@ -477,10 +477,16 @@
             if (renderBusy || renderQueue.length === 0) return;
             renderBusy = true;
             var item = renderQueue.shift();
-            renderLayer(item.key, item.data);
-            // 800 ms gap gives the cluster group's internal chunkedLoading
-            // time to finish before the next layer starts rendering
-            setTimeout(function() { renderBusy = false; overlayDone(); drainRenderQueue(); }, 800);
+            // Pass a callback so the next render only starts after this one
+            // is fully complete — no more timer guessing
+            renderLayer(item.key, item.data, function () {
+                // Brief pause so the browser can paint and run GC
+                setTimeout(function () {
+                    renderBusy = false;
+                    overlayDone();
+                    drainRenderQueue();
+                }, 200);
+            });
         }
 
         // Web worker handles fetch + JSON.parse off the main thread
@@ -635,7 +641,8 @@
         }
 
         function createClusterGroup(cfg) {
-            return L.markerClusterGroup({
+            var _done = null;
+            var group = L.markerClusterGroup({
                 // Cluster radius decreases smoothly as zoom increases — gradient ungrouping
                 maxClusterRadius: function (zoom) {
                     return Math.max(5, 110 - zoom * 8);
@@ -673,12 +680,22 @@
                 showCoverageOnHover: false,
                 zoomToBoundsOnClick: true,
                 chunkedLoading: true,
-                chunkSize: 200,
-                chunkDelay: 100
+                chunkSize: 150,
+                chunkDelay: 50,
+                // Fire _done callback when the last chunk finishes adding to the map
+                chunkProgress: function (processed, total) {
+                    if (processed >= total && _done) {
+                        var cb = _done; _done = null;
+                        setTimeout(cb, 0);
+                    }
+                }
             });
+            // Called by renderLayer to register a one-shot completion callback
+            group._onComplete = function (cb) { _done = cb; };
+            return group;
         }
 
-        function renderLayer(key, geojson) {
+        function renderLayer(key, geojson, onComplete) {
             var cfg = layerConfig[key];
             if (!layerGroups[key]) {
                 layerGroups[key] = cfg.line ? L.layerGroup() : createClusterGroup(cfg);
@@ -697,7 +714,11 @@
                         var coords = lineFeatures[lineIdx].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
                         L.polyline(coords, { color: cfg.line, weight: 2.5, opacity: 0.9 }).addTo(layerGroups[key]);
                     }
-                    if (lineIdx < lineFeatures.length) setTimeout(addLineChunk, 50);
+                    if (lineIdx < lineFeatures.length) {
+                        setTimeout(addLineChunk, 50);
+                    } else if (onComplete) {
+                        setTimeout(onComplete, 0);
+                    }
                 })();
             } else {
                 var icon = makeMarkerIcon(cfg);
@@ -713,7 +734,12 @@
                     }
                     markers.push(marker);
                 });
-                layerGroups[key].addLayers(markers);
+                if (markers.length === 0) {
+                    if (onComplete) setTimeout(onComplete, 0);
+                } else {
+                    if (onComplete) layerGroups[key]._onComplete(onComplete);
+                    layerGroups[key].addLayers(markers);
+                }
             }
         }
 
