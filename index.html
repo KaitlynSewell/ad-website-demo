@@ -287,6 +287,42 @@
             border-color: #555;
             color: #e0e0e0;
         }
+
+        /* Loading overlay */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.38);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        #loading-overlay.active { display: flex; }
+        .loading-card {
+            background: white;
+            border-radius: 10px;
+            padding: 28px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        }
+        .loading-spinner {
+            width: 38px;
+            height: 38px;
+            border: 4px solid #ddd;
+            border-top-color: #4169e1;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 14px;
+            color: #444;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -408,6 +444,27 @@
         var loadQueue = [];
         var MAX_CONCURRENT = 2;
 
+        // Loading overlay — tracks how many layers are still pending
+        var pendingLayers = 0;
+        function overlayShow() {
+            document.getElementById('loading-overlay').classList.add('active');
+        }
+        function overlayUpdate() {
+            var el = document.getElementById('loading-text');
+            if (el) el.textContent = pendingLayers === 1
+                ? 'Loading 1 layer...'
+                : 'Loading ' + pendingLayers + ' layers...';
+        }
+        function overlayDone() {
+            pendingLayers--;
+            if (pendingLayers <= 0) {
+                pendingLayers = 0;
+                document.getElementById('loading-overlay').classList.remove('active');
+            } else {
+                overlayUpdate();
+            }
+        }
+
         // Render queue — processes one layer at a time to avoid concurrent
         // chunk-loading sessions competing for the main thread
         var renderQueue = [];
@@ -423,7 +480,7 @@
             renderLayer(item.key, item.data);
             // 800 ms gap gives the cluster group's internal chunkedLoading
             // time to finish before the next layer starts rendering
-            setTimeout(function() { renderBusy = false; drainRenderQueue(); }, 800);
+            setTimeout(function() { renderBusy = false; overlayDone(); drainRenderQueue(); }, 800);
         }
 
         // Web worker handles fetch + JSON.parse off the main thread
@@ -664,9 +721,11 @@
             var cfg = layerConfig[key];
             if (!cfg) return;
             if (layerCache[key]) { renderLayer(key, layerCache[key]); return; }
-            // Queue the fetch; max 3 concurrent loads to avoid browser overload
             if (loadQueue.indexOf(key) === -1) {
                 loadQueue.push(key);
+                pendingLayers++;
+                overlayShow();
+                overlayUpdate();
                 processLoadQueue();
             }
         }
@@ -731,5 +790,11 @@
             setTimeout(function () { map.invalidateSize(); }, 10);
         }
     </script>
+    <div id="loading-overlay">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loading-text">Loading layers...</div>
+        </div>
+    </div>
 </body>
 </html>
