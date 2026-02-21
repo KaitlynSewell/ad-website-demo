@@ -481,20 +481,19 @@
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
                 li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
                 grp('Human Activity') +
-                li('toggle-census',      rect('#9b59b6'), 'Census Population') +
                 li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment') +
+                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 grp('Utilities') +
                 li('toggle-utilities',   dash('#e67e22'), 'Electric / Gas Utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
                 li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites') +
-                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites');
 
-            ['toggle-corn','toggle-soybean','toggle-census','toggle-paperfood'].forEach(function(id) {
+            ['toggle-corn','toggle-soybean','toggle-paperfood'].forEach(function(id) {
                 var item = div.querySelector('#' + id);
                 if (item) item.parentElement.title = 'No items';
             });
