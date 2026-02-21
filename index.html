@@ -83,6 +83,7 @@
             align-items: center;
             gap: 6px;
             margin-top: 5px;
+            cursor: pointer;
         }
 
         .legend-item input[type="checkbox"] {
@@ -456,7 +457,7 @@
             var div = document.createElement('div');
             div.className = 'legend';
             function li(id, svgHtml, label) {
-                return '<div class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span>' + label + '</span></div>';
+                return '<label class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span>' + label + '</span></label>';
             }
             function tri(c) { return '<svg width="16" height="12" viewBox="0 0 16 12"><polygon points="8,0 16,12 0,12" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
