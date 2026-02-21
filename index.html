@@ -406,7 +406,25 @@
         var layerCache = {};
         var activeLoads = 0;
         var loadQueue = [];
-        var MAX_CONCURRENT = 3;
+        var MAX_CONCURRENT = 2;
+
+        // Render queue — processes one layer at a time to avoid concurrent
+        // chunk-loading sessions competing for the main thread
+        var renderQueue = [];
+        var renderBusy = false;
+        function scheduleRender(key, data) {
+            renderQueue.push({ key: key, data: data });
+            drainRenderQueue();
+        }
+        function drainRenderQueue() {
+            if (renderBusy || renderQueue.length === 0) return;
+            renderBusy = true;
+            var item = renderQueue.shift();
+            renderLayer(item.key, item.data);
+            // 800 ms gap gives the cluster group's internal chunkedLoading
+            // time to finish before the next layer starts rendering
+            setTimeout(function() { renderBusy = false; drainRenderQueue(); }, 800);
+        }
 
         // Web worker handles fetch + JSON.parse off the main thread
         var worker = new Worker('geojson-worker.js');
@@ -416,7 +434,7 @@
                 console.warn('Layer load failed: ' + key, e.data.error);
             } else {
                 layerCache[key] = e.data.data;
-                renderLayer(key, e.data.data);
+                scheduleRender(key, e.data.data);
             }
             activeLoads--;
             processLoadQueue();
@@ -612,10 +630,18 @@
                 layerGroups[key].clearLayers();
             }
             if (cfg.line) {
-                geojson.features.forEach(function (feature) {
-                    var coords = feature.geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
-                    L.polyline(coords, { color: cfg.line, weight: 2.5, opacity: 0.9 }).addTo(layerGroups[key]);
-                });
+                // Chunk polyline additions to avoid blocking the main thread
+                var lineFeatures = geojson.features;
+                var lineIdx = 0;
+                var LINE_CHUNK = 60;
+                (function addLineChunk() {
+                    var end = Math.min(lineIdx + LINE_CHUNK, lineFeatures.length);
+                    for (; lineIdx < end; lineIdx++) {
+                        var coords = lineFeatures[lineIdx].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+                        L.polyline(coords, { color: cfg.line, weight: 2.5, opacity: 0.9 }).addTo(layerGroups[key]);
+                    }
+                    if (lineIdx < lineFeatures.length) setTimeout(addLineChunk, 50);
+                })();
             } else {
                 var icon = makeMarkerIcon(cfg);
                 var markers = [];
