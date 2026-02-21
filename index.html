@@ -439,12 +439,8 @@
         new MapToggleControl().addTo(map);
 
         var layerGroups = {};
-        var layerCache = {};
-        var activeLoads = 0;
-        var loadQueue = [];
-        var MAX_CONCURRENT = 2;
 
-        // Loading overlay — tracks how many layers are still pending
+        // Loading overlay
         var pendingLayers = 0;
         function overlayShow() {
             document.getElementById('loading-overlay').classList.add('active');
@@ -465,50 +461,38 @@
             }
         }
 
-        // Render queue — processes one layer at a time to avoid concurrent
-        // chunk-loading sessions competing for the main thread
-        var renderQueue = [];
-        var renderBusy = false;
-        function scheduleRender(key, data) {
-            renderQueue.push({ key: key, data: data });
-            drainRenderQueue();
-        }
-        function drainRenderQueue() {
-            if (renderBusy || renderQueue.length === 0) return;
-            renderBusy = true;
-            var item = renderQueue.shift();
-            // Pass a callback so the next render only starts after this one
-            // is fully complete — no more timer guessing
-            renderLayer(item.key, item.data, function () {
-                // Brief pause so the browser can paint and run GC
-                setTimeout(function () {
-                    renderBusy = false;
-                    overlayDone();
-                    drainRenderQueue();
-                }, 200);
-            });
-        }
+        // Single sequential pipeline: one layer fetches → renders → frees before next starts.
+        // This prevents raw GeoJSON for all 16 layers accumulating in memory simultaneously.
+        var processQueue = [];
+        var isProcessing = false;
 
-        // Web worker handles fetch + JSON.parse off the main thread
         var worker = new Worker('geojson-worker.js');
-        worker.onmessage = function(e) {
+        worker.onmessage = function (e) {
             var key = e.data.key;
             if (e.data.error) {
                 console.warn('Layer load failed: ' + key, e.data.error);
+                // Skip this layer and continue
+                isProcessing = false;
+                overlayDone();
+                processNext();
             } else {
-                layerCache[key] = e.data.data;
-                scheduleRender(key, e.data.data);
+                // Render then immediately discard raw data — keeps only the
+                // cluster group (layerGroups[key]) in memory going forward
+                renderLayer(key, e.data.data, function () {
+                    setTimeout(function () {
+                        isProcessing = false;
+                        overlayDone();
+                        processNext();
+                    }, 200);
+                });
             }
-            activeLoads--;
-            processLoadQueue();
         };
 
-        function processLoadQueue() {
-            while (activeLoads < MAX_CONCURRENT && loadQueue.length > 0) {
-                activeLoads++;
-                var key = loadQueue.shift();
-                worker.postMessage({ key: key, file: layerConfig[key].file });
-            }
+        function processNext() {
+            if (isProcessing || processQueue.length === 0) return;
+            isProcessing = true;
+            var key = processQueue.shift();
+            worker.postMessage({ key: key, file: layerConfig[key].file });
         }
 
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
@@ -744,22 +728,28 @@
         }
 
         function loadLayer(key) {
-            var cfg = layerConfig[key];
-            if (!cfg) return;
-            if (layerCache[key]) { renderLayer(key, layerCache[key]); return; }
-            if (loadQueue.indexOf(key) === -1) {
-                loadQueue.push(key);
+            if (!layerConfig[key]) return;
+            if (processQueue.indexOf(key) === -1 && !isProcessing) {
+                // Fast path: nothing queued, start immediately
+                processQueue.push(key);
                 pendingLayers++;
                 overlayShow();
                 overlayUpdate();
-                processLoadQueue();
+                processNext();
+            } else if (processQueue.indexOf(key) === -1) {
+                // Queue behind whatever is currently processing
+                processQueue.push(key);
+                pendingLayers++;
+                overlayShow();
+                overlayUpdate();
             }
         }
 
         function toggleLayer(key, visible) {
             if (visible) {
-                if (!layerCache[key] && layerConfig[key]) { loadLayer(key); return; }
-                if (layerGroups[key]) map.addLayer(layerGroups[key]);
+                // Already rendered — just show it (no fetch needed)
+                if (layerGroups[key]) { map.addLayer(layerGroups[key]); return; }
+                loadLayer(key);
             } else {
                 if (layerGroups[key]) map.removeLayer(layerGroups[key]);
             }
