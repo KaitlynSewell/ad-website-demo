@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AD.Website.Demo - Settings</title>
-    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');(function(){var s=localStorage.getItem('textSize');if(s&&s!=='medium')document.documentElement.setAttribute('data-text-size',s);})();</script>
     <link rel="stylesheet" href="styles.css" />
     <script src="translations.js"></script>
     <style>
@@ -98,6 +98,23 @@
                 </div>
             </div>
             <div class="settings-section">
+                <h3>Text Size</h3>
+                <div class="theme-options">
+                    <label class="theme-option">
+                        <input type="radio" name="textSize" value="small" />
+                        <span>Small</span>
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="textSize" value="medium" checked />
+                        <span>Medium (default)</span>
+                    </label>
+                    <label class="theme-option">
+                        <input type="radio" name="textSize" value="large" />
+                        <span>Large</span>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
                 <h3 data-i18n="settings-language">Language</h3>
                 <div class="theme-options">
                     <label class="theme-option">
@@ -136,6 +153,23 @@
                 } else {
                     document.documentElement.classList.remove('dark-mode');
                     localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+
+        // Apply saved text size on load
+        var savedTextSize = localStorage.getItem('textSize') || 'medium';
+        var textSizeRadio = document.querySelector('input[name="textSize"][value="' + savedTextSize + '"]');
+        if (textSizeRadio) textSizeRadio.checked = true;
+
+        // Listen for text size changes
+        document.querySelectorAll('input[name="textSize"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                localStorage.setItem('textSize', this.value);
+                if (this.value === 'medium') {
+                    document.documentElement.removeAttribute('data-text-size');
+                } else {
+                    document.documentElement.setAttribute('data-text-size', this.value);
                 }
             });
         });

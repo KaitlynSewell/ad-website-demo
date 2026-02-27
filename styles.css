@@ -4,6 +4,9 @@
     box-sizing: border-box;
 }
 
+html[data-text-size="small"] { font-size: 13px; }
+html[data-text-size="large"] { font-size: 18px; }
+
 body {
     display: flex;
     flex-direction: column;
