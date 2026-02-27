@@ -252,41 +252,37 @@ html.dark-mode .sidebar-toggle:hover {
     background: rgba(255, 255, 255, 0.15);
 }
 
-/* Gear button — settings link pinned to bottom of sidebar */
-.sidebar-gear-btn {
+/* Gear button — settings link in header bar */
+.header-gear-btn {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: auto;
-    padding: 14px;
-    color: #2c3e50;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
-    border-top: 1px solid #9ba0a6;
-    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
 }
 
-.sidebar-gear-btn:hover {
-    background-color: #bdc3c7;
-}
-
-.sidebar-gear-btn.active {
-    background-color: #4169e1;
+.header-gear-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
     color: white;
 }
 
-.page-layout.sidebar-hidden .sidebar-gear-btn {
-    display: none;
+.header-gear-btn.active {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
-html.dark-mode .sidebar-gear-btn {
-    color: #e0e0e0;
-    border-top-color: #444;
+html.dark-mode .header-gear-btn {
+    color: rgba(255, 255, 255, 0.7);
 }
 
-html.dark-mode .sidebar-gear-btn:hover {
-    background-color: #3a3a4e;
-}
-
-html.dark-mode .sidebar-gear-btn.active {
-    background-color: #1e3a6e;
+html.dark-mode .header-gear-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
 }
