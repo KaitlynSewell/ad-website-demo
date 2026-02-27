@@ -255,13 +255,13 @@ html.dark-mode .sidebar-toggle:hover {
 /* Gear button — settings link in header bar */
 .header-gear-btn {
     position: absolute;
-    right: 24px;
+    right: 0;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.75);
+    color: #b0b5bc;
     text-decoration: none;
     padding: 6px;
     border-radius: 50%;
@@ -270,19 +270,19 @@ html.dark-mode .sidebar-toggle:hover {
 
 .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.2);
-    color: white;
+    color: #d0d4db;
 }
 
 .header-gear-btn.active {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.25);
+    color: #d0d4db;
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 html.dark-mode .header-gear-btn {
-    color: rgba(255, 255, 255, 0.7);
+    color: #888;
 }
 
 html.dark-mode .header-gear-btn:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #aaa;
 }
