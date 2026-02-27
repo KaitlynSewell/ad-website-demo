@@ -6,7 +6,6 @@
     <title>AD.Website.Demo - Iowa Map</title>
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="styles.css" />
     <script src="translations.js"></script>
     <style>
@@ -297,41 +296,6 @@
             color: #e0e0e0;
         }
 
-        /* Loading overlay */
-        #loading-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.38);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        #loading-overlay.active { display: flex; }
-        .loading-card {
-            background: white;
-            border-radius: 10px;
-            padding: 28px 36px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-        }
-        .loading-spinner {
-            width: 38px;
-            height: 38px;
-            border: 4px solid #ddd;
-            border-top-color: #4169e1;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text {
-            font-size: 14px;
-            color: #444;
-            font-weight: 500;
-        }
     </style>
 </head>
 <body>
@@ -399,7 +363,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
     <script>
         var map = L.map('map', { zoomControl: false }).setView([41.88, -93.10], 7);
 
@@ -448,66 +412,40 @@
         new MapToggleControl().addTo(map);
 
         var layerGroups = {};
+        var MAX_NATIVE_ZOOM = 14;
 
-        // Loading overlay
-        var pendingLayers = 0;
-        function overlayShow() {
-            document.getElementById('loading-overlay').classList.add('active');
-        }
-        function overlayUpdate() {
-            var el = document.getElementById('loading-text');
-            if (el) el.textContent = pendingLayers === 1
-                ? 'Loading 1 layer...'
-                : 'Loading ' + pendingLayers + ' layers...';
-        }
-        function overlayDone() {
-            pendingLayers--;
-            if (pendingLayers <= 0) {
-                pendingLayers = 0;
-                document.getElementById('loading-overlay').classList.remove('active');
+        // Create a vector tile layer for the given key.
+        // Tiles are pre-built .pbf files served from the tiles/ directory —
+        // no GeoJSON is sent to the browser, no main-thread marker creation.
+        function createVectorTileLayer(key) {
+            var cfg = layerConfig[key];
+            var style = {};
+            if (cfg.line) {
+                style[key] = { weight: 2.5, color: cfg.line, opacity: 0.9, fill: false };
             } else {
-                overlayUpdate();
+                style[key] = { radius: 5, fillColor: cfg.color, fillOpacity: 0.85,
+                               color: '#333', weight: 0.8, opacity: 1 };
             }
-        }
-
-        // Single sequential pipeline: one layer fetches → renders → frees before next starts.
-        // This prevents raw GeoJSON for all 16 layers accumulating in memory simultaneously.
-        var processQueue = [];
-        var isProcessing = false;
-
-        var worker = new Worker('geojson-worker.js');
-        worker.onerror = function (e) {
-            console.error('Worker error:', e.message, e);
-            isProcessing = false;
-            overlayDone();
-            processNext();
-        };
-        worker.onmessage = function (e) {
-            var key = e.data.key;
-            if (e.data.error) {
-                console.warn('Layer load failed: ' + key, e.data.error);
-                // Skip this layer and continue
-                isProcessing = false;
-                overlayDone();
-                processNext();
-            } else {
-                // Render then immediately discard raw data — keeps only the
-                // cluster group (layerGroups[key]) in memory going forward
-                renderLayer(key, e.data.data, function () {
-                    setTimeout(function () {
-                        isProcessing = false;
-                        overlayDone();
-                        processNext();
-                    }, 200);
+            var layer = L.vectorGrid.protobuf('tiles/' + key + '/{z}/{x}/{y}.pbf', {
+                vectorTileLayerStyles: style,
+                interactive: !cfg.line,
+                maxNativeZoom: MAX_NATIVE_ZOOM,
+            });
+            if (!cfg.line) {
+                layer.on('click', function (e) {
+                    var p = e.layer.properties;
+                    var name = p.facName || p.Plant || p.Name || p.PLANT_NAME || p.COMPANY_NA || p.LandfillNa || '';
+                    var city = p.CityName || p.City || p.CITY || '';
+                    if (name || city) {
+                        L.popup()
+                            .setLatLng(e.latlng)
+                            .setContent('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''))
+                            .openOn(map);
+                    }
+                    L.DomEvent.stopPropagation(e);
                 });
             }
-        };
-
-        function processNext() {
-            if (isProcessing || processQueue.length === 0) return;
-            isProcessing = true;
-            var key = processQueue.shift();
-            worker.postMessage({ key: key, file: layerConfig[key].file });
+            return layer;
         }
 
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
@@ -669,171 +607,13 @@
             return div;
         }
 
-        function makeMarkerIcon(cfg) {
-            var s = 10;
-            var html;
-            if (cfg.shape === 'circle') {
-                html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><circle cx="' + (s/2) + '" cy="' + (s/2) + '" r="' + (s/2-1) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
-            } else if (cfg.shape === 'droplet') {
-                html = '<svg width="10" height="13" viewBox="0 0 10 13"><path d="M5,0 C5,0 0,6 0,9 A5,5 0 0,0 10,9 C10,6 5,0 5,0Z" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
-                return L.divIcon({ html: html, className: '', iconSize: [10, 13], iconAnchor: [5, 13] });
-            } else {
-                html = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '"><rect x="1" y="1" width="' + (s-2) + '" height="' + (s-2) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1"/></svg>';
-            }
-            return L.divIcon({ html: html, className: '', iconSize: [s, s], iconAnchor: [s/2, s/2] });
-        }
-
-        function createClusterGroup(cfg) {
-            var group = L.markerClusterGroup({
-                // Cluster radius decreases smoothly as zoom increases — gradient ungrouping
-                maxClusterRadius: function (zoom) {
-                    return Math.max(5, 110 - zoom * 8);
-                },
-                disableClusteringAtZoom: 15,
-                iconCreateFunction: function (cluster) {
-                    var count = cluster.getChildCount();
-                    // Size scales logarithmically with count
-                    var size = Math.round(Math.min(54, 22 + Math.log(count + 1) * 6));
-                    var half = size / 2;
-                    if (cfg.shape === 'droplet') {
-                        var h = Math.round(size * 1.3);
-                        var cy = h - Math.round(half);
-                        var path = 'M' + half + ',0 C' + half + ',0 0,' + Math.round(cy * 0.65) + ' 0,' + cy + ' A' + half + ',' + half + ' 0 0,0 ' + size + ',' + cy + ' C' + size + ',' + Math.round(cy * 0.65) + ' ' + half + ',0 ' + half + ',0Z';
-                        var dHtml = '<svg width="' + size + '" height="' + h + '" viewBox="0 0 ' + size + ' ' + h + '"><path d="' + path + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/></svg>';
-                        return L.divIcon({ html: dHtml, className: '', iconSize: [size, h], iconAnchor: [Math.round(half), h] });
-                    }
-                    var shapeEl;
-                    if (cfg.shape === 'circle') {
-                        shapeEl = '<circle cx="' + half + '" cy="' + half + '" r="' + (half - 1.5) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/>';
-                    } else {
-                        shapeEl = '<rect x="1.5" y="1.5" width="' + (size - 3) + '" height="' + (size - 3) + '" fill="' + cfg.color + '" stroke="#333" stroke-width="1.5"/>';
-                    }
-                    var html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
-                               shapeEl +
-                               '</svg>';
-                    return L.divIcon({
-                        html: html,
-                        className: '',
-                        iconSize: [size, size],
-                        iconAnchor: [Math.round(half), Math.round(half)]
-                    });
-                },
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-                zoomToBoundsOnClick: true,
-                chunkedLoading: true,
-                chunkSize: 50,
-                chunkDelay: 50,
-                chunkInterval: 50
-            });
-            return group;
-        }
-
-        function renderLayer(key, geojson, onComplete) {
-            var cfg = layerConfig[key];
-            if (!layerGroups[key]) {
-                layerGroups[key] = cfg.line ? L.layerGroup() : createClusterGroup(cfg);
-                layerGroups[key].addTo(map);
-            } else {
-                layerGroups[key].clearLayers();
-            }
-            if (cfg.line) {
-                // Chunk polyline additions to avoid blocking the main thread
-                var lineFeatures = geojson.features;
-                var lineIdx = 0;
-                var LINE_CHUNK = 60;
-                (function addLineChunk() {
-                    try {
-                        var end = Math.min(lineIdx + LINE_CHUNK, lineFeatures.length);
-                        for (; lineIdx < end; lineIdx++) {
-                            var feat = lineFeatures[lineIdx];
-                            if (!feat.geometry || !feat.geometry.coordinates) continue;
-                            var coords = feat.geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
-                            L.polyline(coords, { color: cfg.line, weight: 2.5, opacity: 0.9 }).addTo(layerGroups[key]);
-                        }
-                        if (lineIdx < lineFeatures.length) {
-                            setTimeout(addLineChunk, 50);
-                        } else if (onComplete) {
-                            setTimeout(onComplete, 0);
-                        }
-                    } catch (err) {
-                        console.error('Line render error for ' + key + ':', err);
-                        if (onComplete) setTimeout(onComplete, 0);
-                    }
-                })();
-            } else {
-                var icon = makeMarkerIcon(cfg);
-                var features = geojson.features;
-                var markers = [];
-                var idx = 0;
-                var MARKER_CHUNK = 50;
-                // Chunk marker creation so the main thread yields between batches
-                (function buildMarkers() {
-                    try {
-                        var end = Math.min(idx + MARKER_CHUNK, features.length);
-                        for (; idx < end; idx++) {
-                            if (!features[idx].geometry || !features[idx].geometry.coordinates) continue;
-                            var c = features[idx].geometry.coordinates;
-                            var marker = L.marker([c[1], c[0]], { icon: icon });
-                            var p = features[idx].properties;
-                            var name = p.facName || p.Plant || p.Name || p.PLANT_NAME || p.COMPANY_NA || p.LandfillNa || '';
-                            var city = p.CityName || p.City || p.CITY || '';
-                            if (name || city) {
-                                marker.bindPopup('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''));
-                            }
-                            markers.push(marker);
-                        }
-                        if (idx < features.length) {
-                            setTimeout(buildMarkers, 0);
-                        } else {
-                            if (markers.length === 0) {
-                                if (onComplete) setTimeout(onComplete, 0);
-                            } else {
-                                if (onComplete) {
-                                    // animationend fires when markercluster finishes all addLayers chunks.
-                                    // Fallback timer fires if animationend is skipped (e.g. group off map).
-                                    var _cbFired = false;
-                                    var safeComplete = function () {
-                                        if (!_cbFired) { _cbFired = true; setTimeout(onComplete, 0); }
-                                    };
-                                    layerGroups[key].once('animationend', safeComplete);
-                                    var fallbackMs = Math.max(4000, Math.ceil(markers.length / 50) * 150 + 2000);
-                                    setTimeout(safeComplete, fallbackMs);
-                                }
-                                layerGroups[key].addLayers(markers);
-                            }
-                        }
-                    } catch (err) {
-                        console.error('Marker render error for ' + key + ':', err);
-                        if (onComplete) setTimeout(onComplete, 0);
-                    }
-                })();
-            }
-        }
-
-        function loadLayer(key) {
-            if (!layerConfig[key]) return;
-            if (processQueue.indexOf(key) === -1 && !isProcessing) {
-                // Fast path: nothing queued, start immediately
-                processQueue.push(key);
-                pendingLayers++;
-                overlayShow();
-                overlayUpdate();
-                processNext();
-            } else if (processQueue.indexOf(key) === -1) {
-                // Queue behind whatever is currently processing
-                processQueue.push(key);
-                pendingLayers++;
-                overlayShow();
-                overlayUpdate();
-            }
-        }
 
         function toggleLayer(key, visible) {
             if (visible) {
-                // Already rendered — just show it (no fetch needed)
-                if (layerGroups[key]) { map.addLayer(layerGroups[key]); return; }
-                loadLayer(key);
+                if (!layerGroups[key]) {
+                    layerGroups[key] = createVectorTileLayer(key);
+                }
+                map.addLayer(layerGroups[key]);
             } else {
                 if (layerGroups[key]) map.removeLayer(layerGroups[key]);
             }
@@ -890,11 +670,5 @@
             setTimeout(function () { map.invalidateSize(); }, 10);
         }
     </script>
-    <div id="loading-overlay">
-        <div class="loading-card">
-            <div class="loading-spinner"></div>
-            <div class="loading-text" id="loading-text">Loading layers...</div>
-        </div>
-    </div>
 </body>
 </html>
