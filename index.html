@@ -104,6 +104,15 @@
             margin-top: 8px;
             padding-top: 6px;
             border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .legend-group input[type="checkbox"] {
+            margin: 0;
+            flex-shrink: 0;
+            cursor: pointer;
         }
 
         .legend-group.first {
@@ -531,13 +540,22 @@
             function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function blade(c) { return '<svg width="12" height="16" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
             function paper(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
-            function grp(t, f) { return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>'; }
+            function grp(t, f, secId) {
+                var cb = secId ? '<input type="checkbox" id="' + secId + '">' : '';
+                return '<div class="legend-group' + (f ? ' first' : '') + '">' + cb + t + '</div>';
+            }
+            var sectionKeys = {
+                'sec-agresidue': ['corn','soybean'],
+                'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
+                'sec-human':     ['paperfood','biodiesel','ethanol','wastewater','digesters','lmop'],
+                'sec-utilities': ['utilities','powerplants','pipelines','landfill']
+            };
             div.innerHTML =
                 '<div class="legend-header"><h4>Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none">Clear All</button></div></div>' +
-                grp('Agricultural Residue', true) +
+                grp('Agricultural Residue', true, 'sec-agresidue') +
                 li('toggle-corn',        blade('#f5c518'),  'Corn Residue') +
                 li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue') +
-                grp('Feedlot Waste / Manure') +
+                grp('Feedlot Waste / Manure', false, 'sec-feedlot') +
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle') +
                 li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle') +
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine') +
@@ -545,14 +563,14 @@
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
                 li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
-                grp('Human Activity') +
+                grp('Human Activity', false, 'sec-human') +
                 li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment') +
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites') +
-                grp('Utilities') +
+                grp('Utilities', false, 'sec-utilities') +
                 li('toggle-utilities',   dash('#e67e22'), 'Electric / Gas Utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
                 li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines') +
@@ -562,6 +580,20 @@
                 var item = div.querySelector('#' + id);
                 if (item) item.parentElement.title = 'No items';
             });
+
+            function updateSectionCheckboxes() {
+                Object.keys(sectionKeys).forEach(function (secId) {
+                    var secCb = div.querySelector('#' + secId);
+                    if (!secCb) return;
+                    var keys = sectionKeys[secId];
+                    var checkedCount = keys.filter(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        return cb && cb.checked;
+                    }).length;
+                    secCb.checked = checkedCount === keys.length;
+                    secCb.indeterminate = checkedCount > 0 && checkedCount < keys.length;
+                });
+            }
 
             function updateLegendButtons() {
                 var checkedCount = allKeys.filter(function (key) {
@@ -588,6 +620,7 @@
                     if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
                 });
                 updateLegendButtons();
+                updateSectionCheckboxes();
             });
 
             div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
@@ -596,6 +629,25 @@
                     if (cb && cb.checked) { cb.checked = false; toggleLayer(key, false); }
                 });
                 updateLegendButtons();
+                updateSectionCheckboxes();
+            });
+
+            // Section header checkboxes — toggle all items in that section
+            Object.keys(sectionKeys).forEach(function (secId) {
+                var secCb = div.querySelector('#' + secId);
+                if (!secCb) return;
+                secCb.addEventListener('change', function () {
+                    var checked = this.checked;
+                    sectionKeys[secId].forEach(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        if (cb && cb.checked !== checked) {
+                            cb.checked = checked;
+                            toggleLayer(key, checked);
+                        }
+                    });
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                });
             });
 
             allKeys.forEach(function (key) {
@@ -603,6 +655,7 @@
                 if (cb) cb.addEventListener('change', function () {
                     toggleLayer(key, this.checked);
                     updateLegendButtons();
+                    updateSectionCheckboxes();
                 });
             });
             L.DomEvent.disableScrollPropagation(div);
