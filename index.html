@@ -706,24 +706,36 @@
                 })();
             } else {
                 var icon = makeMarkerIcon(cfg);
+                var features = geojson.features;
                 var markers = [];
-                geojson.features.forEach(function (feature) {
-                    var c = feature.geometry.coordinates;
-                    var marker = L.marker([c[1], c[0]], { icon: icon });
-                    var p = feature.properties;
-                    var name = p.facName || p.Plant || p.Name || p.PLANT_NAME || p.COMPANY_NA || p.LandfillNa || '';
-                    var city = p.CityName || p.City || p.CITY || '';
-                    if (name || city) {
-                        marker.bindPopup('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''));
+                var idx = 0;
+                var MARKER_CHUNK = 100;
+                // Chunk marker creation so the main thread yields between batches —
+                // creating 1000+ L.marker + bindPopup objects in one loop crashes the tab
+                (function buildMarkers() {
+                    var end = Math.min(idx + MARKER_CHUNK, features.length);
+                    for (; idx < end; idx++) {
+                        var c = features[idx].geometry.coordinates;
+                        var marker = L.marker([c[1], c[0]], { icon: icon });
+                        var p = features[idx].properties;
+                        var name = p.facName || p.Plant || p.Name || p.PLANT_NAME || p.COMPANY_NA || p.LandfillNa || '';
+                        var city = p.CityName || p.City || p.CITY || '';
+                        if (name || city) {
+                            marker.bindPopup('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''));
+                        }
+                        markers.push(marker);
                     }
-                    markers.push(marker);
-                });
-                if (markers.length === 0) {
-                    if (onComplete) setTimeout(onComplete, 0);
-                } else {
-                    if (onComplete) layerGroups[key]._onComplete(onComplete);
-                    layerGroups[key].addLayers(markers);
-                }
+                    if (idx < features.length) {
+                        setTimeout(buildMarkers, 0);
+                    } else {
+                        if (markers.length === 0) {
+                            if (onComplete) setTimeout(onComplete, 0);
+                        } else {
+                            if (onComplete) layerGroups[key]._onComplete(onComplete);
+                            layerGroups[key].addLayers(markers);
+                        }
+                    }
+                })();
             }
         }
 
