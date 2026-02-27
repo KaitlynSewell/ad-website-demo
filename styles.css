@@ -251,3 +251,42 @@ html.dark-mode .sidebar-toggle {
 html.dark-mode .sidebar-toggle:hover {
     background: rgba(255, 255, 255, 0.15);
 }
+
+/* Gear button — settings link pinned to bottom of sidebar */
+.sidebar-gear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+    padding: 14px;
+    color: #2c3e50;
+    text-decoration: none;
+    border-top: 1px solid #9ba0a6;
+    flex-shrink: 0;
+}
+
+.sidebar-gear-btn:hover {
+    background-color: #bdc3c7;
+}
+
+.sidebar-gear-btn.active {
+    background-color: #4169e1;
+    color: white;
+}
+
+.page-layout.sidebar-hidden .sidebar-gear-btn {
+    display: none;
+}
+
+html.dark-mode .sidebar-gear-btn {
+    color: #e0e0e0;
+    border-top-color: #444;
+}
+
+html.dark-mode .sidebar-gear-btn:hover {
+    background-color: #3a3a4e;
+}
+
+html.dark-mode .sidebar-gear-btn.active {
+    background-color: #1e3a6e;
+}
