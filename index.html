@@ -414,6 +414,34 @@
         var layerGroups = {};
         var MAX_NATIVE_ZOOM = 14;
 
+        // Returns a vectorgrid rendererFactory that draws squares or droplets on canvas
+        // instead of the default circle.  Circles use the SVG renderer (better click support).
+        function makeRendererFactory(shape) {
+            return function (tileCoord, tileSize, opts) {
+                var renderer = L.canvas.tile(tileCoord, tileSize, opts);
+                renderer._updateCircle = function (layer) {
+                    if (!this._drawing || layer._empty()) return;
+                    var p = layer._point;
+                    var r = Math.max(Math.round(layer._radius), 1);
+                    var ctx = this._ctx;
+                    ctx.beginPath();
+                    if (shape === 'square') {
+                        ctx.rect(p.x - r, p.y - r, r * 2, r * 2);
+                    } else {
+                        // Droplet: pointed top, round bottom (matches legend SVG)
+                        var top = p.y - r * 2.2;
+                        var botY = p.y + r * 0.5;
+                        ctx.moveTo(p.x, top);
+                        ctx.bezierCurveTo(p.x - r * 0.2, top + r, p.x - r, botY - r * 0.8, p.x - r, botY);
+                        ctx.arc(p.x, botY, r, Math.PI, 0);
+                        ctx.bezierCurveTo(p.x + r, botY - r * 0.8, p.x + r * 0.2, top + r, p.x, top);
+                    }
+                    this._fillStroke(ctx, layer);
+                };
+                return renderer;
+            };
+        }
+
         // Create a vector tile layer for the given key.
         // Tiles are pre-built .pbf files served from the tiles/ directory —
         // no GeoJSON is sent to the browser, no main-thread marker creation.
@@ -426,11 +454,16 @@
                 style[key] = { radius: 5, fillColor: cfg.color, fillOpacity: 0.85,
                                color: '#333', weight: 0.8, opacity: 1 };
             }
-            var layer = L.vectorGrid.protobuf('tiles/' + key + '/{z}/{x}/{y}.pbf', {
+            var opts = {
                 vectorTileLayerStyles: style,
                 interactive: !cfg.line,
                 maxNativeZoom: MAX_NATIVE_ZOOM,
-            });
+            };
+            // Non-circle shapes need a custom canvas renderer
+            if (!cfg.line && cfg.shape !== 'circle') {
+                opts.rendererFactory = makeRendererFactory(cfg.shape);
+            }
+            var layer = L.vectorGrid.protobuf('tiles/' + key + '/{z}/{x}/{y}.pbf', opts);
             if (!cfg.line) {
                 layer.on('click', function (e) {
                     var p = e.layer.properties;
