@@ -256,33 +256,37 @@ html.dark-mode .sidebar-toggle:hover {
 .header-gear-btn {
     position: absolute;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #b0b5bc;
+    color: rgba(255, 255, 255, 0.35);
     text-decoration: none;
-    padding: 6px;
+    padding: 4px;
     border-radius: 50%;
     transition: background-color 0.2s, color 0.2s;
 }
 
+.header-gear-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
 .header-gear-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: #d0d4db;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.65);
 }
 
 .header-gear-btn.active {
-    color: #d0d4db;
+    color: rgba(255, 255, 255, 0.65);
     background-color: rgba(255, 255, 255, 0.15);
 }
 
 html.dark-mode .header-gear-btn {
-    color: #888;
+    color: rgba(255, 255, 255, 0.25);
 }
 
 html.dark-mode .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.5);
 }
