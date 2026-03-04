@@ -446,14 +446,14 @@
         function makeIconSvg(shape, color, size) {
             if (shape === 'square') {
                 return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
-                       '<rect x="1" y="1" width="14" height="14" fill="' + color + '" stroke="#333" stroke-width="0.7"/></svg>';
+                       '<rect x="1" y="1" width="14" height="14" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
             } else if (shape === 'droplet') {
                 var w = Math.round(size * 0.75);
                 return '<svg width="' + w + '" height="' + size + '" viewBox="-1 -1 14 18">' +
-                       '<path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + color + '" stroke="#333" stroke-width="0.7"/></svg>';
+                       '<path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
             } else {
                 return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
-                       '<circle cx="8" cy="8" r="7" fill="' + color + '" stroke="#333" stroke-width="0.7"/></svg>';
+                       '<circle cx="8" cy="8" r="7" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
             }
         }
 
