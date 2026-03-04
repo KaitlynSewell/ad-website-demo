@@ -311,6 +311,13 @@
             stroke: #ccc;
         }
 
+        /* White map marker borders in satellite mode */
+        body[data-basemap="satellite"] .custom-marker-icon svg circle,
+        body[data-basemap="satellite"] .custom-marker-icon svg rect,
+        body[data-basemap="satellite"] .custom-marker-icon svg path {
+            stroke: white;
+        }
+
     </style>
 </head>
 <body>
