@@ -467,7 +467,15 @@
         function createPointLayer(key) {
             var cfg = layerConfig[key];
             var cluster = L.markerClusterGroup({
-                maxClusterRadius: 50,
+                maxClusterRadius: function (zoom) {
+                    if (zoom <= 6)  return 160;
+                    if (zoom <= 7)  return 120;
+                    if (zoom <= 8)  return 90;
+                    if (zoom <= 9)  return 65;
+                    if (zoom <= 10) return 45;
+                    if (zoom <= 11) return 30;
+                    return 20;
+                },
                 showCoverageOnHover: false,
                 iconCreateFunction: function (c) {
                     return makeClusterIcon(cfg.shape, cfg.color, c.getChildCount());
