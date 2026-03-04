@@ -260,7 +260,7 @@ html.dark-mode .sidebar-toggle:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.35);
+    color: #c0c4cc;
     text-decoration: none;
     padding: 4px;
     border-radius: 50%;
@@ -268,25 +268,25 @@ html.dark-mode .sidebar-toggle:hover {
 }
 
 .header-gear-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
 }
 
 .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.65);
+    color: #e0e3e8;
 }
 
 .header-gear-btn.active {
-    color: rgba(255, 255, 255, 0.65);
+    color: #e0e3e8;
     background-color: rgba(255, 255, 255, 0.15);
 }
 
 html.dark-mode .header-gear-btn {
-    color: rgba(255, 255, 255, 0.25);
+    color: #9ca3af;
 }
 
 html.dark-mode .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
+    color: #c0c4cc;
 }
