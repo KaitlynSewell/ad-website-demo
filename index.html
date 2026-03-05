@@ -490,7 +490,7 @@
                 }
             });
             cluster.on('clustermouseover', function (e) {
-                e.layer.bindTooltip(String(e.layer.getChildCount()), {
+                e.layer.bindTooltip(cfg.label + ': ' + e.layer.getChildCount(), {
                     permanent: false, direction: 'top', offset: [0, -6]
                 }).openTooltip();
             });
@@ -534,22 +534,22 @@
                        'utilities','powerplants','pipelines','landfill','digesters','lmop'];
 
         var layerConfig = {
-            beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle' },
-            dairy:       { file: 'geojson/dairy.geojson',       color: '#4a90d9', shape: 'circle' },
-            swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle' },
-            horses:      { file: 'geojson/horses.geojson',      color: '#a0a0a0', shape: 'circle' },
-            turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle' },
-            chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle' },
-            sheep:       { file: 'geojson/sheep.geojson',       color: '#d2b48c', shape: 'circle' },
-            biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'droplet' },
-            ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet' },
-            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet' },
-            utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square' },
-            powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square' },
-            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568' },
-            landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square' },
-            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'circle' },
-            lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle' }
+            beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
+            dairy:       { file: 'geojson/dairy.geojson',       color: '#4a90d9', shape: 'circle',  label: 'Dairy Cattle' },
+            swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle',  label: 'Swine' },
+            horses:      { file: 'geojson/horses.geojson',      color: '#a0a0a0', shape: 'circle',  label: 'Horses' },
+            turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle',  label: 'Turkeys' },
+            chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
+            sheep:       { file: 'geojson/sheep.geojson',       color: '#d2b48c', shape: 'circle',  label: 'Sheep / Goats' },
+            biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'droplet', label: 'Biodiesel Plants' },
+            ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
+            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
+            utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square',  label: 'Electric / Gas Utilities' },
+            powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square',  label: 'Power Plants' },
+            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
+            landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
+            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'circle',  label: 'Anaerobic Digesters' },
+            lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle',  label: 'LMOP Sites' }
         };
 
         function buildLegend() {
