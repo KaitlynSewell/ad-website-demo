@@ -489,6 +489,14 @@
                     return makeClusterIcon(cfg.shape, cfg.color, c.getChildCount());
                 }
             });
+            cluster.on('clustermouseover', function (e) {
+                e.layer.bindTooltip(String(e.layer.getChildCount()), {
+                    permanent: false, direction: 'top', offset: [0, -6]
+                }).openTooltip();
+            });
+            cluster.on('clustermouseout', function (e) {
+                e.layer.closeTooltip();
+            });
             fetch('coords/' + key + '.json')
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
