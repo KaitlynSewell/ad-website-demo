@@ -428,9 +428,10 @@
                     }
                     document.body.setAttribute('data-basemap', currentBaseLayer);
                     updateIowaBorder();
-                    // Re-add pipeline vector tiles on top of the new base layer
+                    // Recreate pipeline layer with updated border color, re-add on top
                     if (layerGroups['pipelines'] && map.hasLayer(layerGroups['pipelines'])) {
                         map.removeLayer(layerGroups['pipelines']);
+                        layerGroups['pipelines'] = createPipelineLayer();
                         map.addLayer(layerGroups['pipelines']);
                     }
                 });
@@ -507,10 +508,11 @@
 
         // Pipeline layer stays as pre-built vector tiles (too large for client-side)
         function createPipelineLayer() {
+            var borderColor = currentBaseLayer === 'satellite' ? 'white' : '#333';
             return L.vectorGrid.protobuf('tiles/pipelines/{z}/{x}/{y}.pbf', {
                 vectorTileLayerStyles: {
                     pipelines: [
-                        { weight: 4.5, color: '#333', opacity: 0.9, fill: false },
+                        { weight: 4.5, color: borderColor, opacity: 0.9, fill: false },
                         { weight: 2.5, color: '#4a5568', opacity: 0.9, fill: false }
                     ]
                 },
