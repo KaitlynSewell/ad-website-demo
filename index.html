@@ -562,9 +562,9 @@
                 return '<div class="legend-group' + (f ? ' first' : '') + '">' + cb + t + '</div>';
             }
             var sectionKeys = {
-                'sec-agresidue': [],
+                'sec-agresidue': ['corn','soybean'],
                 'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop'],
+                'sec-human':     ['paperfood','biodiesel','ethanol','wastewater','digesters','lmop'],
                 'sec-utilities': ['utilities','powerplants','pipelines','landfill']
             };
             div.innerHTML =
@@ -682,6 +682,7 @@
 
 
         function toggleLayer(key, visible) {
+            if (!layerConfig[key]) return;
             if (visible) {
                 if (!layerGroups[key]) {
                     layerGroups[key] = layerConfig[key].line ? createPipelineLayer() : createPointLayer(key);
