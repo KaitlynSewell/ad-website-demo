@@ -504,7 +504,7 @@
                         var m = L.marker([p[1], p[0]], { icon: makeMarkerIcon(cfg.shape, cfg.color) });
                         var name = p[2] || '', city = p[3] || '';
                         if (name || city) {
-                            m.bindPopup('<strong>' + name + '</strong>' + (city ? '<br>' + city + ', IA' : ''));
+                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label + (city ? '<br>' + city + ', IA' : ''));
                         }
                         return m;
                     });
