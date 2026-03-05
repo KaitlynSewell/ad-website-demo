@@ -532,6 +532,7 @@
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
                        'biodiesel','ethanol','wastewater',
                        'utilities','powerplants','pipelines','landfill','digesters','lmop'];
+        var noLayerKeys = ['corn','soybean','paperfood'];
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
@@ -640,7 +641,7 @@
             }
 
             div.querySelector('#legend-select-all-btn').addEventListener('click', function () {
-                allKeys.forEach(function (key) {
+                allKeys.concat(noLayerKeys).forEach(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
                 });
@@ -649,7 +650,7 @@
             });
 
             div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
-                allKeys.forEach(function (key) {
+                allKeys.concat(noLayerKeys).forEach(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb && cb.checked) { cb.checked = false; toggleLayer(key, false); }
                 });
