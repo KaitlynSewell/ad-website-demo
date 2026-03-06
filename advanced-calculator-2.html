@@ -78,6 +78,8 @@
             gap: 24px;
             padding: 24px;
             align-items: flex-start;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .ac2-chart-box {
@@ -263,7 +265,7 @@
             </button>
         </div>
     </div>
-    <div class="page-layout">
+    <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
@@ -279,18 +281,20 @@
                 <li><a href="farms.html" data-i18n="nav-farms">Farms and Facilities</a></li>
             </ul>
         </nav>
-        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto;">
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto; height: 100%;">
             <div class="ac2-charts">
-                <div class="ac2-chart-box">
-                    <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
-                    <div style="font-size:11px; color:#888; align-self:flex-start; margin-top:-12px;">As of March 6, 2026</div>
-                    <canvas id="pie-chart-1" width="220" height="220"></canvas>
-                    <div class="ac2-chart-legend" id="pie-legend-1"></div>
-                </div>
-                <div class="ac2-chart-box">
-                    <div class="ac2-chart-title">Anerobic Digestion Inputs</div>
-                    <canvas id="pie-chart-2" width="220" height="220"></canvas>
-                    <div class="ac2-chart-legend" id="pie-legend-2"></div>
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <div class="ac2-chart-box">
+                        <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
+                        <div style="font-size:11px; color:#888; align-self:flex-start; margin-top:-12px;">As of March 6, 2026</div>
+                        <canvas id="pie-chart-1" width="220" height="220"></canvas>
+                        <div class="ac2-chart-legend" id="pie-legend-1"></div>
+                    </div>
+                    <div class="ac2-chart-box">
+                        <div class="ac2-chart-title">Anerobic Digestion Inputs</div>
+                        <canvas id="pie-chart-2" width="220" height="220"></canvas>
+                        <div class="ac2-chart-legend" id="pie-legend-2"></div>
+                    </div>
                 </div>
                 <div class="ac2-map-box">
                     <div class="ac2-chart-title">Microgrid</div>
