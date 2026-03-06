@@ -71,6 +71,65 @@
 
         .ac2-toolbar-btn:hover { background: rgba(255,255,255,0.35); }
 
+        /* Chart boxes */
+        .ac2-charts {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            align-items: flex-start;
+        }
+
+        .ac2-chart-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ac2-chart-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            align-self: flex-start;
+        }
+
+        .ac2-chart-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .ac2-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .ac2-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        html.dark-mode .ac2-chart-box {
+            background: #2c2c3e;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .ac2-chart-title { color: #e0e0e0; }
+        html.dark-mode .ac2-legend-item { color: #bbb; }
+
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
 
@@ -195,13 +254,76 @@
                 <li><a href="farms.html" data-i18n="nav-farms">Farms and Facilities</a></li>
             </ul>
         </nav>
-        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
-<div class="calc-container">
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto;">
+            <div class="ac2-charts">
+                <div class="ac2-chart-box">
+                    <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
+                    <div style="font-size:11px; color:#888; align-self:flex-start; margin-top:-12px;">As of March 6, 2026</div>
+                    <canvas id="pie-chart-1" width="220" height="220"></canvas>
+                    <div class="ac2-chart-legend" id="pie-legend-1"></div>
+                </div>
+                <div class="ac2-chart-box">
+                    <div class="ac2-chart-title">Revenue Breakdown</div>
+                    <canvas id="pie-chart-2" width="220" height="220"></canvas>
+                    <div class="ac2-chart-legend" id="pie-legend-2"></div>
+                </div>
             </div>
+            <div class="calc-container"></div>
         </div>
     </div>
 
     <script>
+        function drawPie(canvasId, legendId, segments) {
+            var canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var cx = canvas.width / 2, cy = canvas.height / 2;
+            var r = Math.min(cx, cy) - 10;
+            var total = segments.reduce(function(s, d) { return s + d.value; }, 0);
+            var angle = -Math.PI / 2;
+            segments.forEach(function(seg) {
+                var slice = (seg.value / total) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, angle, angle + slice);
+                ctx.closePath();
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                angle += slice;
+            });
+            // Donut hole
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
+            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fill();
+            // Legend
+            var legend = document.getElementById(legendId);
+            legend.innerHTML = segments.map(function(seg) {
+                var pct = Math.round(seg.value / total * 100);
+                return '<div class="ac2-legend-item">' +
+                    '<div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
+                    '<span>' + seg.label + ' — ' + pct + '%</span></div>';
+            }).join('');
+        }
+
+        drawPie('pie-chart-1', 'pie-legend-1', [
+            { label: 'Beef Cattle',   value: 32, color: '#c87533' },
+            { label: 'Swine',         value: 24, color: '#ff9eb5' },
+            { label: 'Dairy Cattle',  value: 20, color: '#4a90d9' },
+            { label: 'Wastewater',    value: 14, color: '#3498db' },
+            { label: 'Other',         value: 10, color: '#aaa' }
+        ]);
+
+        drawPie('pie-chart-2', 'pie-legend-2', [
+            { label: 'Energy Sales',  value: 45, color: '#2ecc71' },
+            { label: 'Tipping Fees',  value: 30, color: '#4169e1' },
+            { label: 'RINs / Credits',value: 15, color: '#e6c229' },
+            { label: 'By-products',   value: 10, color: '#9b59b6' }
+        ]);
+
         // Close Add panel when clicking outside
         document.addEventListener('click', function(e) {
             var wrap = document.getElementById('ac2-add-panel');
