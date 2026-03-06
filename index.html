@@ -400,6 +400,10 @@
                 </li>
                 <li><a href="farms.html" data-i18n="nav-farms">Farms and Facilities</a></li>
             </ul>
+            <div class="legend-search-wrap" style="margin-top: auto; padding: 10px 8px 6px;">
+                <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search farms and locations" autocomplete="off" />
+                <ul class="legend-search-dropdown" id="sidebar-search-dropdown" style="bottom: 100%; top: auto;"></ul>
+            </div>
         </nav>
         <div class="main-content">
             <div id="map" style="position:relative;">
@@ -640,7 +644,6 @@
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
                 li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
-                '<div class="legend-search-wrap"><input type="text" id="legend-search-input" class="legend-search" placeholder="Search farms and locations" autocomplete="off" /><ul class="legend-search-dropdown" id="legend-search-dropdown"></ul></div>' +
                 grp('Human Activity', false, 'sec-human') +
                 li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants') +
@@ -737,75 +740,6 @@
                 });
             });
 
-            // Search bar wiring
-            var searchInput = div.querySelector('#legend-search-input');
-            var searchDropdown = div.querySelector('#legend-search-dropdown');
-            var searchTimer = null;
-
-            function showSearchResults(farmResults, locResults) {
-                searchDropdown.innerHTML = '';
-                var items = farmResults.map(function(f) { return { farm: f }; })
-                    .concat(locResults.map(function(l) { return { loc: l }; }));
-                if (!items.length) { searchDropdown.style.display = 'none'; return; }
-                items.forEach(function(item) {
-                    var el = document.createElement('li');
-                    el.className = 'search-result-item';
-                    if (item.farm) {
-                        var f = item.farm;
-                        el.innerHTML = '<span class="search-result-name">' + (f.name || f.city) + '</span>' +
-                            '<span class="search-result-sub">' + f.label + (f.city ? ' \xb7 ' + f.city + ', IA' : '') + '</span>';
-                        el.addEventListener('mousedown', function(e) {
-                            e.preventDefault();
-                            searchInput.value = f.name || f.city;
-                            searchDropdown.style.display = 'none';
-                            zoomToFarm(f);
-                        });
-                    } else {
-                        var l = item.loc;
-                        el.innerHTML = '<span class="search-result-name">' + l.display + '</span>' +
-                            '<span class="search-result-sub">Location \xb7 Iowa</span>';
-                        el.addEventListener('mousedown', function(e) {
-                            e.preventDefault();
-                            searchInput.value = l.display;
-                            searchDropdown.style.display = 'none';
-                            map.flyTo([l.lat, l.lng], l.zoom);
-                        });
-                    }
-                    searchDropdown.appendChild(el);
-                });
-                searchDropdown.style.display = 'block';
-            }
-
-            searchInput.addEventListener('input', function() {
-                var q = this.value.trim();
-                clearTimeout(searchTimer);
-                if (q.length < 2) { searchDropdown.style.display = 'none'; searchDropdown.innerHTML = ''; return; }
-                var ql = q.toLowerCase();
-                var farmResults = searchIndex.filter(function(item) {
-                    return (item.name && item.name.toLowerCase().indexOf(ql) !== -1) ||
-                           (item.city && item.city.toLowerCase().indexOf(ql) !== -1);
-                }).slice(0, 5);
-                showSearchResults(farmResults, []);
-                searchTimer = setTimeout(function() {
-                    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q + ', Iowa, USA') +
-                          '&format=json&limit=5&countrycodes=us')
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            var locResults = data.map(function(r) {
-                                var zoom = r.type === 'postcode' ? 13 : r.class === 'boundary' ? 10 : 12;
-                                return { display: r.display_name.split(',')[0], lat: parseFloat(r.lat), lng: parseFloat(r.lon), zoom: zoom };
-                            });
-                            showSearchResults(farmResults, locResults);
-                        }).catch(function() {});
-                }, 350);
-            });
-            searchInput.addEventListener('blur', function() {
-                setTimeout(function() { searchDropdown.style.display = 'none'; }, 200);
-            });
-            searchInput.addEventListener('focus', function() {
-                if (searchDropdown.children.length) searchDropdown.style.display = 'block';
-            });
-
             L.DomEvent.disableScrollPropagation(div);
             L.DomEvent.disableClickPropagation(div);
             return div;
@@ -880,6 +814,77 @@
             onAdd: function () { return buildLegend(); }
         });
         new LegendControl().addTo(map);
+
+        // Sidebar search bar wiring
+        (function() {
+            var searchInput = document.getElementById('sidebar-search-input');
+            var searchDropdown = document.getElementById('sidebar-search-dropdown');
+            var searchTimer = null;
+
+            function showSearchResults(farmResults, locResults) {
+                searchDropdown.innerHTML = '';
+                var items = farmResults.map(function(f) { return { farm: f }; })
+                    .concat(locResults.map(function(l) { return { loc: l }; }));
+                if (!items.length) { searchDropdown.style.display = 'none'; return; }
+                items.forEach(function(item) {
+                    var el = document.createElement('li');
+                    el.className = 'search-result-item';
+                    if (item.farm) {
+                        var f = item.farm;
+                        el.innerHTML = '<span class="search-result-name">' + (f.name || f.city) + '</span>' +
+                            '<span class="search-result-sub">' + f.label + (f.city ? ' \xb7 ' + f.city + ', IA' : '') + '</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = f.name || f.city;
+                            searchDropdown.style.display = 'none';
+                            zoomToFarm(f);
+                        });
+                    } else {
+                        var l = item.loc;
+                        el.innerHTML = '<span class="search-result-name">' + l.display + '</span>' +
+                            '<span class="search-result-sub">Location \xb7 Iowa</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = l.display;
+                            searchDropdown.style.display = 'none';
+                            map.flyTo([l.lat, l.lng], l.zoom);
+                        });
+                    }
+                    searchDropdown.appendChild(el);
+                });
+                searchDropdown.style.display = 'block';
+            }
+
+            searchInput.addEventListener('input', function() {
+                var q = this.value.trim();
+                clearTimeout(searchTimer);
+                if (q.length < 2) { searchDropdown.style.display = 'none'; searchDropdown.innerHTML = ''; return; }
+                var ql = q.toLowerCase();
+                var farmResults = searchIndex.filter(function(item) {
+                    return (item.name && item.name.toLowerCase().indexOf(ql) !== -1) ||
+                           (item.city && item.city.toLowerCase().indexOf(ql) !== -1);
+                }).slice(0, 5);
+                showSearchResults(farmResults, []);
+                searchTimer = setTimeout(function() {
+                    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q + ', Iowa, USA') +
+                          '&format=json&limit=5&countrycodes=us')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var locResults = data.map(function(r) {
+                                var zoom = r.type === 'postcode' ? 13 : r.class === 'boundary' ? 10 : 12;
+                                return { display: r.display_name.split(',')[0], lat: parseFloat(r.lat), lng: parseFloat(r.lon), zoom: zoom };
+                            });
+                            showSearchResults(farmResults, locResults);
+                        }).catch(function() {});
+                }, 350);
+            });
+            searchInput.addEventListener('blur', function() {
+                setTimeout(function() { searchDropdown.style.display = 'none'; }, 200);
+            });
+            searchInput.addEventListener('focus', function() {
+                if (searchDropdown.children.length) searchDropdown.style.display = 'block';
+            });
+        })();
 
         // Sidebar state
         if (localStorage.getItem('sidebar') === 'hidden') {
