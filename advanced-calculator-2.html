@@ -142,8 +142,6 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            flex: 1;
-            min-width: 320px;
         }
 
         #microgrid-map {
@@ -296,10 +294,12 @@
                         <div class="ac2-chart-legend" id="pie-legend-2"></div>
                     </div>
                 </div>
-                <div class="ac2-map-box">
-                    <div class="ac2-chart-title">Microgrid</div>
-                    <div id="microgrid-map"></div>
-                    <div style="display:flex; width:100%; border:1px solid #ddd; border-radius:6px; overflow:hidden; min-height:80px;">
+                <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
+                    <div class="ac2-map-box" style="flex:none;">
+                        <div class="ac2-chart-title">Microgrid</div>
+                        <div id="microgrid-map"></div>
+                    </div>
+                    <div style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); display:flex; overflow:hidden; min-height:100px;">
                         <div style="flex:1; padding:14px 16px;">
                             <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
                         </div>
