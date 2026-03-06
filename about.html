@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AD.Website.Demo - What is Anaerobic Digestion?</title>
+    <title>AD.Website.Demo - About</title>
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
     <link rel="stylesheet" href="styles.css" />
     <script src="translations.js"></script>
+    <style>
+        .about-section {
+            width: 100%;
+            max-width: 700px;
+            padding: 0 20px 40px 20px;
+        }
+        .about-section + .about-section {
+            border-top: 2px solid #ddd;
+            padding-top: 30px;
+        }
+        html.dark-mode .about-section + .about-section {
+            border-top-color: #444;
+        }
+    </style>
 </head>
 <body>
     <h1 class="page-heading">
@@ -29,17 +43,29 @@
                 <li>
                     <a href="#" onclick="document.getElementById('about-submenu').classList.toggle('open'); return false;" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu open">
-                        <li><a href="about-funding.html" data-i18n="nav-funding">Funding Information</a></li>
-                        <li><a href="about-website.html" data-i18n="nav-how">How does this website work?</a></li>
-                        <li><a href="about-digestion.html" class="active" data-i18n="nav-what">What is anaerobic digestion?</a></li>
+                        <li><a href="about.html#funding" data-i18n="nav-funding">Funding Information</a></li>
+                        <li><a href="about.html#how" data-i18n="nav-how">How does this website work?</a></li>
+                        <li><a href="about.html#digestion" data-i18n="nav-what">What is anaerobic digestion?</a></li>
                         <li><a href="sources.html" data-i18n="nav-sources">Sources</a></li>
                     </ul>
                 </li>
                 <li><a href="farms.html" data-i18n="nav-farms">Farms and Facilities</a></li>
             </ul>
         </nav>
-        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
-            <h2 class="section-heading" data-i18n="about-digestion-heading">What is Anaerobic Digestion?</h2>
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto;">
+
+            <div class="about-section" id="funding">
+                <h2 class="section-heading" data-i18n="funding-heading">Funding Information</h2>
+            </div>
+
+            <div class="about-section" id="how">
+                <h2 class="section-heading" data-i18n="about-website-heading">How Does This Website Work?</h2>
+            </div>
+
+            <div class="about-section" id="digestion">
+                <h2 class="section-heading" data-i18n="about-digestion-heading">What is Anaerobic Digestion?</h2>
+            </div>
+
         </div>
     </div>
     <script>
@@ -55,6 +81,11 @@
             localStorage.setItem('sidebar', hidden ? 'hidden' : 'visible');
             var t = document.getElementById('sidebar-toggle-btn');
             if (t) t.innerHTML = hidden ? '&#8594;' : '&#8592;';
+        }
+        // Scroll to hash on load
+        if (location.hash) {
+            var el = document.querySelector(location.hash);
+            if (el) el.scrollIntoView();
         }
     </script>
 </body>
