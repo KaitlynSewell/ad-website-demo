@@ -131,6 +131,57 @@
             border-top-color: #555;
         }
 
+        .legend-search-wrap {
+            position: relative;
+            margin: 8px 0 4px;
+        }
+        .legend-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 8px;
+            background: #f4f4f4;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #aaa;
+            outline: none;
+        }
+        .legend-search::placeholder { color: #bbb; }
+        .legend-search:focus { border-color: #ccc; color: #666; }
+        .legend-search-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 9999;
+            list-style: none;
+            margin: 0; padding: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .search-result-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .search-result-item:hover { background: #f0f4ff; }
+        .search-result-name { font-size: 12px; color: #333; }
+        .search-result-sub  { font-size: 10px; color: #999; }
+        html.dark-mode .legend-search { background: #3a3a4e; border-color: #555; color: #888; }
+        html.dark-mode .legend-search::placeholder { color: #666; }
+        html.dark-mode .legend-search:focus { color: #ccc; }
+        html.dark-mode .legend-search-dropdown { background: #2c2c3e; border-color: #555; }
+        html.dark-mode .search-result-item:hover { background: #3a3a55; }
+        html.dark-mode .search-result-name { color: #ddd; }
+        html.dark-mode .search-result-sub  { color: #888; }
+
         .page-layout.sidebar-hidden #map {
             max-width: calc(100vw - 34px - 240px - 20px);
         }
@@ -589,6 +640,7 @@
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
                 li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
+                '<div class="legend-search-wrap"><input type="text" id="legend-search-input" class="legend-search" placeholder="Search farms and locations" autocomplete="off" /><ul class="legend-search-dropdown" id="legend-search-dropdown"></ul></div>' +
                 grp('Human Activity', false, 'sec-human') +
                 li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants') +
@@ -684,6 +736,76 @@
                     updateSectionCheckboxes();
                 });
             });
+
+            // Search bar wiring
+            var searchInput = div.querySelector('#legend-search-input');
+            var searchDropdown = div.querySelector('#legend-search-dropdown');
+            var searchTimer = null;
+
+            function showSearchResults(farmResults, locResults) {
+                searchDropdown.innerHTML = '';
+                var items = farmResults.map(function(f) { return { farm: f }; })
+                    .concat(locResults.map(function(l) { return { loc: l }; }));
+                if (!items.length) { searchDropdown.style.display = 'none'; return; }
+                items.forEach(function(item) {
+                    var el = document.createElement('li');
+                    el.className = 'search-result-item';
+                    if (item.farm) {
+                        var f = item.farm;
+                        el.innerHTML = '<span class="search-result-name">' + (f.name || f.city) + '</span>' +
+                            '<span class="search-result-sub">' + f.label + (f.city ? ' \xb7 ' + f.city + ', IA' : '') + '</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = f.name || f.city;
+                            searchDropdown.style.display = 'none';
+                            zoomToFarm(f);
+                        });
+                    } else {
+                        var l = item.loc;
+                        el.innerHTML = '<span class="search-result-name">' + l.display + '</span>' +
+                            '<span class="search-result-sub">Location \xb7 Iowa</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = l.display;
+                            searchDropdown.style.display = 'none';
+                            map.flyTo([l.lat, l.lng], l.zoom);
+                        });
+                    }
+                    searchDropdown.appendChild(el);
+                });
+                searchDropdown.style.display = 'block';
+            }
+
+            searchInput.addEventListener('input', function() {
+                var q = this.value.trim();
+                clearTimeout(searchTimer);
+                if (q.length < 2) { searchDropdown.style.display = 'none'; searchDropdown.innerHTML = ''; return; }
+                var ql = q.toLowerCase();
+                var farmResults = searchIndex.filter(function(item) {
+                    return (item.name && item.name.toLowerCase().indexOf(ql) !== -1) ||
+                           (item.city && item.city.toLowerCase().indexOf(ql) !== -1);
+                }).slice(0, 5);
+                showSearchResults(farmResults, []);
+                searchTimer = setTimeout(function() {
+                    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q + ', Iowa, USA') +
+                          '&format=json&limit=5&countrycodes=us')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var locResults = data.map(function(r) {
+                                var zoom = r.type === 'postcode' ? 13 : r.class === 'boundary' ? 10 : 12;
+                                return { display: r.display_name.split(',')[0], lat: parseFloat(r.lat), lng: parseFloat(r.lon), zoom: zoom };
+                            });
+                            showSearchResults(farmResults, locResults);
+                        }).catch(function() {});
+                }, 350);
+            });
+            searchInput.addEventListener('blur', function() {
+                setTimeout(function() { searchDropdown.style.display = 'none'; }, 200);
+            });
+            searchInput.addEventListener('focus', function() {
+                if (searchDropdown.children.length) searchDropdown.style.display = 'block';
+            });
+
             L.DomEvent.disableScrollPropagation(div);
             L.DomEvent.disableClickPropagation(div);
             return div;
@@ -720,6 +842,37 @@
                     iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 1.5, opacity: 0.4 } }).addTo(map);
                 }
             });
+
+        // Search index — pre-load all coords for farm/location search
+        var searchIndex = [];
+        allKeys.filter(function(k) { return layerConfig[k] && !layerConfig[k].line; }).forEach(function(key) {
+            fetch('coords/' + key + '.json')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    data.forEach(function(p) {
+                        searchIndex.push({ key: key, label: layerConfig[key].label, name: p[2] || '', city: p[3] || '', lat: p[1], lng: p[0] });
+                    });
+                }).catch(function() {});
+        });
+
+        function zoomToFarm(item) {
+            map.flyTo([item.lat, item.lng], 14);
+            if (!layerGroups[item.key]) {
+                toggleLayer(item.key, true);
+                var cb = document.querySelector('#toggle-' + item.key);
+                if (cb) cb.checked = true;
+            }
+            map.once('moveend', function() {
+                if (!layerGroups[item.key]) return;
+                layerGroups[item.key].eachLayer(function(marker) {
+                    if (marker.getLatLng &&
+                        Math.abs(marker.getLatLng().lat - item.lat) < 0.00005 &&
+                        Math.abs(marker.getLatLng().lng - item.lng) < 0.00005) {
+                        marker.openPopup();
+                    }
+                });
+            });
+        }
 
         // Legend as a Leaflet control
         var LegendControl = L.Control.extend({
