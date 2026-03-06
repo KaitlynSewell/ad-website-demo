@@ -232,8 +232,11 @@
                 </button>
             </div>
 
+            <!-- Select Area of Interest -->
+            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;">Select Area of Interest</button>
+
             <!-- Download -->
-            <button class="ac2-toolbar-btn" onclick="handleDownload()" style="margin-left:auto;">
+            <button class="ac2-toolbar-btn" onclick="handleDownload()" style="margin-left:0;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 Download
             </button>
@@ -452,6 +455,10 @@
                 if (query) console.log('Search Area:', query);
             }
         });
+
+        function handleSelectArea() {
+            console.log('Select Area of Interest triggered');
+        }
 
         function handleDownload() {
             console.log('Download triggered');
