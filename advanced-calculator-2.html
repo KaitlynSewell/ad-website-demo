@@ -365,10 +365,43 @@
 
         // Microgrid map
         var microgridMap = L.map('microgrid-map', { zoomControl: true }).setView([41.88, -93.10], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        var mgStreetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
-        }).addTo(microgridMap);
+        });
+
+        var mgSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 19
+        });
+
+        mgSatelliteLayer.addTo(microgridMap);
+        var mgBaseLayer = 'satellite';
+
+        // Basemap toggle button
+        var mgToggleBtn = L.control({ position: 'topright' });
+        mgToggleBtn.onAdd = function() {
+            var btn = L.DomUtil.create('button', '');
+            btn.textContent = 'Switch to Street Map';
+            btn.style.cssText = 'padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
+            L.DomEvent.on(btn, 'click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                if (mgBaseLayer === 'satellite') {
+                    microgridMap.removeLayer(mgSatelliteLayer);
+                    microgridMap.addLayer(mgStreetLayer);
+                    mgBaseLayer = 'street';
+                    btn.textContent = 'Switch to Satellite';
+                } else {
+                    microgridMap.removeLayer(mgStreetLayer);
+                    microgridMap.addLayer(mgSatelliteLayer);
+                    mgBaseLayer = 'satellite';
+                    btn.textContent = 'Switch to Street Map';
+                }
+            });
+            return btn;
+        };
+        mgToggleBtn.addTo(microgridMap);
 
         // Close Add panel when clicking outside
         document.addEventListener('click', function(e) {
