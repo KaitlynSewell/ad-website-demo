@@ -72,11 +72,9 @@
     </div>
 
     <script>
-        if (localStorage.getItem('sidebar') === 'hidden') {
-            document.querySelector('.page-layout').classList.add('sidebar-hidden');
-            var t = document.getElementById('sidebar-toggle-btn');
-            if (t) t.innerHTML = '&#8594;';
-        }
+        document.querySelector('.page-layout').classList.add('sidebar-hidden');
+        var t = document.getElementById('sidebar-toggle-btn');
+        if (t) t.innerHTML = '&#8594;';
         function toggleSidebar() {
             var layout = document.querySelector('.page-layout');
             layout.classList.toggle('sidebar-hidden');
