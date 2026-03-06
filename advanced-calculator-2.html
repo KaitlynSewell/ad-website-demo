@@ -6,6 +6,7 @@
     <title>AD.Website.Demo - Advanced Calculator 2</title>
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="translations.js"></script>
     <style>
         .calc-container {
@@ -129,6 +130,30 @@
 
         html.dark-mode .ac2-chart-title { color: #e0e0e0; }
         html.dark-mode .ac2-legend-item { color: #bbb; }
+
+        .ac2-map-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            min-width: 320px;
+        }
+
+        #microgrid-map {
+            width: 100%;
+            height: 420px;
+            border-radius: 4px;
+        }
+
+        html.dark-mode .ac2-map-box {
+            background: #2c2c3e;
+            border-color: #444;
+        }
 
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
@@ -267,11 +292,16 @@
                     <canvas id="pie-chart-2" width="220" height="220"></canvas>
                     <div class="ac2-chart-legend" id="pie-legend-2"></div>
                 </div>
+                <div class="ac2-map-box">
+                    <div class="ac2-chart-title">Microgrid</div>
+                    <div id="microgrid-map"></div>
+                </div>
             </div>
             <div class="calc-container"></div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         function drawPie(canvasId, legendId, segments) {
             var canvas = document.getElementById(canvasId);
@@ -323,6 +353,13 @@
             { label: 'RINs / Credits',value: 15, color: '#e6c229' },
             { label: 'By-products',   value: 10, color: '#9b59b6' }
         ]);
+
+        // Microgrid map
+        var microgridMap = L.map('microgrid-map', { zoomControl: true }).setView([41.88, -93.10], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(microgridMap);
 
         // Close Add panel when clicking outside
         document.addEventListener('click', function(e) {
