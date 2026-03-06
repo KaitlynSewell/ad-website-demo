@@ -146,7 +146,7 @@
 
         #microgrid-map {
             width: 100%;
-            height: 420px;
+            height: 560px;
             border-radius: 4px;
         }
 
@@ -402,9 +402,25 @@
                     mgBaseLayer = 'satellite';
                     btn.textContent = 'Switch to Street Map';
                 }
+                updateMgIowaBorder();
             });
             return btn;
         };
+        // Iowa border — white on satellite, grey on street
+        var mgIowaLayer = null;
+        function updateMgIowaBorder() {
+            if (!mgIowaLayer) return;
+            mgIowaLayer.setStyle({ color: mgBaseLayer === 'satellite' ? '#ffffff' : '#888', weight: 1.5, opacity: 0.4 });
+        }
+        fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var iowa = data.features.find(function(f) { return f.properties.name === 'Iowa'; });
+                if (iowa) {
+                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 1.5, opacity: 0.4 } }).addTo(microgridMap);
+                }
+            });
+
         mgToggleBtn.addTo(microgridMap);
 
         // Close Add panel when clicking outside
