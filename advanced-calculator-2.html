@@ -227,34 +227,9 @@
 
             <!-- Add button -->
             <div class="ac2-add-wrap">
-                <button class="ac2-toolbar-btn" onclick="toggleAddPanel(this)">
+                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)">
                     + Add
                 </button>
-                <div class="ac2-add-panel" id="ac2-add-panel">
-                    <div class="panel-section">Agricultural Residue</div>
-                    <label><input type="checkbox" value="corn"> Corn</label>
-                    <label><input type="checkbox" value="soybean"> Soybean</label>
-                    <div class="panel-section">Feedlot</div>
-                    <label><input type="checkbox" value="beef"> Beef Cattle</label>
-                    <label><input type="checkbox" value="dairy"> Dairy Cattle</label>
-                    <label><input type="checkbox" value="swine"> Swine</label>
-                    <label><input type="checkbox" value="horses"> Horses</label>
-                    <label><input type="checkbox" value="turkeys"> Turkeys</label>
-                    <label><input type="checkbox" value="chickens"> Chickens</label>
-                    <label><input type="checkbox" value="sheep"> Sheep / Goats</label>
-                    <div class="panel-section">Human Activity</div>
-                    <label><input type="checkbox" value="paperfood"> Paper / Food Waste</label>
-                    <label><input type="checkbox" value="biodiesel"> Biodiesel Plants</label>
-                    <label><input type="checkbox" value="ethanol"> Ethanol Plants</label>
-                    <label><input type="checkbox" value="wastewater"> Wastewater Treatment</label>
-                    <label><input type="checkbox" value="digesters"> Anaerobic Digesters</label>
-                    <label><input type="checkbox" value="lmop"> LMOP Sites</label>
-                    <div class="panel-section">Utilities</div>
-                    <label><input type="checkbox" value="utilities"> Electric / Gas Utilities</label>
-                    <label><input type="checkbox" value="powerplants"> Power Plants</label>
-                    <label><input type="checkbox" value="pipelines"> Gas Pipelines</label>
-                    <label><input type="checkbox" value="landfill"> Landfill Sites</label>
-                </div>
             </div>
 
             <!-- Download -->
@@ -313,6 +288,33 @@
             </div>
             <div class="calc-container"></div>
         </div>
+    </div>
+
+    <!-- Add panel is a direct body child so it's always above Leaflet's stacking contexts -->
+    <div class="ac2-add-panel" id="ac2-add-panel">
+        <div class="panel-section">Agricultural Residue</div>
+        <label><input type="checkbox" value="corn"> Corn</label>
+        <label><input type="checkbox" value="soybean"> Soybean</label>
+        <div class="panel-section">Feedlot</div>
+        <label><input type="checkbox" value="beef"> Beef Cattle</label>
+        <label><input type="checkbox" value="dairy"> Dairy Cattle</label>
+        <label><input type="checkbox" value="swine"> Swine</label>
+        <label><input type="checkbox" value="horses"> Horses</label>
+        <label><input type="checkbox" value="turkeys"> Turkeys</label>
+        <label><input type="checkbox" value="chickens"> Chickens</label>
+        <label><input type="checkbox" value="sheep"> Sheep / Goats</label>
+        <div class="panel-section">Human Activity</div>
+        <label><input type="checkbox" value="paperfood"> Paper / Food Waste</label>
+        <label><input type="checkbox" value="biodiesel"> Biodiesel Plants</label>
+        <label><input type="checkbox" value="ethanol"> Ethanol Plants</label>
+        <label><input type="checkbox" value="wastewater"> Wastewater Treatment</label>
+        <label><input type="checkbox" value="digesters"> Anaerobic Digesters</label>
+        <label><input type="checkbox" value="lmop"> LMOP Sites</label>
+        <div class="panel-section">Utilities</div>
+        <label><input type="checkbox" value="utilities"> Electric / Gas Utilities</label>
+        <label><input type="checkbox" value="powerplants"> Power Plants</label>
+        <label><input type="checkbox" value="pipelines"> Gas Pipelines</label>
+        <label><input type="checkbox" value="landfill"> Landfill Sites</label>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -437,9 +439,9 @@
 
         // Close Add panel when clicking outside
         document.addEventListener('click', function(e) {
-            var wrap = document.getElementById('ac2-add-panel');
-            if (wrap && !e.target.closest('.ac2-add-wrap')) {
-                wrap.classList.remove('open');
+            var panel = document.getElementById('ac2-add-panel');
+            if (panel && !e.target.closest('#ac2-add-panel') && !e.target.closest('#ac2-add-btn')) {
+                panel.classList.remove('open');
             }
         });
 
