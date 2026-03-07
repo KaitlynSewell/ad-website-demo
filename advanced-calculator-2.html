@@ -947,6 +947,7 @@
                 fillColor: '#4a90d9', fillOpacity: 0.08
             }).addTo(microgridMap);
 
+            microgridMap.fitBounds(aoiBounds, { padding: [24, 24] });
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
             updateCharts();
@@ -1000,6 +1001,7 @@
                 fillColor: '#4a90d9', fillOpacity: 0.08
             }).addTo(microgridMap);
 
+            microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
             microgridMap.doubleClickZoom.enable();
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
