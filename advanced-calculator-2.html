@@ -943,8 +943,9 @@
             aoiBounds = bounds;
             aoiPolyPoints = null;
             aoiLayer = L.rectangle(bounds, {
-                color: '#1a6fc4', weight: 2.5,
-                fillColor: '#4a90d9', fillOpacity: 0.08
+                color: '#1a6fc4', weight: 2.5, opacity: 1,
+                fillColor: '#4a90d9', fillOpacity: 0.08,
+                interactive: false
             }).addTo(microgridMap);
 
             microgridMap.fitBounds(aoiBounds, { padding: [24, 24] });
@@ -997,8 +998,9 @@
             aoiPolyPoints = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
             aoiBounds = null;
             aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
-                color: '#1a6fc4', weight: 2.5,
-                fillColor: '#4a90d9', fillOpacity: 0.08
+                color: '#1a6fc4', weight: 2.5, opacity: 1,
+                fillColor: '#4a90d9', fillOpacity: 0.08,
+                interactive: false
             }).addTo(microgridMap);
 
             microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
