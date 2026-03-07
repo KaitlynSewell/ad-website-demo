@@ -395,7 +395,7 @@
         <label><input type="checkbox" value="biodiesel"> Biodiesel Plants</label>
         <label><input type="checkbox" value="ethanol"> Ethanol Plants</label>
         <label><input type="checkbox" value="wastewater"> Wastewater Treatment</label>
-        <label><input type="checkbox" value="digesters"> Anaerobic Digesters</label>
+        <label><input type="checkbox" value="digesters" checked> Anaerobic Digesters</label>
         <label><input type="checkbox" value="lmop"> LMOP Sites</label>
         <div class="panel-section">Utilities</div>
         <label><input type="checkbox" value="utilities"> Electric / Gas Utilities</label>
@@ -1047,6 +1047,9 @@
                 }
             });
         });
+
+        // Load default layers on startup
+        loadLayer('digesters');
 
         document.getElementById('ac2-search').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
