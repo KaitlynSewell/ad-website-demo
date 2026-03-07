@@ -887,8 +887,7 @@
             if (type === 'rectangle') {
                 showAoiToast('Click and drag to draw a rectangle');
             } else {
-                showAoiToast('Click to add vertices \u2014 double-click to finish');
-                microgridMap.doubleClickZoom.disable();
+                showAoiToast('Click to add vertices \u2014 click any dot to finish');
             }
         }
 
@@ -955,15 +954,44 @@
         });
 
         // ---- Polygon draw events ----
+        function finalizePolygon() {
+            clearPolyPreview();
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+            aoiPolyPoints = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
+            aoiBounds = null;
+            aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
+                color: '#1a6fc4', weight: 2.5, opacity: 1,
+                fillColor: '#4a90d9', fillOpacity: 0.08,
+                interactive: false
+            }).addTo(microgridMap);
+            microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+            exitDrawMode();
+            document.getElementById('aoi-clear-btn').style.display = 'block';
+            updateCharts();
+        }
+
         microgridMap.on('click', function(e) {
             if (!aoiMode || aoiDrawType !== 'polygon') return;
             L.DomEvent.stopPropagation(e.originalEvent);
+
+            // If >= 3 vertices exist, check if click is near any existing dot → close polygon
+            if (polyPoints.length >= 3) {
+                var clickPx = microgridMap.latLngToContainerPoint(e.latlng);
+                for (var i = 0; i < polyVertexMarkers.length; i++) {
+                    var vPx = microgridMap.latLngToContainerPoint(polyVertexMarkers[i].getLatLng());
+                    var dx = clickPx.x - vPx.x, dy = clickPx.y - vPx.y;
+                    if (Math.sqrt(dx * dx + dy * dy) <= 12) {
+                        finalizePolygon();
+                        return;
+                    }
+                }
+            }
 
             polyPoints.push(e.latlng);
 
             // Vertex dot
             var dot = L.circleMarker(e.latlng, {
-                radius: 4, color: '#1a6fc4', fillColor: '#4a90d9',
+                radius: 6, color: '#1a6fc4', fillColor: '#4a90d9',
                 fillOpacity: 1, weight: 1.5
             }).addTo(microgridMap);
             polyVertexMarkers.push(dot);
@@ -976,38 +1004,6 @@
                     color: '#1a6fc4', weight: 2, opacity: 0.9
                 }).addTo(microgridMap);
             }
-        });
-
-        microgridMap.on('dblclick', function(e) {
-            if (!aoiMode || aoiDrawType !== 'polygon') return;
-            L.DomEvent.stopPropagation(e.originalEvent);
-
-            // Remove the extra vertex added by the first click of the dblclick
-            polyPoints.pop();
-            var lastDot = polyVertexMarkers.pop();
-            if (lastDot) microgridMap.removeLayer(lastDot);
-
-            if (polyPoints.length < 3) {
-                clearPolyPreview();
-                return;
-            }
-
-            // Finalize polygon
-            clearPolyPreview();
-            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
-            aoiPolyPoints = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
-            aoiBounds = null;
-            aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
-                color: '#1a6fc4', weight: 2.5, opacity: 1,
-                fillColor: '#4a90d9', fillOpacity: 0.08,
-                interactive: false
-            }).addTo(microgridMap);
-
-            microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
-            microgridMap.doubleClickZoom.enable();
-            exitDrawMode();
-            document.getElementById('aoi-clear-btn').style.display = 'block';
-            updateCharts();
         });
 
         function clearAOI() {
