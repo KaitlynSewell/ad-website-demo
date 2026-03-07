@@ -240,6 +240,42 @@
         .aoi-clear-btn:hover { background: #f5f5f5; }
         .ac2-chart-box { position: relative; }
         .ac2-map-box { position: relative; }
+
+        /* AOI mode selection panel */
+        .aoi-mode-panel {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            z-index: 9999;
+            min-width: 170px;
+            padding: 6px 0;
+        }
+        .aoi-mode-panel.open { display: block; }
+        .aoi-mode-panel button {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 9px 16px;
+            background: none;
+            border: none;
+            font-size: 13px;
+            color: #2c3e50;
+            cursor: pointer;
+            text-align: left;
+        }
+        .aoi-mode-panel button:hover { background: #f0f4ff; }
+        .aoi-mode-panel .aoi-mode-divider {
+            font-size: 10px;
+            font-weight: bold;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 16px 2px;
+        }
     </style>
 </head>
 <body>
@@ -366,6 +402,19 @@
         <label><input type="checkbox" value="powerplants"> Power Plants</label>
         <label><input type="checkbox" value="pipelines"> Gas Pipelines</label>
         <label><input type="checkbox" value="landfill"> Landfill Sites</label>
+    </div>
+
+    <!-- AOI mode selection panel -->
+    <div class="aoi-mode-panel" id="aoi-mode-panel">
+        <div class="aoi-mode-divider">Select method</div>
+        <button onclick="startAoiMode('rectangle')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            Rectangle
+        </button>
+        <button onclick="startAoiMode('polygon')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 15,6 12,14 4,14 1,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            Polygon
+        </button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -574,13 +623,39 @@
         }
 
         // ===== AOI STATE =====
-        var aoiMode = false;
-        var aoiLayer = null;        // L.rectangle on map
-        var aoiBounds = null;       // L.LatLngBounds
-        var aoiDrawing = false;
-        var aoiStartLatLng = null;
-        var aoiPreviewRect = null;  // preview rectangle while dragging
+        var aoiMode = false;          // draw mode active
+        var aoiDrawType = null;       // 'rectangle' or 'polygon'
+        var aoiLayer = null;          // finalized shape on map
+        var aoiBounds = null;         // L.LatLngBounds — set for rectangle AOI
+        var aoiPolyPoints = null;     // [{lat,lng}] — set for polygon AOI
+
+        // Rectangle draw state
+        var rectDrawing = false;
+        var rectStartLatLng = null;
+        var aoiPreviewRect = null;
+
+        // Polygon draw state
+        var polyPoints = [];          // L.LatLng[] being collected
+        var polyPreviewLine = null;   // L.polyline showing drawn edges
+        var polyRubberBand = null;    // L.polyline from last vertex to cursor
+        var polyVertexMarkers = [];   // L.circleMarker[] for vertices
+
         var aoiToast = null;
+
+        // ===== SPATIAL HELPERS =====
+        function pointInPolygon(pt, polygon) {
+            // Ray-casting algorithm; polygon = [{lat,lng}, ...]
+            var x = pt.lng, y = pt.lat;
+            var inside = false;
+            for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                var xi = polygon[i].lng, yi = polygon[i].lat;
+                var xj = polygon[j].lng, yj = polygon[j].lat;
+                var intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
 
         function getFeaturesInAOI() {
             var result = {};
@@ -590,10 +665,18 @@
                     feats = feats.filter(function(f) {
                         return aoiBounds.contains(L.latLng(f.lat, f.lng));
                     });
+                } else if (aoiPolyPoints) {
+                    feats = feats.filter(function(f) {
+                        return pointInPolygon(f, aoiPolyPoints);
+                    });
                 }
                 result[key] = feats;
             });
             return result;
+        }
+
+        function hasAoiActive() {
+            return aoiBounds !== null || aoiPolyPoints !== null;
         }
 
         function hasAnyLoadedLayer() {
@@ -602,7 +685,7 @@
 
         function updateCharts() {
             // If no layers loaded and no AOI drawn, show default placeholder data
-            if (!hasAnyLoadedLayer() && !aoiBounds) {
+            if (!hasAnyLoadedLayer() && !hasAoiActive()) {
                 drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1);
                 drawPie('pie-chart-2', 'pie-legend-2', DEFAULT_PIE2);
                 updateProdCost(null);
@@ -729,8 +812,6 @@
         mgToggleBtn.addTo(microgridMap);
 
         // ===== AOI DRAWING =====
-        var aoiBtn = null; // set on DOM ready
-
         function showAoiToast(msg) {
             removeAoiToast();
             var mapBox = document.querySelector('.ac2-map-box');
@@ -743,75 +824,184 @@
             if (aoiToast) { aoiToast.remove(); aoiToast = null; }
         }
 
-        function handleSelectArea() {
-            aoiMode = !aoiMode;
-            var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
-            var mapEl = document.getElementById('microgrid-map');
-
-            if (aoiMode) {
-                btn.classList.add('aoi-active');
-                mapEl.classList.add('aoi-draw-mode');
-                microgridMap.dragging.disable();
-                showAoiToast('Click and drag on the map to draw your area of interest');
-            } else {
-                btn.classList.remove('aoi-active');
-                mapEl.classList.remove('aoi-draw-mode');
-                microgridMap.dragging.enable();
-                removeAoiToast();
-            }
-        }
-
-        microgridMap.on('mousedown', function(e) {
-            if (!aoiMode) return;
-            L.DomEvent.stopPropagation(e.originalEvent);
-            aoiDrawing = true;
-            aoiStartLatLng = e.latlng;
-            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-        });
-
-        microgridMap.on('mousemove', function(e) {
-            if (!aoiMode || !aoiDrawing || !aoiStartLatLng) return;
-            var bounds = L.latLngBounds(aoiStartLatLng, e.latlng);
-            if (aoiPreviewRect) {
-                aoiPreviewRect.setBounds(bounds);
-            } else {
-                aoiPreviewRect = L.rectangle(bounds, {
-                    color: '#1a6fc4', weight: 2, dashArray: '6 4',
-                    fillColor: '#4a90d9', fillOpacity: 0.15
-                }).addTo(microgridMap);
-            }
-        });
-
-        microgridMap.on('mouseup', function(e) {
-            if (!aoiMode || !aoiDrawing) return;
-            aoiDrawing = false;
-
-            var bounds = L.latLngBounds(aoiStartLatLng, e.latlng);
-            // Ignore tiny clicks (not a drag)
-            var size = microgridMap.project(bounds.getNorthEast()).distanceTo(microgridMap.project(bounds.getSouthWest()));
-            if (size < 10) {
-                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-                return;
-            }
-
-            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
-
-            aoiBounds = bounds;
-            aoiLayer = L.rectangle(bounds, {
-                color: '#1a6fc4', weight: 2.5,
-                fillColor: '#4a90d9', fillOpacity: 0.08
-            }).addTo(microgridMap);
-
-            // Exit draw mode after finishing
+        function exitDrawMode() {
             aoiMode = false;
+            aoiDrawType = null;
             var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
             var mapEl = document.getElementById('microgrid-map');
             btn.classList.remove('aoi-active');
             mapEl.classList.remove('aoi-draw-mode');
             microgridMap.dragging.enable();
             removeAoiToast();
+        }
 
+        function clearPolyPreview() {
+            if (polyPreviewLine) { microgridMap.removeLayer(polyPreviewLine); polyPreviewLine = null; }
+            if (polyRubberBand)  { microgridMap.removeLayer(polyRubberBand);  polyRubberBand  = null; }
+            polyVertexMarkers.forEach(function(m) { microgridMap.removeLayer(m); });
+            polyVertexMarkers = [];
+            polyPoints = [];
+        }
+
+        // Button click — show mode selection panel
+        function handleSelectArea() {
+            var panel = document.getElementById('aoi-mode-panel');
+            var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
+            var isOpen = panel.classList.contains('open');
+
+            // If already in draw mode, cancel it
+            if (aoiMode) {
+                exitDrawMode();
+                clearPolyPreview();
+                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+                panel.classList.remove('open');
+                return;
+            }
+
+            panel.classList.toggle('open');
+            if (!isOpen) {
+                var rect = btn.getBoundingClientRect();
+                panel.style.top = (rect.bottom + 6) + 'px';
+                panel.style.left = rect.left + 'px';
+            }
+        }
+
+        // Close mode panel when clicking outside
+        document.addEventListener('click', function(e) {
+            var panel = document.getElementById('aoi-mode-panel');
+            if (panel && !e.target.closest('#aoi-mode-panel') &&
+                !e.target.closest('.ac2-toolbar-btn[onclick="handleSelectArea()"]')) {
+                panel.classList.remove('open');
+            }
+        });
+
+        function startAoiMode(type) {
+            document.getElementById('aoi-mode-panel').classList.remove('open');
+            aoiMode = true;
+            aoiDrawType = type;
+            var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
+            var mapEl = document.getElementById('microgrid-map');
+            btn.classList.add('aoi-active');
+            mapEl.classList.add('aoi-draw-mode');
+            microgridMap.dragging.disable();
+            if (type === 'rectangle') {
+                showAoiToast('Click and drag to draw a rectangle');
+            } else {
+                showAoiToast('Click to add vertices \u2014 double-click to finish');
+                microgridMap.doubleClickZoom.disable();
+            }
+        }
+
+        // ---- Rectangle draw events ----
+        microgridMap.on('mousedown', function(e) {
+            if (!aoiMode || aoiDrawType !== 'rectangle') return;
+            L.DomEvent.stopPropagation(e.originalEvent);
+            rectDrawing = true;
+            rectStartLatLng = e.latlng;
+            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+        });
+
+        microgridMap.on('mousemove', function(e) {
+            if (aoiMode && aoiDrawType === 'rectangle' && rectDrawing && rectStartLatLng) {
+                var bounds = L.latLngBounds(rectStartLatLng, e.latlng);
+                if (aoiPreviewRect) {
+                    aoiPreviewRect.setBounds(bounds);
+                } else {
+                    aoiPreviewRect = L.rectangle(bounds, {
+                        color: '#1a6fc4', weight: 2, dashArray: '6 4',
+                        fillColor: '#4a90d9', fillOpacity: 0.15
+                    }).addTo(microgridMap);
+                }
+            }
+            // Polygon rubber band
+            if (aoiMode && aoiDrawType === 'polygon' && polyPoints.length > 0) {
+                var latlngs = polyPoints.concat([e.latlng]);
+                if (polyRubberBand) {
+                    polyRubberBand.setLatLngs(latlngs);
+                } else {
+                    polyRubberBand = L.polyline(latlngs, {
+                        color: '#1a6fc4', weight: 2, dashArray: '4 4', opacity: 0.7
+                    }).addTo(microgridMap);
+                }
+            }
+        });
+
+        microgridMap.on('mouseup', function(e) {
+            if (!aoiMode || aoiDrawType !== 'rectangle' || !rectDrawing) return;
+            rectDrawing = false;
+
+            var bounds = L.latLngBounds(rectStartLatLng, e.latlng);
+            var size = microgridMap.project(bounds.getNorthEast())
+                .distanceTo(microgridMap.project(bounds.getSouthWest()));
+            if (size < 10) {
+                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+                return;
+            }
+            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+
+            aoiBounds = bounds;
+            aoiPolyPoints = null;
+            aoiLayer = L.rectangle(bounds, {
+                color: '#1a6fc4', weight: 2.5,
+                fillColor: '#4a90d9', fillOpacity: 0.08
+            }).addTo(microgridMap);
+
+            exitDrawMode();
+            document.getElementById('aoi-clear-btn').style.display = 'block';
+            updateCharts();
+        });
+
+        // ---- Polygon draw events ----
+        microgridMap.on('click', function(e) {
+            if (!aoiMode || aoiDrawType !== 'polygon') return;
+            L.DomEvent.stopPropagation(e.originalEvent);
+
+            polyPoints.push(e.latlng);
+
+            // Vertex dot
+            var dot = L.circleMarker(e.latlng, {
+                radius: 4, color: '#1a6fc4', fillColor: '#4a90d9',
+                fillOpacity: 1, weight: 1.5
+            }).addTo(microgridMap);
+            polyVertexMarkers.push(dot);
+
+            // Redraw preview line
+            if (polyPreviewLine) {
+                polyPreviewLine.setLatLngs(polyPoints);
+            } else if (polyPoints.length >= 2) {
+                polyPreviewLine = L.polyline(polyPoints, {
+                    color: '#1a6fc4', weight: 2, opacity: 0.9
+                }).addTo(microgridMap);
+            }
+        });
+
+        microgridMap.on('dblclick', function(e) {
+            if (!aoiMode || aoiDrawType !== 'polygon') return;
+            L.DomEvent.stopPropagation(e.originalEvent);
+
+            // Remove the extra vertex added by the first click of the dblclick
+            polyPoints.pop();
+            var lastDot = polyVertexMarkers.pop();
+            if (lastDot) microgridMap.removeLayer(lastDot);
+
+            if (polyPoints.length < 3) {
+                clearPolyPreview();
+                return;
+            }
+
+            // Finalize polygon
+            clearPolyPreview();
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+            aoiPolyPoints = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
+            aoiBounds = null;
+            aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
+                color: '#1a6fc4', weight: 2.5,
+                fillColor: '#4a90d9', fillOpacity: 0.08
+            }).addTo(microgridMap);
+
+            microgridMap.doubleClickZoom.enable();
+            exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
             updateCharts();
         });
@@ -819,8 +1009,10 @@
         function clearAOI() {
             if (aoiLayer) { microgridMap.removeLayer(aoiLayer); aoiLayer = null; }
             if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+            clearPolyPreview();
             aoiBounds = null;
-            aoiDrawing = false;
+            aoiPolyPoints = null;
+            rectDrawing = false;
             document.getElementById('aoi-clear-btn').style.display = 'none';
             updateCharts();
         }
