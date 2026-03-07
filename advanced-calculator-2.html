@@ -955,11 +955,12 @@
 
         // ---- Polygon draw events ----
         function finalizePolygon() {
+            var pts = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
             clearPolyPreview();
             if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
-            aoiPolyPoints = polyPoints.map(function(p) { return { lat: p.lat, lng: p.lng }; });
+            aoiPolyPoints = pts;
             aoiBounds = null;
-            aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
+            aoiLayer = L.polygon(pts.map(function(p) { return [p.lat, p.lng]; }), {
                 color: '#1a6fc4', weight: 2.5, opacity: 1,
                 fillColor: '#4a90d9', fillOpacity: 0.08,
                 interactive: false
