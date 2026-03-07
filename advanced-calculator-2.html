@@ -195,6 +195,51 @@
             padding: 8px 14px 3px;
             letter-spacing: 0.5px;
         }
+
+        /* AOI drawing mode */
+        #microgrid-map.aoi-draw-mode,
+        #microgrid-map.aoi-draw-mode .leaflet-interactive,
+        #microgrid-map.aoi-draw-mode .leaflet-container {
+            cursor: crosshair !important;
+        }
+        .ac2-toolbar-btn.aoi-active {
+            background: rgba(255,255,255,0.55) !important;
+            color: #1a3060 !important;
+            font-weight: bold;
+            outline: 2px solid white;
+        }
+        .aoi-toast {
+            position: absolute;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30,30,30,0.82);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 1100;
+        }
+        .aoi-clear-btn {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1100;
+            background: white;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            display: none;
+        }
+        .aoi-clear-btn:hover { background: #f5f5f5; }
+        .ac2-chart-box { position: relative; }
+        .ac2-map-box { position: relative; }
     </style>
 </head>
 <body>
@@ -276,15 +321,18 @@
                 <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
                     <div class="ac2-map-box" style="flex:none;">
                         <div class="ac2-chart-title">Microgrid</div>
+                        <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()">&#10005; Clear Area of Interest</button>
                         <div id="microgrid-map"></div>
                     </div>
                     <div style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); display:flex; overflow:hidden; min-height:100px;">
                         <div style="flex:1; padding:14px 16px;">
                             <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
+                            <div id="prod-content"></div>
                         </div>
                         <div style="width:1px; background:#ddd;"></div>
                         <div style="flex:1; padding:14px 16px;">
                             <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Costs</div>
+                            <div id="cost-content"></div>
                         </div>
                     </div>
                 </div>
@@ -322,13 +370,30 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // ===== PIE CHART DRAWING =====
+        var DEFAULT_PIE1 = [
+            { label: 'Beef Cattle',  value: 32, color: '#c87533' },
+            { label: 'Swine',        value: 24, color: '#ff9eb5' },
+            { label: 'Dairy Cattle', value: 20, color: '#4a90d9' },
+            { label: 'Wastewater',   value: 14, color: '#3498db' },
+            { label: 'Other',        value: 10, color: '#aaa'    }
+        ];
+        var DEFAULT_PIE2 = [
+            { label: 'Energy Sales',   value: 45, color: '#2ecc71' },
+            { label: 'Tipping Fees',   value: 30, color: '#4169e1' },
+            { label: 'RINs / Credits', value: 15, color: '#e6c229' },
+            { label: 'By-products',    value: 10, color: '#9b59b6' }
+        ];
+
         function drawPie(canvasId, legendId, segments) {
             var canvas = document.getElementById(canvasId);
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             var cx = canvas.width / 2, cy = canvas.height / 2;
             var r = Math.min(cx, cy) - 10;
             var total = segments.reduce(function(s, d) { return s + d.value; }, 0);
+            if (total === 0) { drawZeroPie(canvasId, legendId, segments); return; }
             var angle = -Math.PI / 2;
             segments.forEach(function(seg) {
                 var slice = (seg.value / total) * 2 * Math.PI;
@@ -343,44 +408,280 @@
                 ctx.stroke();
                 angle += slice;
             });
-            // Donut hole
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
             ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
             ctx.fill();
-            // Legend
             var legend = document.getElementById(legendId);
             legend.innerHTML = segments.map(function(seg) {
                 var pct = Math.round(seg.value / total * 100);
                 return '<div class="ac2-legend-item">' +
                     '<div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
-                    '<span>' + seg.label + ' — ' + pct + '%</span></div>';
+                    '<span>' + seg.label + ' \u2014 ' + pct + '%</span></div>';
             }).join('');
         }
 
-        drawPie('pie-chart-1', 'pie-legend-1', [
-            { label: 'Beef Cattle',   value: 32, color: '#c87533' },
-            { label: 'Swine',         value: 24, color: '#ff9eb5' },
-            { label: 'Dairy Cattle',  value: 20, color: '#4a90d9' },
-            { label: 'Wastewater',    value: 14, color: '#3498db' },
-            { label: 'Other',         value: 10, color: '#aaa' }
-        ]);
+        function drawZeroPie(canvasId, legendId, segments) {
+            var canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var cx = canvas.width / 2, cy = canvas.height / 2;
+            var r = Math.min(cx, cy) - 10;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
+            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fill();
+            ctx.fillStyle = '#bbb';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No data', cx, cy);
+            var legend = document.getElementById(legendId);
+            legend.innerHTML = segments.map(function(seg) {
+                return '<div class="ac2-legend-item">' +
+                    '<div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
+                    '<span>' + seg.label + ' \u2014 0%</span></div>';
+            }).join('');
+        }
 
-        drawPie('pie-chart-2', 'pie-legend-2', [
-            { label: 'Energy Sales',  value: 45, color: '#2ecc71' },
-            { label: 'Tipping Fees',  value: 30, color: '#4169e1' },
-            { label: 'RINs / Credits',value: 15, color: '#e6c229' },
-            { label: 'By-products',   value: 10, color: '#9b59b6' }
-        ]);
+        // ===== LAYER CONFIG =====
+        var LAYER_FILES = {
+            beef: 'geojson/beef.geojson', dairy: 'geojson/dairy.geojson',
+            swine: 'geojson/swine.geojson', horses: 'geojson/horses.geojson',
+            turkeys: 'geojson/turkeys.geojson', chickens: 'geojson/chickens.geojson',
+            sheep: 'geojson/sheep.geojson', biodiesel: 'geojson/biodiesel.geojson',
+            ethanol: 'geojson/ethanol.geojson', wastewater: 'geojson/wastewater.geojson',
+            digesters: 'geojson/digesters.geojson', lmop: 'geojson/lmop.geojson',
+            utilities: 'geojson/utilities.geojson', powerplants: 'geojson/powerplants.geojson',
+            pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson'
+        };
 
-        // Microgrid map
+        // Map each layer key to a pie-1 category (energy generation by source type)
+        var PIE1_CAT = {
+            beef: 'Beef Cattle', dairy: 'Dairy Cattle', swine: 'Swine',
+            wastewater: 'Wastewater'
+            // all others → 'Other'
+        };
+        var PIE1_COLORS = {
+            'Beef Cattle': '#c87533', 'Dairy Cattle': '#4a90d9',
+            'Swine': '#ff9eb5', 'Wastewater': '#3498db', 'Other': '#aaa'
+        };
+
+        // Map each layer key to a pie-2 category (AD revenue/input type)
+        var PIE2_CAT = {
+            biodiesel: 'Energy Sales', ethanol: 'Energy Sales', powerplants: 'Energy Sales',
+            wastewater: 'Tipping Fees', digesters: 'Tipping Fees',
+            beef: 'Tipping Fees', dairy: 'Tipping Fees', swine: 'Tipping Fees',
+            horses: 'Tipping Fees', turkeys: 'Tipping Fees', chickens: 'Tipping Fees',
+            sheep: 'Tipping Fees',
+            lmop: 'RINs / Credits', landfill: 'RINs / Credits',
+            utilities: 'By-products', pipelines: 'By-products'
+        };
+        var PIE2_COLORS = {
+            'Energy Sales': '#2ecc71', 'Tipping Fees': '#4169e1',
+            'RINs / Credits': '#e6c229', 'By-products': '#9b59b6'
+        };
+
+        // Approximate annual biogas production potential (MWh) per facility
+        var PROD_PER_FEAT = {
+            beef: 520, dairy: 840, swine: 310, horses: 90,
+            turkeys: 160, chickens: 210, sheep: 70,
+            biodiesel: 2800, ethanol: 3200, wastewater: 1300,
+            digesters: 2100, lmop: 1600, utilities: 900,
+            powerplants: 4800, pipelines: 400, landfill: 1050
+        };
+        // Approximate annual cost (thousand $) per facility
+        var COST_PER_FEAT = {
+            beef: 180, dairy: 290, swine: 110, horses: 40,
+            turkeys: 60, chickens: 80, sheep: 30,
+            biodiesel: 650, ethanol: 740, wastewater: 380,
+            digesters: 520, lmop: 310, utilities: 270,
+            powerplants: 1100, pipelines: 150, landfill: 240
+        };
+        var LAYER_COLORS = {
+            beef: '#c87533', dairy: '#4a90d9', swine: '#ff9eb5',
+            horses: '#8B4513', turkeys: '#DAA520', chickens: '#FFD700',
+            sheep: '#708090', biodiesel: '#2ecc71', ethanol: '#27ae60',
+            wastewater: '#3498db', digesters: '#9b59b6', lmop: '#e6c229',
+            utilities: '#e67e22', powerplants: '#e74c3c',
+            pipelines: '#95a5a6', landfill: '#7f8c8d'
+        };
+
+        // ===== LAYER STATE =====
+        // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
+        var loadedLayers = {};
+
+        function getFeatureCoord(feature) {
+            var geom = feature.geometry;
+            if (!geom) return null;
+            var c;
+            if (geom.type === 'Point') {
+                c = geom.coordinates;
+                return { lng: c[0], lat: c[1] };
+            } else if (geom.type === 'MultiPoint' || geom.type === 'LineString') {
+                c = geom.coordinates[Math.floor(geom.coordinates.length / 2)];
+                return { lng: c[0], lat: c[1] };
+            } else if (geom.type === 'MultiLineString' || geom.type === 'Polygon') {
+                c = geom.coordinates[0][0];
+                return { lng: c[0], lat: c[1] };
+            } else if (geom.type === 'MultiPolygon') {
+                c = geom.coordinates[0][0][0];
+                return { lng: c[0], lat: c[1] };
+            }
+            return null;
+        }
+
+        function loadLayer(key) {
+            if (loadedLayers[key] || !LAYER_FILES[key]) return;
+            fetch(LAYER_FILES[key])
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var features = [];
+                    var markers = [];
+                    data.features.forEach(function(f) {
+                        var coord = getFeatureCoord(f);
+                        if (!coord) return;
+                        features.push(coord);
+                        var m = L.circleMarker([coord.lat, coord.lng], {
+                            radius: 5,
+                            color: LAYER_COLORS[key] || '#888',
+                            fillColor: LAYER_COLORS[key] || '#888',
+                            fillOpacity: 0.75,
+                            weight: 1
+                        });
+                        markers.push(m);
+                    });
+                    var group = L.layerGroup(markers).addTo(microgridMap);
+                    loadedLayers[key] = { leafletLayer: group, features: features };
+                    updateCharts();
+                })
+                .catch(function() {});
+        }
+
+        function unloadLayer(key) {
+            if (!loadedLayers[key]) return;
+            microgridMap.removeLayer(loadedLayers[key].leafletLayer);
+            delete loadedLayers[key];
+            updateCharts();
+        }
+
+        // ===== AOI STATE =====
+        var aoiMode = false;
+        var aoiLayer = null;        // L.rectangle on map
+        var aoiBounds = null;       // L.LatLngBounds
+        var aoiDrawing = false;
+        var aoiStartLatLng = null;
+        var aoiPreviewRect = null;  // preview rectangle while dragging
+        var aoiToast = null;
+
+        function getFeaturesInAOI() {
+            var result = {};
+            Object.keys(loadedLayers).forEach(function(key) {
+                var feats = loadedLayers[key].features;
+                if (aoiBounds) {
+                    feats = feats.filter(function(f) {
+                        return aoiBounds.contains(L.latLng(f.lat, f.lng));
+                    });
+                }
+                result[key] = feats;
+            });
+            return result;
+        }
+
+        function hasAnyLoadedLayer() {
+            return Object.keys(loadedLayers).length > 0;
+        }
+
+        function updateCharts() {
+            // If no layers loaded and no AOI drawn, show default placeholder data
+            if (!hasAnyLoadedLayer() && !aoiBounds) {
+                drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1);
+                drawPie('pie-chart-2', 'pie-legend-2', DEFAULT_PIE2);
+                updateProdCost(null);
+                return;
+            }
+
+            var filtered = getFeaturesInAOI();
+
+            // --- Pie 1: energy generation by source type ---
+            var pie1Counts = {};
+            Object.keys(PIE1_COLORS).forEach(function(k) { pie1Counts[k] = 0; });
+            Object.keys(filtered).forEach(function(key) {
+                var cat = PIE1_CAT[key] || 'Other';
+                pie1Counts[cat] = (pie1Counts[cat] || 0) + filtered[key].length;
+            });
+            var pie1Segs = Object.keys(PIE1_COLORS).map(function(label) {
+                return { label: label, value: pie1Counts[label] || 0, color: PIE1_COLORS[label] };
+            });
+            drawPie('pie-chart-1', 'pie-legend-1', pie1Segs);
+
+            // --- Pie 2: AD inputs/revenue ---
+            var pie2Counts = {};
+            Object.keys(PIE2_COLORS).forEach(function(k) { pie2Counts[k] = 0; });
+            Object.keys(filtered).forEach(function(key) {
+                var cat = PIE2_CAT[key];
+                if (cat) pie2Counts[cat] = (pie2Counts[cat] || 0) + filtered[key].length;
+            });
+            var pie2Segs = Object.keys(PIE2_COLORS).map(function(label) {
+                return { label: label, value: pie2Counts[label] || 0, color: PIE2_COLORS[label] };
+            });
+            drawPie('pie-chart-2', 'pie-legend-2', pie2Segs);
+
+            // --- Production / Costs ---
+            updateProdCost(filtered);
+        }
+
+        function updateProdCost(filtered) {
+            var prodEl = document.getElementById('prod-content');
+            var costEl = document.getElementById('cost-content');
+            if (!prodEl || !costEl) return;
+
+            if (!filtered) {
+                prodEl.innerHTML = '<div style="font-size:12px;color:#888;">Add layers to see estimates</div>';
+                costEl.innerHTML = '<div style="font-size:12px;color:#888;">Add layers to see estimates</div>';
+                return;
+            }
+
+            var totalProd = 0, totalCost = 0, totalFeat = 0;
+            Object.keys(filtered).forEach(function(key) {
+                var n = filtered[key].length;
+                totalFeat += n;
+                totalProd += (PROD_PER_FEAT[key] || 0) * n;
+                totalCost += (COST_PER_FEAT[key] || 0) * n;
+            });
+
+            if (totalFeat === 0) {
+                prodEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">0</div>' +
+                    '<div style="font-size:11px;color:#888;">MWh / year</div>';
+                costEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
+                    '<div style="font-size:11px;color:#888;">thousand / year</div>';
+                return;
+            }
+
+            prodEl.innerHTML =
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">' + totalProd.toLocaleString() + '</div>' +
+                '<div style="font-size:11px;color:#888;">MWh / year (est.)</div>' +
+                '<div style="font-size:11px;color:#888;margin-top:4px;">' + totalFeat + ' facilit' + (totalFeat === 1 ? 'y' : 'ies') + '</div>';
+            costEl.innerHTML =
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + totalCost.toLocaleString() + 'k</div>' +
+                '<div style="font-size:11px;color:#888;">thousand / year (est.)</div>';
+        }
+
+        // ===== MAP SETUP =====
         var microgridMap = L.map('microgrid-map', { zoomControl: true }).setView([41.88, -93.10], 7);
 
         var mgStreetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
         });
-
         var mgSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri',
             maxZoom: 19
@@ -389,7 +690,6 @@
         mgSatelliteLayer.addTo(microgridMap);
         var mgBaseLayer = 'satellite';
 
-        // Basemap toggle button
         var mgToggleBtn = L.control({ position: 'topright' });
         mgToggleBtn.onAdd = function() {
             var btn = L.DomUtil.create('button', '');
@@ -412,7 +712,7 @@
             });
             return btn;
         };
-        // Iowa border — white on satellite, grey on street
+
         var mgIowaLayer = null;
         function updateMgIowaBorder() {
             if (!mgIowaLayer) return;
@@ -426,9 +726,106 @@
                     mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 1.5, opacity: 0.4 } }).addTo(microgridMap);
                 }
             });
-
         mgToggleBtn.addTo(microgridMap);
 
+        // ===== AOI DRAWING =====
+        var aoiBtn = null; // set on DOM ready
+
+        function showAoiToast(msg) {
+            removeAoiToast();
+            var mapBox = document.querySelector('.ac2-map-box');
+            aoiToast = document.createElement('div');
+            aoiToast.className = 'aoi-toast';
+            aoiToast.textContent = msg;
+            mapBox.appendChild(aoiToast);
+        }
+        function removeAoiToast() {
+            if (aoiToast) { aoiToast.remove(); aoiToast = null; }
+        }
+
+        function handleSelectArea() {
+            aoiMode = !aoiMode;
+            var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
+            var mapEl = document.getElementById('microgrid-map');
+
+            if (aoiMode) {
+                btn.classList.add('aoi-active');
+                mapEl.classList.add('aoi-draw-mode');
+                microgridMap.dragging.disable();
+                showAoiToast('Click and drag on the map to draw your area of interest');
+            } else {
+                btn.classList.remove('aoi-active');
+                mapEl.classList.remove('aoi-draw-mode');
+                microgridMap.dragging.enable();
+                removeAoiToast();
+            }
+        }
+
+        microgridMap.on('mousedown', function(e) {
+            if (!aoiMode) return;
+            L.DomEvent.stopPropagation(e.originalEvent);
+            aoiDrawing = true;
+            aoiStartLatLng = e.latlng;
+            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+        });
+
+        microgridMap.on('mousemove', function(e) {
+            if (!aoiMode || !aoiDrawing || !aoiStartLatLng) return;
+            var bounds = L.latLngBounds(aoiStartLatLng, e.latlng);
+            if (aoiPreviewRect) {
+                aoiPreviewRect.setBounds(bounds);
+            } else {
+                aoiPreviewRect = L.rectangle(bounds, {
+                    color: '#1a6fc4', weight: 2, dashArray: '6 4',
+                    fillColor: '#4a90d9', fillOpacity: 0.15
+                }).addTo(microgridMap);
+            }
+        });
+
+        microgridMap.on('mouseup', function(e) {
+            if (!aoiMode || !aoiDrawing) return;
+            aoiDrawing = false;
+
+            var bounds = L.latLngBounds(aoiStartLatLng, e.latlng);
+            // Ignore tiny clicks (not a drag)
+            var size = microgridMap.project(bounds.getNorthEast()).distanceTo(microgridMap.project(bounds.getSouthWest()));
+            if (size < 10) {
+                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+                return;
+            }
+
+            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+
+            aoiBounds = bounds;
+            aoiLayer = L.rectangle(bounds, {
+                color: '#1a6fc4', weight: 2.5,
+                fillColor: '#4a90d9', fillOpacity: 0.08
+            }).addTo(microgridMap);
+
+            // Exit draw mode after finishing
+            aoiMode = false;
+            var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
+            var mapEl = document.getElementById('microgrid-map');
+            btn.classList.remove('aoi-active');
+            mapEl.classList.remove('aoi-draw-mode');
+            microgridMap.dragging.enable();
+            removeAoiToast();
+
+            document.getElementById('aoi-clear-btn').style.display = 'block';
+            updateCharts();
+        });
+
+        function clearAOI() {
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); aoiLayer = null; }
+            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+            aoiBounds = null;
+            aoiDrawing = false;
+            document.getElementById('aoi-clear-btn').style.display = 'none';
+            updateCharts();
+        }
+
+        // ===== ADD PANEL =====
         function toggleAddPanel(btn) {
             var panel = document.getElementById('ac2-add-panel');
             var isOpen = panel.classList.contains('open');
@@ -440,7 +837,6 @@
             }
         }
 
-        // Close Add panel when clicking outside
         document.addEventListener('click', function(e) {
             var panel = document.getElementById('ac2-add-panel');
             if (panel && !e.target.closest('#ac2-add-panel') && !e.target.closest('#ac2-add-btn')) {
@@ -448,17 +844,23 @@
             }
         });
 
-        // Search Area — placeholder for future map integration
+        // Wire checkboxes to load/unload GeoJSON layers
+        document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                if (this.checked) {
+                    loadLayer(this.value);
+                } else {
+                    unloadLayer(this.value);
+                }
+            });
+        });
+
         document.getElementById('ac2-search').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 var query = this.value.trim();
                 if (query) console.log('Search Area:', query);
             }
         });
-
-        function handleSelectArea() {
-            console.log('Select Area of Interest triggered');
-        }
 
         function handleDownload() {
             console.log('Download triggered');
@@ -477,6 +879,9 @@
             var t = document.getElementById('sidebar-toggle-btn');
             if (t) t.innerHTML = hidden ? '&#8594;' : '&#8592;';
         }
+
+        // Initial chart render
+        updateCharts();
     </script>
 </body>
 </html>
