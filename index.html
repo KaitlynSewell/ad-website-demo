@@ -715,6 +715,7 @@
                 });
                 updateLegendButtons();
                 updateSectionCheckboxes();
+                saveLegendState();
             });
 
             div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
@@ -724,6 +725,7 @@
                 });
                 updateLegendButtons();
                 updateSectionCheckboxes();
+                saveLegendState();
             });
 
             // Section header checkboxes — toggle all items in that section
@@ -741,6 +743,7 @@
                     });
                     updateLegendButtons();
                     updateSectionCheckboxes();
+                    saveLegendState();
                 });
             });
 
@@ -750,8 +753,38 @@
                     toggleLayer(key, this.checked);
                     updateLegendButtons();
                     updateSectionCheckboxes();
+                    saveLegendState();
                 });
             });
+
+            function saveLegendState() {
+                var state = {};
+                allKeys.concat(noLayerKeys).forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb) state[key] = cb.checked;
+                });
+                localStorage.setItem('legendState', JSON.stringify(state));
+            }
+
+            function restoreLegendState() {
+                var saved = localStorage.getItem('legendState');
+                if (!saved) return;
+                try {
+                    var state = JSON.parse(saved);
+                    allKeys.concat(noLayerKeys).forEach(function (key) {
+                        if (state[key] === true) {
+                            var cb = div.querySelector('#toggle-' + key);
+                            if (cb && !cb.checked) {
+                                cb.checked = true;
+                                toggleLayer(key, true);
+                            }
+                        }
+                    });
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                } catch (e) {}
+            }
+            restoreLegendState();
 
             L.DomEvent.disableScrollPropagation(div);
             L.DomEvent.disableClickPropagation(div);
