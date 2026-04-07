@@ -1,5 +1,2 @@
 *.zip
 nul
-# Raw GeoJSON source data — served as pre-built vector tiles instead.
-# Users on the live site only see individual tiles, not the full dataset.
-geojson/
