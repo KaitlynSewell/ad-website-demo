@@ -633,8 +633,10 @@
             function blade(c) { return '<svg width="12" height="16" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
             function paper(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
             function grp(t, f, secId) {
-                var cb = secId ? '<input type="checkbox" id="' + secId + '">' : '';
-                return '<div class="legend-group' + (f ? ' first' : '') + '">' + cb + t + '</div>';
+                if (secId) {
+                    return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '">' + t + '</label></div>';
+                }
+                return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>';
             }
             var sectionKeys = {
                 'sec-agresidue': ['corn','soybean'],
