@@ -462,6 +462,14 @@
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
             ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
             ctx.fill();
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(total.toLocaleString(), cx, cy - 7);
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#888';
+            ctx.fillText('total', cx, cy + 10);
             var legend = document.getElementById(legendId);
             legend.innerHTML = segments.map(function(seg) {
                 var pct = Math.round(seg.value / total * 100);
