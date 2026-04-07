@@ -135,6 +135,17 @@
         html.dark-mode .ac2-chart-title { color: #e0e0e0; }
         html.dark-mode .ac2-legend-item { color: #bbb; }
 
+        .ac2-data-date {
+            font-size: 11px;
+            color: #aaa;
+            text-align: right;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #eee;
+            width: 100%;
+        }
+        html.dark-mode .ac2-data-date { color: #666; border-top-color: #3a3a50; }
+
         .ac2-map-box {
             background: white;
             border: 1px solid #ddd;
@@ -347,12 +358,13 @@
                         <div class="ac2-chart-title">Anerobic Digestion Inputs by Source</div>
                         <canvas id="pie-chart-2" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-2"></div>
+                        <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
                     <div class="ac2-chart-box">
                         <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
-                        <div style="font-size:11px; color:#888; align-self:flex-start; margin-top:-12px;">As of March 6, 2026</div>
                         <canvas id="pie-chart-1" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-1"></div>
+                        <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
@@ -361,16 +373,19 @@
                         <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()">&#10005; Clear Area of Interest</button>
                         <div id="microgrid-map"></div>
                     </div>
-                    <div style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); display:flex; overflow:hidden; min-height:100px;">
-                        <div style="flex:1; padding:14px 16px;">
-                            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
-                            <div id="prod-content"></div>
+                    <div style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
+                        <div style="display:flex;">
+                            <div style="flex:1; padding:14px 16px;">
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
+                                <div id="prod-content"></div>
+                            </div>
+                            <div style="width:1px; background:#ddd;"></div>
+                            <div style="flex:1; padding:14px 16px;">
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Costs</div>
+                                <div id="cost-content"></div>
+                            </div>
                         </div>
-                        <div style="width:1px; background:#ddd;"></div>
-                        <div style="flex:1; padding:14px 16px;">
-                            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Costs</div>
-                            <div id="cost-content"></div>
-                        </div>
+                        <div class="ac2-data-date" style="padding:0 16px 8px;">As of April 7, 2026</div>
                     </div>
                 </div>
             </div>
