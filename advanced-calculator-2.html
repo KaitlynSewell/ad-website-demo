@@ -435,7 +435,7 @@
             { label: 'By-products',    value: 10, color: '#9b59b6' }
         ];
 
-        function drawPie(canvasId, legendId, segments) {
+        function drawPie(canvasId, legendId, segments, unit) {
             var canvas = document.getElementById(canvasId);
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
@@ -469,7 +469,7 @@
             ctx.fillText(total.toLocaleString(), cx, cy - 7);
             ctx.font = '11px sans-serif';
             ctx.fillStyle = '#888';
-            ctx.fillText('total', cx, cy + 10);
+            ctx.fillText(unit || 'total', cx, cy + 10);
             var legend = document.getElementById(legendId);
             legend.innerHTML = segments.map(function(seg) {
                 var pct = Math.round(seg.value / total * 100);
@@ -695,8 +695,8 @@
         function updateCharts() {
             // If no layers loaded and no AOI drawn, show default placeholder data
             if (!hasAnyLoadedLayer() && !hasAoiActive()) {
-                drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1);
-                drawPie('pie-chart-2', 'pie-legend-2', DEFAULT_PIE2);
+                drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
+                drawPie('pie-chart-2', 'pie-legend-2', DEFAULT_PIE2, 'tons');
                 updateProdCost(null);
                 return;
             }
@@ -713,7 +713,7 @@
             var pie1Segs = Object.keys(PIE1_COLORS).map(function(label) {
                 return { label: label, value: pie1Counts[label] || 0, color: PIE1_COLORS[label] };
             });
-            drawPie('pie-chart-1', 'pie-legend-1', pie1Segs);
+            drawPie('pie-chart-1', 'pie-legend-1', pie1Segs, 'MW');
 
             // --- Pie 2: AD inputs/revenue ---
             var pie2Counts = {};
@@ -725,7 +725,7 @@
             var pie2Segs = Object.keys(PIE2_COLORS).map(function(label) {
                 return { label: label, value: pie2Counts[label] || 0, color: PIE2_COLORS[label] };
             });
-            drawPie('pie-chart-2', 'pie-legend-2', pie2Segs);
+            drawPie('pie-chart-2', 'pie-legend-2', pie2Segs, 'tons');
 
             // --- Production / Costs ---
             updateProdCost(filtered);
