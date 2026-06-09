@@ -794,13 +794,13 @@
             maxZoom: 19
         });
 
-        mgSatelliteLayer.addTo(microgridMap);
-        var mgBaseLayer = 'satellite';
+        mgStreetLayer.addTo(microgridMap);
+        var mgBaseLayer = 'street';
 
         var mgToggleBtn = L.control({ position: 'topright' });
         mgToggleBtn.onAdd = function() {
             var btn = L.DomUtil.create('button', '');
-            btn.textContent = 'Switch to Street Map';
+            btn.textContent = 'Switch to Satellite';
             btn.style.cssText = 'padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
             L.DomEvent.on(btn, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
