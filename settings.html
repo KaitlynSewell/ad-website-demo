@@ -199,5 +199,10 @@
             if (t) t.innerHTML = hidden ? '&#8594;' : '&#8592;';
         }
     </script>
+    <script>
+        var prev = localStorage.getItem('prevPage');
+        var btn = document.querySelector('.header-gear-btn');
+        if (btn) btn.href = prev || 'index.html';
+    </script>
 </body>
 </html>
