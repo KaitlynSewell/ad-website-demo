@@ -1,6 +1,6 @@
 var translations = {
     en: {
-        'site-title': 'Anerobic Digestion Pathways',
+        'site-title': 'Anaerobic Digestion Pathways',
         'nav-home': 'Home',
         'nav-about': 'About',
         'nav-funding': 'Funding Information',
