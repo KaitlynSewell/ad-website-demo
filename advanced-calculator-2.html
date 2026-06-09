@@ -530,6 +530,24 @@
             legend.innerHTML = '<div class="ac2-legend-item" style="color:#888;font-style:italic;">No Inputs Selected</div>';
         }
 
+        function drawNoInputsBar() {
+            var canvas = document.getElementById('bar-chart-1');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var cx = canvas.width / 2, cy = canvas.height / 2;
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#bbb';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No Inputs Selected', cx, cy);
+        }
+
         function drawBarChart() {
             var canvas = document.getElementById('bar-chart-1');
             if (!canvas) return;
@@ -791,14 +809,17 @@
         }
 
         function updateCharts() {
-            // Pie 1 and bar chart are always static
-            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
-
             if (!hasAnyLoadedLayer()) {
+                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
                 drawNoInputsPie('pie-chart-2', 'pie-legend-2');
+                drawNoInputsBar();
                 updateProdCost(null);
                 return;
             }
+
+            // Pie 1 and bar chart are static when layers are loaded
+            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
+            drawBarChart();
 
             var filtered = getFeaturesInAOI();
 
@@ -1172,7 +1193,6 @@
 
         // Initial chart render
         updateCharts();
-        drawBarChart();
     </script>
 </body>
 </html>
