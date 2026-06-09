@@ -437,11 +437,10 @@
     <script>
         // ===== PIE CHART DRAWING =====
         var DEFAULT_PIE1 = [
-            { label: 'Beef Cattle',  value: 32, color: '#c87533' },
-            { label: 'Swine',        value: 24, color: '#ff9eb5' },
-            { label: 'Dairy Cattle', value: 20, color: '#4a90d9' },
-            { label: 'Wastewater',   value: 14, color: '#3498db' },
-            { label: 'Other',        value: 10, color: '#aaa'    }
+            { label: 'Biogas',   value: 35, color: '#2ecc71' },
+            { label: 'Heat',     value: 28, color: '#e74c3c' },
+            { label: 'Electric', value: 25, color: '#4169e1' },
+            { label: 'Solar',    value: 12, color: '#f39c12' }
         ];
         var DEFAULT_PIE2 = [
             { label: 'Energy Sales',   value: 45, color: '#2ecc71' },
@@ -561,13 +560,15 @@
 
         // Map each layer key to a pie-1 category (energy generation by source type)
         var PIE1_CAT = {
-            beef: 'Beef Cattle', dairy: 'Dairy Cattle', swine: 'Swine',
-            wastewater: 'Wastewater'
-            // all others → 'Other'
+            digesters: 'Biogas', lmop: 'Biogas', wastewater: 'Biogas',
+            beef: 'Heat', dairy: 'Heat', swine: 'Heat', horses: 'Heat',
+            turkeys: 'Heat', chickens: 'Heat', sheep: 'Heat',
+            powerplants: 'Electric', utilities: 'Electric', ethanol: 'Electric'
+            // Solar → unassigned until solar layer added
         };
         var PIE1_COLORS = {
-            'Beef Cattle': '#c87533', 'Dairy Cattle': '#4a90d9',
-            'Swine': '#ff9eb5', 'Wastewater': '#3498db', 'Other': '#aaa'
+            'Biogas': '#2ecc71', 'Heat': '#e74c3c',
+            'Electric': '#4169e1', 'Solar': '#f39c12'
         };
 
         // Map each layer key to a pie-2 category (AD revenue/input type)
