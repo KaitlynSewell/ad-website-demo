@@ -533,24 +533,13 @@
         }
 
         function drawNoInputsBar() {
-            var canvas = document.getElementById('bar-chart-1');
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var cx = canvas.width / 2, cy = canvas.height / 2;
-            ctx.strokeStyle = '#ccc';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 4]);
-            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#bbb';
-            ctx.font = '13px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('No Inputs Selected', cx, cy);
+            drawBarChart(BAR_DATA.map(function(d) {
+                return { label: d.label, used: 0, stored: 0, color: d.color };
+            }));
         }
 
-        function drawBarChart() {
+        function drawBarChart(data) {
+            data = data || BAR_DATA;
             var canvas = document.getElementById('bar-chart-1');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
@@ -559,9 +548,9 @@
             var padL = 38, padR = 8, padT = 10, padB = 28;
             var chartW = W - padL - padR;
             var chartH = H - padT - padB;
-            var maxVal = Math.max.apply(null, BAR_DATA.map(function(d) { return Math.max(d.used, d.stored); }));
-            maxVal = Math.ceil(maxVal / 100) * 100;
-            var groupW = chartW / BAR_DATA.length;
+            var maxVal = Math.max.apply(null, data.map(function(d) { return Math.max(d.used, d.stored); }));
+            maxVal = maxVal > 0 ? Math.ceil(maxVal / 100) * 100 : 100;
+            var groupW = chartW / data.length;
             var barW = groupW * 0.28;
             var gap = groupW * 0.06;
             // gridlines + y-axis labels
@@ -577,7 +566,7 @@
                 ctx.fillText(Math.round(maxVal * i / 4), padL - 4, y);
             }
             // bars
-            BAR_DATA.forEach(function(d, i) {
+            data.forEach(function(d, i) {
                 var cx = padL + i * groupW + groupW / 2;
                 var x1 = cx - barW - gap / 2;
                 var x2 = cx + gap / 2;
