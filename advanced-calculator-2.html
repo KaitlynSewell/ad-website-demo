@@ -366,6 +366,15 @@
                         <div class="ac2-chart-legend" id="pie-legend-1"></div>
                         <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
+                    <div class="ac2-chart-box">
+                        <div class="ac2-chart-title">Energy Used vs Stored by Type</div>
+                        <canvas id="bar-chart-1" width="260" height="180"></canvas>
+                        <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Used</span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Stored</span>
+                        </div>
+                        <div class="ac2-data-date">As of April 7, 2026</div>
+                    </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
                     <div class="ac2-map-box" style="flex:none;">
@@ -439,8 +448,14 @@
         var DEFAULT_PIE1 = [
             { label: 'Biogas',   value: 35, color: '#2ecc71' },
             { label: 'Heat',     value: 28, color: '#e74c3c' },
-            { label: 'Electric', value: 25, color: '#4169e1' },
-            { label: 'Solar',    value: 12, color: '#f39c12' }
+            { label: 'Electric', value: 25, color: '#f1c40f' },
+            { label: 'Solar',    value: 12, color: '#3498db' }
+        ];
+        var BAR_DATA = [
+            { label: 'Biogas',   used: 420, stored: 180, color: '#2ecc71' },
+            { label: 'Heat',     used: 310, stored: 95,  color: '#e74c3c' },
+            { label: 'Electric', used: 550, stored: 220, color: '#f1c40f' },
+            { label: 'Solar',    used: 140, stored: 60,  color: '#3498db' }
         ];
         var DEFAULT_PIE2 = [
             { label: 'Energy Sales',   value: 45, color: '#2ecc71' },
@@ -515,6 +530,51 @@
             legend.innerHTML = '<div class="ac2-legend-item" style="color:#888;font-style:italic;">No Inputs Selected</div>';
         }
 
+        function drawBarChart() {
+            var canvas = document.getElementById('bar-chart-1');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            var padL = 38, padR = 8, padT = 10, padB = 28;
+            var chartW = W - padL - padR;
+            var chartH = H - padT - padB;
+            var maxVal = Math.max.apply(null, BAR_DATA.map(function(d) { return Math.max(d.used, d.stored); }));
+            maxVal = Math.ceil(maxVal / 100) * 100;
+            var groupW = chartW / BAR_DATA.length;
+            var barW = groupW * 0.28;
+            var gap = groupW * 0.06;
+            // gridlines + y-axis labels
+            ctx.lineWidth = 1;
+            for (var i = 0; i <= 4; i++) {
+                var y = padT + chartH - (chartH * i / 4);
+                ctx.strokeStyle = '#eee';
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
+                ctx.fillStyle = '#999';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.round(maxVal * i / 4), padL - 4, y);
+            }
+            // bars
+            BAR_DATA.forEach(function(d, i) {
+                var cx = padL + i * groupW + groupW / 2;
+                var x1 = cx - barW - gap / 2;
+                var x2 = cx + gap / 2;
+                var usedH = (d.used / maxVal) * chartH;
+                ctx.fillStyle = d.color;
+                ctx.fillRect(x1, padT + chartH - usedH, barW, usedH);
+                var storedH = (d.stored / maxVal) * chartH;
+                ctx.fillStyle = '#aaa';
+                ctx.fillRect(x2, padT + chartH - storedH, barW, storedH);
+                ctx.fillStyle = '#555';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(d.label, cx, padT + chartH + 4);
+            });
+        }
+
         function drawZeroPie(canvasId, legendId, segments) {
             var canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -568,7 +628,7 @@
         };
         var PIE1_COLORS = {
             'Biogas': '#2ecc71', 'Heat': '#e74c3c',
-            'Electric': '#4169e1', 'Solar': '#f39c12'
+            'Electric': '#f1c40f', 'Solar': '#3498db'
         };
 
         // Map each layer key to a pie-2 category (AD revenue/input type)
@@ -731,26 +791,16 @@
         }
 
         function updateCharts() {
+            // Pie 1 and bar chart are always static
+            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
+
             if (!hasAnyLoadedLayer()) {
-                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
                 drawNoInputsPie('pie-chart-2', 'pie-legend-2');
                 updateProdCost(null);
                 return;
             }
 
             var filtered = getFeaturesInAOI();
-
-            // --- Pie 1: energy generation by source type ---
-            var pie1Counts = {};
-            Object.keys(PIE1_COLORS).forEach(function(k) { pie1Counts[k] = 0; });
-            Object.keys(filtered).forEach(function(key) {
-                var cat = PIE1_CAT[key] || 'Other';
-                pie1Counts[cat] = (pie1Counts[cat] || 0) + filtered[key].length;
-            });
-            var pie1Segs = Object.keys(PIE1_COLORS).map(function(label) {
-                return { label: label, value: pie1Counts[label] || 0, color: PIE1_COLORS[label] };
-            });
-            drawPie('pie-chart-1', 'pie-legend-1', pie1Segs, 'MW');
 
             // --- Pie 2: AD inputs/revenue ---
             var pie2Counts = {};
@@ -1124,6 +1174,7 @@
 
         // Initial chart render
         updateCharts();
+        drawBarChart();
     </script>
 </body>
 </html>
