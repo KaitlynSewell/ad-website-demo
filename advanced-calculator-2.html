@@ -517,15 +517,17 @@
             var r = Math.min(cx, cy) - 10;
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#ccc';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 4]);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.fillStyle = '#ccc';
+            ctx.fill();
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#fff';
             ctx.fill();
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('0', cx, cy);
             var legend = document.getElementById(legendId);
             legend.innerHTML = '<div class="ac2-legend-item" style="color:#888;font-style:italic;">No Inputs Selected</div>';
         }
