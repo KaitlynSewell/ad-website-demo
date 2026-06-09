@@ -494,6 +494,28 @@
             }).join('');
         }
 
+        function drawNoInputsPie(canvasId, legendId) {
+            var canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var cx = canvas.width / 2, cy = canvas.height / 2;
+            var r = Math.min(cx, cy) - 10;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
+            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fill();
+            var legend = document.getElementById(legendId);
+            legend.innerHTML = '<div class="ac2-legend-item" style="color:#888;font-style:italic;">No Inputs Selected</div>';
+        }
+
         function drawZeroPie(canvasId, legendId, segments) {
             var canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -708,10 +730,9 @@
         }
 
         function updateCharts() {
-            // If no layers loaded and no AOI drawn, show default placeholder data
-            if (!hasAnyLoadedLayer() && !hasAoiActive()) {
-                drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
-                drawPie('pie-chart-2', 'pie-legend-2', DEFAULT_PIE2, 'tons');
+            if (!hasAnyLoadedLayer()) {
+                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
+                drawNoInputsPie('pie-chart-2', 'pie-legend-2');
                 updateProdCost(null);
                 return;
             }
@@ -752,8 +773,8 @@
             if (!prodEl || !costEl) return;
 
             if (!filtered) {
-                prodEl.innerHTML = '<div style="font-size:12px;color:#888;">Add layers to see estimates</div>';
-                costEl.innerHTML = '<div style="font-size:12px;color:#888;">Add layers to see estimates</div>';
+                prodEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
+                costEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
                 return;
             }
 
