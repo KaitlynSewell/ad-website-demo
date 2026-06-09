@@ -135,16 +135,15 @@
         html.dark-mode .ac2-chart-title { color: #e0e0e0; }
         html.dark-mode .ac2-legend-item { color: #bbb; }
 
-        .ac2-data-date {
+        .ac2-page-date {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
             font-size: 11px;
             color: #aaa;
-            text-align: right;
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px solid #eee;
-            width: 100%;
+            pointer-events: none;
         }
-        html.dark-mode .ac2-data-date { color: #666; border-top-color: #3a3a50; }
+        html.dark-mode .ac2-page-date { color: #666; }
 
         .ac2-map-box {
             background: white;
@@ -358,13 +357,11 @@
                         <div class="ac2-chart-title">Anerobic Digestion Inputs by Source</div>
                         <canvas id="pie-chart-2" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-2"></div>
-                        <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
                     <div class="ac2-chart-box">
                         <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
                         <canvas id="pie-chart-1" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-1"></div>
-                        <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
                     <div class="ac2-chart-box">
                         <div class="ac2-chart-title">Energy Used vs Stored by Type</div>
@@ -373,7 +370,6 @@
                             <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Used</span>
                             <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Stored</span>
                         </div>
-                        <div class="ac2-data-date">As of April 7, 2026</div>
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
@@ -394,7 +390,6 @@
                                 <div id="cost-content"></div>
                             </div>
                         </div>
-                        <div class="ac2-data-date" style="padding:0 16px 8px;">As of April 7, 2026</div>
                     </div>
                 </div>
             </div>
@@ -1184,6 +1179,8 @@
 
         // Initial chart render
         updateCharts();
+
     </script>
+    <div class="ac2-page-date">As of April 7, 2026</div>
 </body>
 </html>
