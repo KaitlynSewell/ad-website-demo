@@ -358,12 +358,6 @@
                             <label><input type="radio" name="energyUnit" value="MMBTU" onchange="setEnergyUnit('MMBTU')"> MMBTU</label>
                         </span>
                     </div>
-                    <div class="units-row">
-                        <span>Currency</span>
-                        <label><input type="radio" name="moneyUnit" value="dollars"  onchange="setMoneyUnit('dollars')">  $</label>
-                        <label><input type="radio" name="moneyUnit" value="thousand" checked onchange="setMoneyUnit('thousand')"> $ thousand</label>
-                        <label><input type="radio" name="moneyUnit" value="million"  onchange="setMoneyUnit('million')">  $ million</label>
-                    </div>
                 </div>
             </div>
 
@@ -503,7 +497,6 @@
         // ===== UNITS =====
         var unitSystem = 'metric';
         var energyUnit = 'MWh';
-        var moneyUnit  = 'thousand';
         var ENERGY_UNITS = {
             // Metric
             'kWh':   { label: 'kWh',    factor: 1000,        system: 'metric'   },
@@ -514,11 +507,6 @@
             'BTU':   { label: 'BTU',    factor: 3412142,     system: 'imperial' },
             'kBTU':  { label: 'kBTU',   factor: 3412.142,    system: 'imperial' },
             'MMBTU': { label: 'MMBTU',  factor: 3.412142,    system: 'imperial' }
-        };
-        var MONEY_UNITS = {
-            'dollars':  { label: '$',          factor: 1000  },
-            'thousand': { label: '$ thousand', factor: 1     },
-            'million':  { label: '$ million',  factor: 0.001 }
         };
         function toggleUnitsPanel() {
             var p = document.getElementById('ac2-units-panel');
@@ -535,7 +523,6 @@
             updateCharts();
         }
         function setEnergyUnit(u) { energyUnit = u; updateCharts(); }
-        function setMoneyUnit(u)  { moneyUnit  = u; updateCharts(); }
         document.addEventListener('click', function(e) {
             var wrap = document.getElementById('ac2-units-wrap');
             if (wrap && !wrap.contains(e.target)) {
@@ -946,7 +933,6 @@
             if (!prodEl || !costEl) return;
 
             var eu = ENERGY_UNITS[energyUnit];
-            var mu = MONEY_UNITS[moneyUnit];
 
             if (!filtered) {
                 prodEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
@@ -963,14 +949,12 @@
             });
 
             var prodConverted = Math.round(totalProd * eu.factor);
-            var costConverted = totalCost * mu.factor;
-            var costStr = mu.factor < 1 ? costConverted.toFixed(2) : Math.round(costConverted).toLocaleString();
 
             if (totalFeat === 0) {
                 prodEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">0</div>' +
                     '<div style="font-size:11px;color:#888;">' + eu.label + ' / year</div>';
                 costEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
-                    '<div style="font-size:11px;color:#888;">' + mu.label + ' / year</div>';
+                    '<div style="font-size:11px;color:#888;">$ thousand / year</div>';
                 return;
             }
 
@@ -979,8 +963,8 @@
                 '<div style="font-size:11px;color:#888;">' + eu.label + ' / year (est.)</div>' +
                 '<div style="font-size:11px;color:#888;margin-top:4px;">' + totalFeat + ' facilit' + (totalFeat === 1 ? 'y' : 'ies') + '</div>';
             costEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + costStr + '</div>' +
-                '<div style="font-size:11px;color:#888;">' + mu.label + ' / year (est.)</div>';
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + totalCost.toLocaleString() + 'k</div>' +
+                '<div style="font-size:11px;color:#888;">$ thousand / year (est.)</div>';
         }
 
         // ===== MAP SETUP =====
