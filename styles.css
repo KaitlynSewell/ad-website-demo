@@ -89,7 +89,7 @@ body {
     padding: 0;
     margin: 0;
     display: none;
-    background-color: #a0a5ad;
+    background-color: #c8ccd1;
 }
 
 .sidebar .submenu.open {
@@ -97,7 +97,7 @@ body {
 }
 
 .sidebar .submenu li {
-    border-bottom: 1px solid #969ba2;
+    border-bottom: 1px solid #b5babe;
 }
 
 .sidebar .submenu li a {
