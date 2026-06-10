@@ -105,7 +105,7 @@ body {
     font-size: 13px;
 }
 
-.sidebar ul li:has(.submenu) {
+.sidebar ul li:has(.submenu.open) {
     border-bottom: 2px solid white;
 }
 
@@ -239,7 +239,7 @@ html.dark-mode .sidebar .submenu {
     background-color: #1e1e30;
 }
 
-html.dark-mode .sidebar ul li:has(.submenu) {
+html.dark-mode .sidebar ul li:has(.submenu.open) {
     border-bottom-color: rgba(255,255,255,0.3);
 }
 
