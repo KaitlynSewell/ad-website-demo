@@ -642,6 +642,48 @@
             { label: 'By-products',    value: 10, color: '#9b59b6' }
         ];
 
+        // ===== PIE CHART HOVER TOOLTIPS =====
+        var pieSliceData = {};
+
+        function initPieHover(canvasId) {
+            var canvas = document.getElementById(canvasId);
+            if (!canvas || canvas._hoverInit) return;
+            canvas._hoverInit = true;
+            var tt = document.createElement('div');
+            tt.style.cssText = 'position:fixed;pointer-events:none;background:rgba(20,20,20,0.85);color:#fff;padding:7px 11px;border-radius:5px;font-size:12px;line-height:1.6;z-index:99999;display:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+            document.body.appendChild(tt);
+            canvas.addEventListener('mousemove', function(e) {
+                var data = pieSliceData[canvasId];
+                if (!data || !data.slices.length) return;
+                var rect = canvas.getBoundingClientRect();
+                var sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+                var dx = (e.clientX - rect.left) * sx - data.cx;
+                var dy = (e.clientY - rect.top) * sy - data.cy;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < data.innerR || dist > data.r) { tt.style.display = 'none'; return; }
+                // Convert to clockwise-from-top angle in [0, 2π)
+                var mouseTA = Math.atan2(dy, dx) + Math.PI / 2;
+                if (mouseTA < 0) mouseTA += 2 * Math.PI;
+                if (mouseTA >= 2 * Math.PI) mouseTA -= 2 * Math.PI;
+                var hit = null;
+                for (var i = 0; i < data.slices.length; i++) {
+                    var s = data.slices[i];
+                    if (mouseTA >= s.startTA && mouseTA < s.endTA) { hit = s; break; }
+                }
+                if (!hit) hit = data.slices[data.slices.length - 1]; // last slice catches rounding edge
+                var pct = (hit.value / data.total * 100).toFixed(1);
+                tt.innerHTML = '<strong>' + hit.label + '</strong><br>' +
+                    hit.value.toLocaleString() + (data.unit ? ' ' + data.unit : '') + '<br>' +
+                    pct + '% of total';
+                tt.style.display = 'block';
+                var tx = e.clientX + 14;
+                if (tx + 180 > window.innerWidth) tx = e.clientX - 180;
+                tt.style.left = tx + 'px';
+                tt.style.top = (e.clientY - 10) + 'px';
+            });
+            canvas.addEventListener('mouseleave', function() { tt.style.display = 'none'; });
+        }
+
         function drawPie(canvasId, legendId, segments, unit) {
             var canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -652,8 +694,11 @@
             var total = segments.reduce(function(s, d) { return s + d.value; }, 0);
             if (total === 0) { drawZeroPie(canvasId, legendId, segments); return; }
             var angle = -Math.PI / 2;
+            var slices = [];
             segments.forEach(function(seg) {
                 var slice = (seg.value / total) * 2 * Math.PI;
+                var startTA = angle + Math.PI / 2;
+                if (startTA < 0) startTA += 2 * Math.PI;
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
                 ctx.arc(cx, cy, r, angle, angle + slice);
@@ -664,7 +709,12 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 angle += slice;
+                var endTA = angle + Math.PI / 2;
+                if (endTA < 0) endTA += 2 * Math.PI;
+                slices.push({ startTA: startTA, endTA: endTA, value: seg.value, label: seg.label, color: seg.color });
             });
+            pieSliceData[canvasId] = { cx: cx, cy: cy, r: r, innerR: r * 0.42, total: total, slices: slices, unit: unit || '' };
+            initPieHover(canvasId);
             var isDark = document.documentElement.classList.contains('dark-mode');
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
