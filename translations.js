@@ -37,7 +37,7 @@ var translations = {
         'btn-clear': 'Clear',
         // Help
         'help-heading': 'Help',
-        'help-faqs': "FAQ's",
+        'help-faqs': 'FAQs',
         'help-tutorials': 'Tutorials',
         // Farms
         'farms-title': 'Farms & Facilities',
