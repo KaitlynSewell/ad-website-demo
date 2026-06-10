@@ -1038,7 +1038,8 @@
             .then(function(data) {
                 var iowa = data.features.find(function(f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 4, opacity: 0.4 } }).addTo(microgridMap);
+                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 4, opacity: 0.4 } }).addTo(microgridMap);
+                    updateMgIowaBorder();
                 }
             });
         mgToggleBtn.addTo(microgridMap);
