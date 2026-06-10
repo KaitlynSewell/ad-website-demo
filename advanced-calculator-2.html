@@ -74,6 +74,35 @@
 
         .ac2-toolbar-btn:hover { background: rgba(255,255,255,0.35); }
 
+        .ac2-units-wrap { position: relative; }
+        .ac2-units-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 400;
+            white-space: nowrap;
+            font-size: 12px;
+            color: #2c3e50;
+            display: none;
+        }
+        .ac2-units-panel .units-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 0;
+        }
+        .ac2-units-panel .units-row + .units-row { border-top: 1px solid #eee; margin-top: 4px; padding-top: 8px; }
+        .ac2-units-panel .units-row > span:first-child { font-weight: bold; min-width: 50px; }
+        .ac2-units-panel .units-row > span:not(:first-child) { display: flex; gap: 12px; }
+        .ac2-units-panel label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        html.dark-mode .ac2-units-panel { background: #2c2c3e; border-color: #555; color: #e0e0e0; }
+        html.dark-mode .ac2-units-panel .units-row + .units-row { border-top-color: #444; }
+
         /* Chart boxes */
         .ac2-charts {
             display: flex;
@@ -306,6 +335,38 @@
     <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
         <span style="font-weight:bold; position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;">Advanced Calculator 2</span>
         <div class="ac2-toolbar">
+            <!-- Units dropdown -->
+            <div class="ac2-units-wrap" id="ac2-units-wrap">
+                <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()">Units &#9662;</button>
+                <div class="ac2-units-panel" id="ac2-units-panel">
+                    <div class="units-row">
+                        <span>System</span>
+                        <label><input type="radio" name="unitSystem" value="metric"   checked onchange="setUnitSystem('metric')">   Metric</label>
+                        <label><input type="radio" name="unitSystem" value="imperial"         onchange="setUnitSystem('imperial')"> Imperial</label>
+                    </div>
+                    <div class="units-row">
+                        <span>Energy</span>
+                        <span id="energy-metric">
+                            <label><input type="radio" name="energyUnit" value="kWh"  onchange="setEnergyUnit('kWh')">  kWh</label>
+                            <label><input type="radio" name="energyUnit" value="MWh"  checked onchange="setEnergyUnit('MWh')">  MWh</label>
+                            <label><input type="radio" name="energyUnit" value="GWh"  onchange="setEnergyUnit('GWh')">  GWh</label>
+                            <label><input type="radio" name="energyUnit" value="GJ"   onchange="setEnergyUnit('GJ')">   GJ</label>
+                        </span>
+                        <span id="energy-imperial" style="display:none;">
+                            <label><input type="radio" name="energyUnit" value="BTU"   onchange="setEnergyUnit('BTU')">   BTU</label>
+                            <label><input type="radio" name="energyUnit" value="kBTU"  onchange="setEnergyUnit('kBTU')">  kBTU</label>
+                            <label><input type="radio" name="energyUnit" value="MMBTU" onchange="setEnergyUnit('MMBTU')"> MMBTU</label>
+                        </span>
+                    </div>
+                    <div class="units-row">
+                        <span>Money</span>
+                        <label><input type="radio" name="moneyUnit" value="dollars"  onchange="setMoneyUnit('dollars')">  $</label>
+                        <label><input type="radio" name="moneyUnit" value="thousand" checked onchange="setMoneyUnit('thousand')"> $ thousand</label>
+                        <label><input type="radio" name="moneyUnit" value="million"  onchange="setMoneyUnit('million')">  $ million</label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Time period -->
             <select id="ac2-period">
                 <option value="yearly">Yearly</option>
@@ -439,6 +500,50 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // ===== UNITS =====
+        var unitSystem = 'metric';
+        var energyUnit = 'MWh';
+        var moneyUnit  = 'thousand';
+        var ENERGY_UNITS = {
+            // Metric
+            'kWh':   { label: 'kWh',    factor: 1000,        system: 'metric'   },
+            'MWh':   { label: 'MWh',    factor: 1,           system: 'metric'   },
+            'GWh':   { label: 'GWh',    factor: 0.001,       system: 'metric'   },
+            'GJ':    { label: 'GJ',     factor: 3.6,         system: 'metric'   },
+            // Imperial
+            'BTU':   { label: 'BTU',    factor: 3412142,     system: 'imperial' },
+            'kBTU':  { label: 'kBTU',   factor: 3412.142,    system: 'imperial' },
+            'MMBTU': { label: 'MMBTU',  factor: 3.412142,    system: 'imperial' }
+        };
+        var MONEY_UNITS = {
+            'dollars':  { label: '$',          factor: 1000  },
+            'thousand': { label: '$ thousand', factor: 1     },
+            'million':  { label: '$ million',  factor: 0.001 }
+        };
+        function toggleUnitsPanel() {
+            var p = document.getElementById('ac2-units-panel');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        }
+        function setUnitSystem(sys) {
+            unitSystem = sys;
+            energyUnit = sys === 'metric' ? 'MWh' : 'MMBTU';
+            document.querySelectorAll('input[name="energyUnit"]').forEach(function(r) {
+                r.checked = r.value === energyUnit;
+            });
+            document.getElementById('energy-metric').style.display  = sys === 'metric'   ? '' : 'none';
+            document.getElementById('energy-imperial').style.display = sys === 'imperial' ? '' : 'none';
+            updateCharts();
+        }
+        function setEnergyUnit(u) { energyUnit = u; updateCharts(); }
+        function setMoneyUnit(u)  { moneyUnit  = u; updateCharts(); }
+        document.addEventListener('click', function(e) {
+            var wrap = document.getElementById('ac2-units-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                var p = document.getElementById('ac2-units-panel');
+                if (p) p.style.display = 'none';
+            }
+        });
+
         // ===== PIE CHART DRAWING =====
         var DEFAULT_PIE1 = [
             { label: 'Biogas',   value: 35, color: '#2ecc71' },
@@ -533,16 +638,23 @@
             }));
         }
 
-        function drawBarChart(data) {
+        function drawBarChart(data, unitLabel) {
             data = data || BAR_DATA;
+            unitLabel = unitLabel || ENERGY_UNITS[energyUnit].label;
             var canvas = document.getElementById('bar-chart-1');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             var W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
-            var padL = 38, padR = 8, padT = 10, padB = 28;
+            var padL = 38, padR = 8, padT = 18, padB = 28;
             var chartW = W - padL - padR;
             var chartH = H - padT - padB;
+            // unit label top-left
+            ctx.fillStyle = '#999';
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('(' + unitLabel + ')', padL, 2);
             var maxVal = Math.max.apply(null, data.map(function(d) { return Math.max(d.used, d.stored); }));
             maxVal = maxVal > 0 ? Math.ceil(maxVal / 100) * 100 : 100;
             var groupW = chartW / data.length;
@@ -804,8 +916,11 @@
             }
 
             // Pie 1 and bar chart are static when layers are loaded
-            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, 'MW');
-            drawBarChart();
+            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, ENERGY_UNITS[energyUnit].label);
+            var ef = ENERGY_UNITS[energyUnit].factor;
+            drawBarChart(BAR_DATA.map(function(d) {
+                return { label: d.label, used: Math.round(d.used * ef), stored: Math.round(d.stored * ef), color: d.color };
+            }), ENERGY_UNITS[energyUnit].label);
 
             var filtered = getFeaturesInAOI();
 
@@ -830,6 +945,9 @@
             var costEl = document.getElementById('cost-content');
             if (!prodEl || !costEl) return;
 
+            var eu = ENERGY_UNITS[energyUnit];
+            var mu = MONEY_UNITS[moneyUnit];
+
             if (!filtered) {
                 prodEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
                 costEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
@@ -844,21 +962,25 @@
                 totalCost += (COST_PER_FEAT[key] || 0) * n;
             });
 
+            var prodConverted = Math.round(totalProd * eu.factor);
+            var costConverted = totalCost * mu.factor;
+            var costStr = mu.factor < 1 ? costConverted.toFixed(2) : Math.round(costConverted).toLocaleString();
+
             if (totalFeat === 0) {
                 prodEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">0</div>' +
-                    '<div style="font-size:11px;color:#888;">MWh / year</div>';
+                    '<div style="font-size:11px;color:#888;">' + eu.label + ' / year</div>';
                 costEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
-                    '<div style="font-size:11px;color:#888;">thousand / year</div>';
+                    '<div style="font-size:11px;color:#888;">' + mu.label + ' / year</div>';
                 return;
             }
 
             prodEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">' + totalProd.toLocaleString() + '</div>' +
-                '<div style="font-size:11px;color:#888;">MWh / year (est.)</div>' +
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">' + prodConverted.toLocaleString() + '</div>' +
+                '<div style="font-size:11px;color:#888;">' + eu.label + ' / year (est.)</div>' +
                 '<div style="font-size:11px;color:#888;margin-top:4px;">' + totalFeat + ' facilit' + (totalFeat === 1 ? 'y' : 'ies') + '</div>';
             costEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + totalCost.toLocaleString() + 'k</div>' +
-                '<div style="font-size:11px;color:#888;">thousand / year (est.)</div>';
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + costStr + '</div>' +
+                '<div style="font-size:11px;color:#888;">' + mu.label + ' / year (est.)</div>';
         }
 
         // ===== MAP SETUP =====
