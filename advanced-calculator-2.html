@@ -865,6 +865,46 @@
         // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
         var loadedLayers = {};
 
+        // Background coord cache — lightweight coords pre-loaded for AOI counting
+        // regardless of whether the user has toggled the layer on.
+        var bgCoordCache = {};
+
+        function bgLoadCoords(key) {
+            if (bgCoordCache[key] !== undefined) return;
+            bgCoordCache[key] = null; // null = loading
+            fetch('coords/' + key + '.json')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    bgCoordCache[key] = data.map(function(p) { return { lat: p[1], lng: p[0] }; });
+                    if (hasAoiActive()) updateAoiSidebar();
+                })
+                .catch(function() { bgCoordCache[key] = []; });
+        }
+
+        function getAoiCount(key) {
+            var features = loadedLayers[key]
+                ? loadedLayers[key].features
+                : bgCoordCache[key];
+            if (!features) return null; // still loading
+            if (aoiBounds) {
+                return features.filter(function(f) {
+                    return aoiBounds.contains(L.latLng(f.lat, f.lng));
+                }).length;
+            }
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
+                return features.filter(function(f) {
+                    return pointInPolygon(f.lat, f.lng);
+                }).length;
+            }
+            return features.length;
+        }
+
+        // Pre-load coords for all non-pipeline layers so AOI sidebar counts work
+        // regardless of whether the user has toggled that layer on.
+        Object.keys(LAYER_FILES).forEach(function(key) {
+            if (key !== 'pipelines') bgLoadCoords(key);
+        });
+
         function getFeatureCoord(feature) {
             var geom = feature.geometry;
             if (!geom) return null;
@@ -1386,12 +1426,8 @@
 
             var digestersEl = document.getElementById('aoi-digesters-display');
             if (digestersEl) {
-                if (loadedLayers['digesters']) {
-                    var filtered = getFeaturesInAOI();
-                    digestersEl.textContent = (filtered['digesters'] || []).length;
-                } else {
-                    digestersEl.textContent = '—';
-                }
+                var dCount = getAoiCount('digesters');
+                digestersEl.textContent = dCount !== null ? dCount : '…';
             }
 
             sidebar.classList.add('open');
