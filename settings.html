@@ -71,7 +71,7 @@
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
-                <li><a href="advanced-calculator-2.html">Create A Microgrid</a></li>
+                <li><a href="advanced-calculator-2.html" data-i18n="nav-create-microgrid">Create A Microgrid</a></li>
                 <li>
                     <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
@@ -100,15 +100,15 @@
                 </div>
             </div>
             <div class="settings-section">
-                <h3>Text Size</h3>
+                <h3 data-i18n="settings-text-size">Text Size</h3>
                 <div class="theme-options">
                     <label class="theme-option">
                         <input type="radio" name="textSize" value="medium" checked />
-                        <span>Default</span>
+                        <span data-i18n="settings-text-default">Default</span>
                     </label>
                     <label class="theme-option">
                         <input type="radio" name="textSize" value="large" />
-                        <span>Large</span>
+                        <span data-i18n="settings-text-large">Large</span>
                     </label>
                 </div>
             </div>

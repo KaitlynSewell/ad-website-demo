@@ -401,15 +401,15 @@
         <div class="ac2-toolbar">
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
-                <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()">Units &#9662;</button>
+                <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()" data-i18n="ac2-units-btn">Units &#9662;</button>
                 <div class="ac2-units-panel" id="ac2-units-panel">
                     <div class="units-row">
-                        <span>System</span>
-                        <label><input type="radio" name="unitSystem" value="metric"   checked onchange="setUnitSystem('metric')">   Metric</label>
-                        <label><input type="radio" name="unitSystem" value="imperial"         onchange="setUnitSystem('imperial')"> Imperial</label>
+                        <span data-i18n="ac2-system">System</span>
+                        <label><input type="radio" name="unitSystem" value="metric"   checked onchange="setUnitSystem('metric')"> <span data-i18n="ac2-metric">Metric</span></label>
+                        <label><input type="radio" name="unitSystem" value="imperial"         onchange="setUnitSystem('imperial')"> <span data-i18n="ac2-imperial">Imperial</span></label>
                     </div>
                     <div class="units-row">
-                        <span>Energy</span>
+                        <span data-i18n="ac2-energy">Energy</span>
                         <span id="energy-metric">
                             <label><input type="radio" name="energyUnit" value="kWh"  onchange="setEnergyUnit('kWh')">  kWh</label>
                             <label><input type="radio" name="energyUnit" value="MWh"  checked onchange="setEnergyUnit('MWh')">  MWh</label>
@@ -427,10 +427,10 @@
 
             <!-- Time period -->
             <select id="ac2-period">
-                <option value="yearly">Yearly</option>
-                <option value="monthly">Monthly</option>
-                <option value="weekly">Weekly</option>
-                <option value="daily">Daily</option>
+                <option value="yearly" data-i18n="ac2-period-yearly">Yearly</option>
+                <option value="monthly" data-i18n="ac2-period-monthly">Monthly</option>
+                <option value="weekly" data-i18n="ac2-period-weekly">Weekly</option>
+                <option value="daily" data-i18n="ac2-period-daily">Daily</option>
             </select>
 
             <!-- Search Area -->
@@ -438,18 +438,18 @@
 
             <!-- Add button -->
             <div class="ac2-add-wrap">
-                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)">
+                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)" data-i18n="ac2-add-btn">
                     + Add
                 </button>
             </div>
 
             <!-- Select Area of Interest -->
-            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;">Select Area of Interest</button>
+            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;" data-i18n="ac2-select-aoi">Select Area of Interest</button>
 
             <!-- Download -->
             <button class="ac2-toolbar-btn" onclick="handleDownload()" style="margin-left:0;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download
+                <span data-i18n="ac2-download">Download</span>
             </button>
         </div>
     </div>
@@ -457,7 +457,7 @@
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
-                <li><a href="advanced-calculator-2.html" class="active">Create A Microgrid</a></li>
+                <li><a href="advanced-calculator-2.html" class="active" data-i18n="nav-create-microgrid">Create A Microgrid</a></li>
                 <li>
                     <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
@@ -474,39 +474,39 @@
             <div class="ac2-charts">
                 <div style="display:flex; flex-direction:column; gap:24px;">
                     <div class="ac2-chart-box">
-                        <div class="ac2-chart-title">Anaerobic Digestion Inputs by Source</div>
+                        <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Predicted Anaerobic Digestion Inputs by Source</div>
                         <canvas id="pie-chart-2" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-2"></div>
                     </div>
                     <div class="ac2-chart-box">
-                        <div class="ac2-chart-title">Current Energy Generation By Source Type</div>
+                        <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Energy Generation By Source Type</div>
                         <canvas id="pie-chart-1" width="220" height="220"></canvas>
                         <div class="ac2-chart-legend" id="pie-legend-1"></div>
                     </div>
                     <div class="ac2-chart-box">
-                        <div class="ac2-chart-title">Energy Used vs Stored by Type</div>
+                        <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Energy Used vs Stored by Type</div>
                         <canvas id="bar-chart-1" width="260" height="180"></canvas>
                         <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Used</span>
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Stored</span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-used">Used</span></span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-stored">Stored</span></span>
                         </div>
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
                     <div class="ac2-map-box" style="flex:none;">
-                        <div class="ac2-chart-title">My Microgrid</div>
-                        <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()">&#10005; Clear Area of Interest</button>
+                        <div class="ac2-chart-title" data-i18n="ac2-map-title">My Microgrid</div>
+                        <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
                         <div id="microgrid-map"></div>
                     </div>
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
                         <div style="display:flex;">
                             <div style="flex:1; padding:14px 16px;">
-                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-production">Production</div>
                                 <div id="prod-content"></div>
                             </div>
                             <div style="width:1px; background:#ddd;"></div>
                             <div style="flex:1; padding:14px 16px;">
-                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Costs</div>
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-costs">Costs</div>
                                 <div id="cost-content"></div>
                             </div>
                         </div>
@@ -516,16 +516,16 @@
             <div class="calc-container"></div>
         </div>
         <div id="aoi-right-sidebar" class="aoi-right-sidebar">
-            <div class="aoi-rs-header">Selected Area</div>
+            <div class="aoi-rs-header" data-i18n="ac2-sidebar-header">Selected Area</div>
             <div class="aoi-rs-section">
-                <div class="aoi-rs-label">Total Area</div>
+                <div class="aoi-rs-label" data-i18n="ac2-sidebar-area-label">Total Area</div>
                 <div class="aoi-rs-value" id="aoi-area-display">—</div>
                 <div class="aoi-rs-unit" id="aoi-area-unit">sq km</div>
             </div>
             <div class="aoi-rs-section">
-                <div class="aoi-rs-label">Digesters</div>
+                <div class="aoi-rs-label" data-i18n="ac2-sidebar-digesters-label">Digesters</div>
                 <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
-                <div class="aoi-rs-unit">in selected area</div>
+                <div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>
             </div>
             <div class="aoi-rs-section">
                 <div class="aoi-rs-label">Est. Population</div>
@@ -537,41 +537,41 @@
 
     <!-- Add panel is a direct body child so it's always above Leaflet's stacking contexts -->
     <div class="ac2-add-panel" id="ac2-add-panel">
-        <div class="panel-section">Agricultural Residue</div>
-        <label><input type="checkbox" value="corn"> Corn</label>
-        <label><input type="checkbox" value="soybean"> Soybean</label>
-        <div class="panel-section">Feedlot</div>
-        <label><input type="checkbox" value="beef"> Beef Cattle</label>
-        <label><input type="checkbox" value="dairy"> Dairy Cattle</label>
-        <label><input type="checkbox" value="swine"> Swine</label>
-        <label><input type="checkbox" value="horses"> Horses</label>
-        <label><input type="checkbox" value="turkeys"> Turkeys</label>
-        <label><input type="checkbox" value="chickens"> Chickens</label>
-        <label><input type="checkbox" value="sheep"> Sheep / Goats</label>
-        <div class="panel-section">Human Activity</div>
-        <label><input type="checkbox" value="paperfood"> Paper / Food Waste</label>
-        <label><input type="checkbox" value="biodiesel"> Biodiesel Plants</label>
-        <label><input type="checkbox" value="ethanol"> Ethanol Plants</label>
-        <label><input type="checkbox" value="wastewater"> Wastewater Treatment</label>
-        <label><input type="checkbox" value="digesters"> Anaerobic Digesters</label>
-        <label><input type="checkbox" value="lmop"> LMOP Sites</label>
-        <div class="panel-section">Utilities</div>
-        <label><input type="checkbox" value="utilities"> Electric / Gas Utilities</label>
-        <label><input type="checkbox" value="powerplants"> Power Plants</label>
-        <label><input type="checkbox" value="pipelines"> Gas Pipelines</label>
-        <label><input type="checkbox" value="landfill"> Landfill Sites</label>
+        <div class="panel-section" data-i18n="ac2-panel-ag-residue">Agricultural Residue</div>
+        <label><input type="checkbox" value="corn"> <span data-i18n="ac2-layer-corn">Corn</span></label>
+        <label><input type="checkbox" value="soybean"> <span data-i18n="ac2-layer-soybean">Soybean</span></label>
+        <div class="panel-section" data-i18n="ac2-panel-feedlot">Feedlot</div>
+        <label><input type="checkbox" value="beef"> <span data-i18n="ac2-layer-beef">Beef Cattle</span></label>
+        <label><input type="checkbox" value="dairy"> <span data-i18n="ac2-layer-dairy">Dairy Cattle</span></label>
+        <label><input type="checkbox" value="swine"> <span data-i18n="ac2-layer-swine">Swine</span></label>
+        <label><input type="checkbox" value="horses"> <span data-i18n="ac2-layer-horses">Horses</span></label>
+        <label><input type="checkbox" value="turkeys"> <span data-i18n="ac2-layer-turkeys">Turkeys</span></label>
+        <label><input type="checkbox" value="chickens"> <span data-i18n="ac2-layer-chickens">Chickens</span></label>
+        <label><input type="checkbox" value="sheep"> <span data-i18n="ac2-layer-sheep">Sheep / Goats</span></label>
+        <div class="panel-section" data-i18n="ac2-panel-human">Human Activity</div>
+        <label><input type="checkbox" value="paperfood"> <span data-i18n="ac2-layer-paperfood">Paper / Food Waste</span></label>
+        <label><input type="checkbox" value="biodiesel"> <span data-i18n="ac2-layer-biodiesel">Biodiesel Plants</span></label>
+        <label><input type="checkbox" value="ethanol"> <span data-i18n="ac2-layer-ethanol">Ethanol Plants</span></label>
+        <label><input type="checkbox" value="wastewater"> <span data-i18n="ac2-layer-wastewater">Wastewater Treatment</span></label>
+        <label><input type="checkbox" value="digesters"> <span data-i18n="ac2-layer-digesters">Anaerobic Digesters</span></label>
+        <label><input type="checkbox" value="lmop"> <span data-i18n="ac2-layer-lmop">LMOP Sites</span></label>
+        <div class="panel-section" data-i18n="ac2-panel-utilities">Utilities</div>
+        <label><input type="checkbox" value="utilities"> <span data-i18n="ac2-layer-utilities">Electric / Gas Utilities</span></label>
+        <label><input type="checkbox" value="powerplants"> <span data-i18n="ac2-layer-powerplants">Power Plants</span></label>
+        <label><input type="checkbox" value="pipelines"> <span data-i18n="ac2-layer-pipelines">Gas Pipelines</span></label>
+        <label><input type="checkbox" value="landfill"> <span data-i18n="ac2-layer-landfill">Landfill Sites</span></label>
     </div>
 
     <!-- AOI mode selection panel -->
     <div class="aoi-mode-panel" id="aoi-mode-panel">
-        <div class="aoi-mode-divider">Select method</div>
+        <div class="aoi-mode-divider" data-i18n="ac2-aoi-select-method">Select method</div>
         <button onclick="startAoiMode('rectangle')">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-            Rectangle
+            <span data-i18n="ac2-aoi-rectangle">Rectangle</span>
         </button>
         <button onclick="startAoiMode('polygon')">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 15,6 12,14 4,14 1,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-            Polygon (Draw)
+            <span data-i18n="ac2-aoi-polygon">Polygon (Draw)</span>
         </button>
     </div>
 
@@ -1462,6 +1462,6 @@
         updateCharts();
 
     </script>
-    <div class="ac2-page-date">As of April 7, 2026</div>
+    <div class="ac2-page-date">Data Updated: April 7, 2026</div>
 </body>
 </html>

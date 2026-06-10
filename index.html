@@ -399,7 +399,7 @@
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" class="active" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
-                <li><a href="advanced-calculator-2.html">Create A Microgrid</a></li>
+                <li><a href="advanced-calculator-2.html" data-i18n="nav-create-microgrid">Create A Microgrid</a></li>
                 <li>
                     <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
@@ -423,7 +423,7 @@
             </div>
         </div>
         <div class="calculator-panel" id="calculator-panel">
-            <h3><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">&#9654;</button><span>Calculator</span></h3>
+            <h3><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">&#9654;</button><span data-i18n="calc-panel-title">Calculator</span></h3>
             <div class="calc-panel-body">
                 <div class="calc-field">
                     <label for="calc-1">Prompt 1</label>
@@ -644,8 +644,8 @@
         function buildLegend() {
             var div = document.createElement('div');
             div.className = 'legend';
-            function li(id, svgHtml, label) {
-                return '<label class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span>' + label + '</span></label>';
+            function li(id, svgHtml, label, i18nKey) {
+                return '<label class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + label + '</span></label>';
             }
             function tri(c) { return '<svg width="16" height="12" viewBox="0 0 16 12"><polygon points="8,0 16,12 0,12" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
@@ -654,11 +654,11 @@
             function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function blade(c) { return '<svg width="12" height="16" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
             function paper(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
-            function grp(t, f, secId) {
+            function grp(t, f, secId, i18nKey) {
                 if (secId) {
-                    return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '">' + t + '</label></div>';
+                    return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></label></div>';
                 }
-                return '<div class="legend-group' + (f ? ' first' : '') + '">' + t + '</div>';
+                return '<div class="legend-group' + (f ? ' first' : '') + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></div>';
             }
             var sectionKeys = {
                 'sec-agresidue': ['corn','soybean'],
@@ -667,30 +667,30 @@
                 'sec-utilities': ['utilities','powerplants','pipelines','landfill']
             };
             div.innerHTML =
-                '<div class="legend-header"><h4>Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none">Clear All</button></div></div>' +
-                grp('Agricultural Residue', true, 'sec-agresidue') +
-                li('toggle-corn',        blade('#f5c518'),  'Corn Residue') +
-                li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue') +
-                grp('Feedlot Waste / Manure', false, 'sec-feedlot') +
-                li('toggle-beef',        circ('#c87533'), 'Beef Cattle') +
-                li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle') +
-                li('toggle-swine',       circ('#ff9eb5'), 'Swine') +
-                li('toggle-horses',      circ('#a0a0a0'), 'Horses') +
-                li('toggle-turkeys',     circ('#f4a460'), 'Turkeys') +
-                li('toggle-chickens',    circ('#ffd700'), 'Chickens') +
-                li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats') +
-                grp('Human Activity', false, 'sec-human') +
-                li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.') +
-                li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants') +
-                li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants') +
-                li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment') +
-                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters') +
-                li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites') +
-                grp('Utilities', false, 'sec-utilities') +
-                li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities') +
-                li('toggle-powerplants', rect('#d94a4a'), 'Power Plants') +
-                li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines') +
-                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites');
+                '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
+                grp('Agricultural Residue', true, 'sec-agresidue', 'legend-ag-residue') +
+                li('toggle-corn',        blade('#f5c518'),  'Corn Residue', 'legend-corn') +
+                li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue', 'legend-soybean') +
+                grp('Feedlot Waste / Manure', false, 'sec-feedlot', 'legend-feedlot') +
+                li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
+                li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle', 'legend-dairy') +
+                li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
+                li('toggle-horses',      circ('#a0a0a0'), 'Horses', 'legend-horses') +
+                li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
+                li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
+                li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats', 'legend-sheep') +
+                grp('Human Activity', false, 'sec-human', 'legend-human') +
+                li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.', 'legend-paperfood') +
+                li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
+                li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
+                li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
+                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters', 'legend-digesters') +
+                li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites', 'legend-lmop') +
+                grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
+                li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities', 'legend-utilities') +
+                li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
+                li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines') +
+                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill');
 
             ['toggle-corn','toggle-soybean','toggle-paperfood'].forEach(function(id) {
                 var item = div.querySelector('#' + id);

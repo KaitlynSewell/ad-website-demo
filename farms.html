@@ -193,7 +193,7 @@
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
-                <li><a href="advanced-calculator-2.html">Create A Microgrid</a></li>
+                <li><a href="advanced-calculator-2.html" data-i18n="nav-create-microgrid">Create A Microgrid</a></li>
                 <li>
                     <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
@@ -207,24 +207,24 @@
             </ul>
         </nav>
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
-            <h2 class="section-heading">Farms &amp; Facilities</h2>
+            <h2 class="section-heading" data-i18n="farms-title">Farms &amp; Facilities</h2>
             <div class="farms-container">
                 <div class="summary-chips" id="summary-chips">
-                    <span class="chip" id="chip-beef"        onclick="selectCategory('beef')">Beef Cattle <strong>2,085</strong></span>
-                    <span class="chip" id="chip-dairy"       onclick="selectCategory('dairy')">Dairy Cattle <strong>305</strong></span>
-                    <span class="chip" id="chip-swine"       onclick="selectCategory('swine')">Swine <strong>447</strong></span>
-                    <span class="chip" id="chip-horses"      onclick="selectCategory('horses')">Horses <strong>65</strong></span>
-                    <span class="chip" id="chip-turkeys"     onclick="selectCategory('turkeys')">Turkeys <strong>119</strong></span>
-                    <span class="chip" id="chip-chickens"    onclick="selectCategory('chickens')">Chickens <strong>164</strong></span>
-                    <span class="chip" id="chip-sheep"       onclick="selectCategory('sheep')">Sheep &amp; Goats <strong>64</strong></span>
-                    <span class="chip" id="chip-biodiesel"   onclick="selectCategory('biodiesel')">Biodiesel Plants <strong>15</strong></span>
-                    <span class="chip" id="chip-ethanol"     onclick="selectCategory('ethanol')">Ethanol Plants <strong>44</strong></span>
-                    <span class="chip" id="chip-wastewater"  onclick="selectCategory('wastewater')">Wastewater Treatment <strong>1,099</strong></span>
-                    <span class="chip" id="chip-utilities"   onclick="selectCategory('utilities')">Utilities <strong>186</strong></span>
-                    <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')">Power Plants <strong>217</strong></span>
-                    <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')">Landfill Sites <strong>88</strong></span>
-                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')">Anaerobic Digesters <strong>203</strong></span>
-                    <span class="chip" id="chip-lmop"        onclick="selectCategory('lmop')">LMOP Sites <strong>32</strong></span>
+                    <span class="chip" id="chip-beef"        onclick="selectCategory('beef')"><span data-i18n="farms-chip-beef">Beef Cattle</span> <strong>2,085</strong></span>
+                    <span class="chip" id="chip-dairy"       onclick="selectCategory('dairy')"><span data-i18n="farms-chip-dairy">Dairy Cattle</span> <strong>305</strong></span>
+                    <span class="chip" id="chip-swine"       onclick="selectCategory('swine')"><span data-i18n="farms-chip-swine">Swine</span> <strong>447</strong></span>
+                    <span class="chip" id="chip-horses"      onclick="selectCategory('horses')"><span data-i18n="farms-chip-horses">Horses</span> <strong>65</strong></span>
+                    <span class="chip" id="chip-turkeys"     onclick="selectCategory('turkeys')"><span data-i18n="farms-chip-turkeys">Turkeys</span> <strong>119</strong></span>
+                    <span class="chip" id="chip-chickens"    onclick="selectCategory('chickens')"><span data-i18n="farms-chip-chickens">Chickens</span> <strong>164</strong></span>
+                    <span class="chip" id="chip-sheep"       onclick="selectCategory('sheep')"><span data-i18n="farms-chip-sheep">Sheep &amp; Goats</span> <strong>64</strong></span>
+                    <span class="chip" id="chip-biodiesel"   onclick="selectCategory('biodiesel')"><span data-i18n="farms-chip-biodiesel">Biodiesel Plants</span> <strong>15</strong></span>
+                    <span class="chip" id="chip-ethanol"     onclick="selectCategory('ethanol')"><span data-i18n="farms-chip-ethanol">Ethanol Plants</span> <strong>44</strong></span>
+                    <span class="chip" id="chip-wastewater"  onclick="selectCategory('wastewater')"><span data-i18n="farms-chip-wastewater">Wastewater Treatment</span> <strong>1,099</strong></span>
+                    <span class="chip" id="chip-utilities"   onclick="selectCategory('utilities')"><span data-i18n="farms-chip-utilities">Utilities</span> <strong>186</strong></span>
+                    <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')"><span data-i18n="farms-chip-powerplants">Power Plants</span> <strong>217</strong></span>
+                    <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')"><span data-i18n="farms-chip-landfill">Landfill Sites</span> <strong>88</strong></span>
+                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')"><span data-i18n="farms-chip-digesters">Anaerobic Digesters</span> <strong>203</strong></span>
+                    <span class="chip" id="chip-lmop"        onclick="selectCategory('lmop')"><span data-i18n="farms-chip-lmop">LMOP Sites</span> <strong>32</strong></span>
                 </div>
                 <div class="farms-toolbar">
                     <select id="category-select" onchange="onCategoryChange()">
@@ -250,11 +250,11 @@
                             <option value="lmop">LMOP Sites (32)</option>
                         </optgroup>
                     </select>
-                    <input type="text" id="search-input" placeholder="Search..." oninput="onSearch()" />
+                    <input type="text" id="search-input" placeholder="Search..." data-i18n-placeholder="farms-search" oninput="onSearch()" />
                     <span class="farms-count" id="record-count"></span>
                 </div>
                 <div class="farms-table-wrapper">
-                    <div class="farms-loading" id="farms-loading">Loading data...</div>
+                    <div class="farms-loading" id="farms-loading" data-i18n="farms-loading">Loading data...</div>
                     <table class="farms-table" id="farms-table" style="display:none;">
                         <thead id="farms-thead"></thead>
                         <tbody id="farms-tbody"></tbody>
