@@ -508,6 +508,27 @@
         L.control.zoom({ position: 'topleft' }).addTo(map);
         new MapToggleControl().addTo(map);
 
+        var _mapRecenterBtn = L.control({ position: 'topleft' });
+        _mapRecenterBtn.onAdd = function() {
+            var btn = L.DomUtil.create('button', '');
+            btn.textContent = '⌖ Recenter';
+            btn.style.cssText = 'display:none;padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);margin-top:4px;';
+            L.DomEvent.on(btn, 'click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                _mapRecentering = true;
+                map.setView([41.88, -93.10], 7);
+                btn.style.display = 'none';
+                map.once('moveend', function() { _mapRecentering = false; });
+            });
+            return btn;
+        };
+        _mapRecenterBtn.addTo(map);
+        var _mapRecentering = false;
+        map.on('moveend zoomend', function() {
+            if (_mapRecentering) return;
+            _mapRecenterBtn.getContainer().style.display = 'block';
+        });
+
         var layerGroups = {};
 
         // Build an inline SVG string for a given shape/color/size

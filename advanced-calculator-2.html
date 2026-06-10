@@ -359,7 +359,7 @@
                         </span>
                     </div>
                     <div class="units-row">
-                        <span>Money</span>
+                        <span>Currency</span>
                         <label><input type="radio" name="moneyUnit" value="dollars"  onchange="setMoneyUnit('dollars')">  $</label>
                         <label><input type="radio" name="moneyUnit" value="thousand" checked onchange="setMoneyUnit('thousand')"> $ thousand</label>
                         <label><input type="radio" name="moneyUnit" value="million"  onchange="setMoneyUnit('million')">  $ million</label>
@@ -1035,6 +1035,27 @@
                 }
             });
         mgToggleBtn.addTo(microgridMap);
+
+        var _mgRecenterBtn = L.control({ position: 'topleft' });
+        _mgRecenterBtn.onAdd = function() {
+            var btn = L.DomUtil.create('button', '');
+            btn.textContent = '⌖ Recenter';
+            btn.style.cssText = 'display:none;padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
+            L.DomEvent.on(btn, 'click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                _mgRecentering = true;
+                microgridMap.setView([41.88, -93.10], 7);
+                btn.style.display = 'none';
+                microgridMap.once('moveend', function() { _mgRecentering = false; });
+            });
+            return btn;
+        };
+        _mgRecenterBtn.addTo(microgridMap);
+        var _mgRecentering = false;
+        microgridMap.on('moveend zoomend', function() {
+            if (_mgRecentering) return;
+            _mgRecenterBtn.getContainer().style.display = 'block';
+        });
 
         // ===== AOI DRAWING =====
         function showAoiToast(msg) {
