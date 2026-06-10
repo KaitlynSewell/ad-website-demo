@@ -89,7 +89,7 @@ body {
     padding: 0;
     margin: 0;
     display: none;
-    background-color: #c8ccd1;
+    background-color: #d0d4db;
 }
 
 .sidebar .submenu.open {
@@ -97,12 +97,16 @@ body {
 }
 
 .sidebar .submenu li {
-    border-bottom: 1px solid #b5babe;
+    border-bottom: 1px solid #9ba0a6;
 }
 
 .sidebar .submenu li a {
-    padding: 10px 16px 10px 28px;
+    padding: 10px 16px 10px 36px;
     font-size: 13px;
+}
+
+.sidebar ul li:has(.submenu) {
+    border-bottom: 2px solid white;
 }
 
 .main-content {
@@ -232,7 +236,11 @@ html.dark-mode .sidebar ul li a.active {
 }
 
 html.dark-mode .sidebar .submenu {
-    background-color: #252538;
+    background-color: #1e1e30;
+}
+
+html.dark-mode .sidebar ul li:has(.submenu) {
+    border-bottom-color: rgba(255,255,255,0.3);
 }
 
 html.dark-mode .sidebar .submenu li {
