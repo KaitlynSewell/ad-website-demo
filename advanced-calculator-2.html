@@ -4,7 +4,7 @@
     <script>if(window.location.protocol==='file:'){var _p=window.location.pathname.split('/').pop()||'index.html';window.location.replace('https://kaitlynsewell.github.io/ad-website-demo/'+_p);}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AD.Website.Demo - Advanced Calculator 2</title>
+    <title>AD.Website.Demo - Create A Microgrid</title>
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -192,9 +192,31 @@
         }
 
         html.dark-mode .ac2-map-box {
-            background: #2c2c3e;
-            border-color: #444;
+            background: #162238;
+            border-color: #2a4a7a;
         }
+
+        /* ===== Deep Navy dark mode overrides ===== */
+        html.dark-mode body { background-color: #0d1b2a; color: #e8f0fe; }
+        html.dark-mode .page-heading { background-color: #1b2a4a; }
+        html.dark-mode .sidebar { background-color: #1b2a4a; color: #e8f0fe; }
+        html.dark-mode .sidebar ul li { border-bottom-color: #2a4a7a; }
+        html.dark-mode .sidebar ul li a { color: #e8f0fe; }
+        html.dark-mode .sidebar ul li a:hover { background-color: #243d5e; }
+        html.dark-mode .sidebar ul li a.active { background-color: #2ec4b6; color: #0d1b2a; }
+        html.dark-mode .sidebar .submenu { background-color: #162238; }
+        html.dark-mode .sidebar .submenu li { border-bottom-color: #2a4a7a; }
+        html.dark-mode .sidebar ul li:has(.submenu) { border-bottom-color: rgba(46,196,182,0.4); }
+        html.dark-mode .ac2-chart-box { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
+        html.dark-mode .ac2-chart-title { color: #e8f0fe; }
+        html.dark-mode .ac2-legend-item { color: #c8d8f0; }
+        html.dark-mode .ac2-prod-cost-box { background: #162238 !important; border-color: #2a4a7a !important; }
+        html.dark-mode .ac2-prod-cost-box div[style*="color:#2c3e50"] { color: #e8f0fe !important; }
+        html.dark-mode .ac2-prod-cost-box div[style*="background:#ddd"] { background: #2a4a7a !important; }
+        html.dark-mode .ac2-prod-cost-box [style*="font-weight:bold"] { color: #e8f0fe !important; }
+        html.dark-mode .ac2-units-panel { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
+        html.dark-mode .ac2-units-panel .units-row + .units-row { border-top-color: #2a4a7a; }
+        html.dark-mode .main-content { background-color: #0d1b2a; }
 
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
@@ -333,7 +355,7 @@
         <a href="settings.html" class="header-gear-btn" title="Settings" onclick="localStorage.setItem('prevPage', location.href)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.61.07-.93s-.03-.64-.07-.93l2-1.57c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2 1.57c-.04.3-.07.61-.07.93s.03.64.07.93l-2 1.57c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2-1.57z"/></svg></a>
     </h1>
     <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
-        <span style="font-weight:bold; position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;">Advanced Calculator 2</span>
+        <span style="font-weight:bold; position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;">Create A Microgrid</span>
         <div class="ac2-toolbar">
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
@@ -393,6 +415,7 @@
         <nav class="sidebar">
             <ul>
                 <li class="home-nav-item"><a href="index.html" data-i18n="nav-home">Home</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
+                <li><a href="advanced-calculator-2.html" class="active">Create A Microgrid</a></li>
                 <li>
                     <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
                     <ul id="about-submenu" class="submenu">
@@ -433,7 +456,7 @@
                         <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()">&#10005; Clear Area of Interest</button>
                         <div id="microgrid-map"></div>
                     </div>
-                    <div style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
+                    <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
                         <div style="display:flex;">
                             <div style="flex:1; padding:14px 16px;">
                                 <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Production</div>
