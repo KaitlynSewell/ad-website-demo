@@ -603,10 +603,16 @@
             });
             document.getElementById('energy-metric').style.display  = sys === 'metric'   ? '' : 'none';
             document.getElementById('energy-imperial').style.display = sys === 'imperial' ? '' : 'none';
+            localStorage.setItem('ac2UnitSystem', sys);
+            localStorage.setItem('ac2EnergyUnit', energyUnit);
             if (hasAoiActive()) updateAoiSidebar();
             updateCharts();
         }
-        function setEnergyUnit(u) { energyUnit = u; updateCharts(); }
+        function setEnergyUnit(u) {
+            energyUnit = u;
+            localStorage.setItem('ac2EnergyUnit', u);
+            updateCharts();
+        }
         document.addEventListener('click', function(e) {
             var wrap = document.getElementById('ac2-units-wrap');
             if (wrap && !wrap.contains(e.target)) {
@@ -1457,6 +1463,28 @@
             }
         });
 
+        function saveAc2LayerState() {
+            var state = {};
+            document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
+                state[cb.value] = cb.checked;
+            });
+            localStorage.setItem('ac2LayerState', JSON.stringify(state));
+        }
+
+        function restoreAc2LayerState() {
+            var saved = localStorage.getItem('ac2LayerState');
+            if (!saved) return;
+            try {
+                var state = JSON.parse(saved);
+                document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
+                    if (state[cb.value] === true) {
+                        cb.checked = true;
+                        loadLayer(cb.value);
+                    }
+                });
+            } catch (e) {}
+        }
+
         // Wire checkboxes to load/unload GeoJSON layers
         document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
             cb.addEventListener('change', function() {
@@ -1465,9 +1493,34 @@
                 } else {
                     unloadLayer(this.value);
                 }
+                saveAc2LayerState();
             });
         });
 
+        restoreAc2LayerState();
+
+        // Restore unit system, energy unit, and time period
+        (function() {
+            var savedSys = localStorage.getItem('ac2UnitSystem');
+            if (savedSys === 'metric' || savedSys === 'imperial') {
+                var r = document.querySelector('input[name="unitSystem"][value="' + savedSys + '"]');
+                if (r) { r.checked = true; setUnitSystem(savedSys); }
+            }
+            var savedEU = localStorage.getItem('ac2EnergyUnit');
+            if (savedEU && ENERGY_UNITS[savedEU]) {
+                var r2 = document.querySelector('input[name="energyUnit"][value="' + savedEU + '"]');
+                if (r2) { r2.checked = true; energyUnit = savedEU; }
+            }
+            var savedPeriod = localStorage.getItem('ac2Period');
+            if (savedPeriod) {
+                var sel = document.getElementById('ac2-period');
+                if (sel) sel.value = savedPeriod;
+            }
+        })();
+
+        document.getElementById('ac2-period').addEventListener('change', function() {
+            localStorage.setItem('ac2Period', this.value);
+        });
 
         document.getElementById('ac2-search').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
