@@ -1117,7 +1117,11 @@
             L.DomEvent.on(btn, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 _mgRecentering = true;
-                microgridMap.setView([41.88, -93.10], 7);
+                if (aoiLayer) {
+                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                } else {
+                    microgridMap.setView([41.88, -93.10], 7);
+                }
                 btn.style.display = 'none';
                 microgridMap.once('moveend', function() { _mgRecentering = false; });
             });
