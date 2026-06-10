@@ -338,6 +338,47 @@
             letter-spacing: 0.5px;
             padding: 6px 16px 2px;
         }
+
+        /* AOI right sidebar */
+        .aoi-right-sidebar {
+            width: 200px;
+            background: white;
+            border-left: 1px solid #ddd;
+            display: none;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+            padding: 16px 14px;
+            gap: 16px;
+        }
+        .aoi-right-sidebar.open { display: flex; }
+        .aoi-rs-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .aoi-rs-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .aoi-rs-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .aoi-rs-unit {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        html.dark-mode .aoi-right-sidebar { background: #162238; border-left-color: #2a4a7a; }
+        html.dark-mode .aoi-rs-header { color: #e8f0fe; border-bottom-color: #2a4a7a; }
+        html.dark-mode .aoi-rs-value { color: #e8f0fe; }
     </style>
 </head>
 <body>
@@ -473,6 +514,14 @@
             </div>
             <div class="calc-container"></div>
         </div>
+        <div id="aoi-right-sidebar" class="aoi-right-sidebar">
+            <div class="aoi-rs-header">Selected Area</div>
+            <div class="aoi-rs-section">
+                <div class="aoi-rs-label">Total Area</div>
+                <div class="aoi-rs-value" id="aoi-area-display">—</div>
+                <div class="aoi-rs-unit" id="aoi-area-unit">sq km</div>
+            </div>
+        </div>
     </div>
 
     <!-- Add panel is a direct body child so it's always above Leaflet's stacking contexts -->
@@ -543,6 +592,7 @@
             });
             document.getElementById('energy-metric').style.display  = sys === 'metric'   ? '' : 'none';
             document.getElementById('energy-imperial').style.display = sys === 'imperial' ? '' : 'none';
+            if (hasAoiActive()) updateAoiSidebar();
             updateCharts();
         }
         function setEnergyUnit(u) { energyUnit = u; updateCharts(); }
@@ -1204,6 +1254,7 @@
             microgridMap.fitBounds(aoiBounds, { padding: [24, 24] });
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
+            updateAoiSidebar();
             updateCharts();
         });
 
@@ -1222,6 +1273,7 @@
             microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
+            updateAoiSidebar();
             updateCharts();
         }
 
@@ -1269,7 +1321,54 @@
             aoiPolyPoints = null;
             rectDrawing = false;
             document.getElementById('aoi-clear-btn').style.display = 'none';
+            hideAoiSidebar();
             updateCharts();
+        }
+
+        // ===== AOI AREA SIDEBAR =====
+        function calcAOIAreaKm2() {
+            var KM_PER_DEG_LAT = 111.1;
+            if (aoiBounds) {
+                var ne = aoiBounds.getNorthEast();
+                var sw = aoiBounds.getSouthWest();
+                var latMid = (ne.lat + sw.lat) / 2;
+                var kmPerDegLng = KM_PER_DEG_LAT * Math.cos(latMid * Math.PI / 180);
+                return Math.abs(ne.lng - sw.lng) * kmPerDegLng * Math.abs(ne.lat - sw.lat) * KM_PER_DEG_LAT;
+            }
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
+                var pts = aoiPolyPoints;
+                var latMid = pts.reduce(function(s, p) { return s + p.lat; }, 0) / pts.length;
+                var kmPerDegLng = KM_PER_DEG_LAT * Math.cos(latMid * Math.PI / 180);
+                var area = 0, n = pts.length;
+                for (var i = 0; i < n; i++) {
+                    var j = (i + 1) % n;
+                    area += (pts[i].lng * kmPerDegLng) * (pts[j].lat * KM_PER_DEG_LAT)
+                          - (pts[j].lng * kmPerDegLng) * (pts[i].lat * KM_PER_DEG_LAT);
+                }
+                return Math.abs(area) / 2;
+            }
+            return 0;
+        }
+
+        function updateAoiSidebar() {
+            var sidebar = document.getElementById('aoi-right-sidebar');
+            var display = document.getElementById('aoi-area-display');
+            var unitEl  = document.getElementById('aoi-area-unit');
+            if (!sidebar || !display) return;
+            var km2 = calcAOIAreaKm2();
+            if (unitSystem === 'imperial') {
+                display.textContent = (km2 * 0.386102).toLocaleString(undefined, { maximumFractionDigits: 2 });
+                unitEl.textContent = 'sq mi';
+            } else {
+                display.textContent = km2.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                unitEl.textContent = 'sq km';
+            }
+            sidebar.classList.add('open');
+        }
+
+        function hideAoiSidebar() {
+            var sidebar = document.getElementById('aoi-right-sidebar');
+            if (sidebar) sidebar.classList.remove('open');
         }
 
         // ===== ADD PANEL =====
