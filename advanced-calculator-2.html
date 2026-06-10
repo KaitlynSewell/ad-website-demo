@@ -192,7 +192,7 @@
         }
 
         html.dark-mode .ac2-map-box {
-            background: #162238;
+            background: #1e3050;
             border-color: #2a4a7a;
         }
 
@@ -208,10 +208,10 @@
         html.dark-mode .sidebar .submenu { background-color: #162238; }
         html.dark-mode .sidebar .submenu li { border-bottom-color: #2a4a7a; }
         html.dark-mode .sidebar ul li:has(.submenu) { border-bottom-color: rgba(46,196,182,0.4); }
-        html.dark-mode .ac2-chart-box { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
+        html.dark-mode .ac2-chart-box { background: #1e3050; border-color: #2a4a7a; color: #e8f0fe; }
         html.dark-mode .ac2-chart-title { color: #e8f0fe; }
         html.dark-mode .ac2-legend-item { color: #c8d8f0; }
-        html.dark-mode .ac2-prod-cost-box { background: #162238 !important; border-color: #2a4a7a !important; }
+        html.dark-mode .ac2-prod-cost-box { background: #1e3050 !important; border-color: #2a4a7a !important; }
         html.dark-mode .ac2-prod-cost-box div[style*="color:#2c3e50"] { color: #e8f0fe !important; }
         html.dark-mode .ac2-prod-cost-box div[style*="background:#ddd"] { background: #2a4a7a !important; }
         html.dark-mode .ac2-prod-cost-box [style*="font-weight:bold"] { color: #e8f0fe !important; }
@@ -377,7 +377,7 @@
             color: #888;
             margin-top: 2px;
         }
-        html.dark-mode .aoi-right-sidebar { background: #162238; border-left-color: #2a4a7a; }
+        html.dark-mode .aoi-right-sidebar { background: #1e3050; border-left-color: #2a4a7a; }
         html.dark-mode .aoi-rs-header { color: #e8f0fe; border-bottom-color: #2a4a7a; }
         html.dark-mode .aoi-rs-value { color: #e8f0fe; }
     </style>
@@ -521,6 +521,16 @@
                 <div class="aoi-rs-label">Total Area</div>
                 <div class="aoi-rs-value" id="aoi-area-display">—</div>
                 <div class="aoi-rs-unit" id="aoi-area-unit">sq km</div>
+            </div>
+            <div class="aoi-rs-section">
+                <div class="aoi-rs-label">Digesters</div>
+                <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
+                <div class="aoi-rs-unit">in selected area</div>
+            </div>
+            <div class="aoi-rs-section">
+                <div class="aoi-rs-label">Est. Population</div>
+                <div class="aoi-rs-value" id="aoi-population-display">—</div>
+                <div class="aoi-rs-unit">people (2020 census)</div>
             </div>
         </div>
     </div>
@@ -1002,6 +1012,7 @@
 
             // --- Production / Costs ---
             updateProdCost(filtered);
+            if (hasAoiActive()) updateAoiSidebar();
         }
 
         function updateProdCost(filtered) {
@@ -1359,6 +1370,7 @@
             var display = document.getElementById('aoi-area-display');
             var unitEl  = document.getElementById('aoi-area-unit');
             if (!sidebar || !display) return;
+
             var km2 = calcAOIAreaKm2();
             if (unitSystem === 'imperial') {
                 display.textContent = (km2 * 0.386102).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -1367,6 +1379,17 @@
                 display.textContent = km2.toLocaleString(undefined, { maximumFractionDigits: 2 });
                 unitEl.textContent = 'sq km';
             }
+
+            var digestersEl = document.getElementById('aoi-digesters-display');
+            if (digestersEl) {
+                if (loadedLayers['digesters']) {
+                    var filtered = getFeaturesInAOI();
+                    digestersEl.textContent = (filtered['digesters'] || []).length;
+                } else {
+                    digestersEl.textContent = '—';
+                }
+            }
+
             sidebar.classList.add('open');
         }
 
