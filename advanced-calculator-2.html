@@ -1008,14 +1008,14 @@
         var mgIowaLayer = null;
         function updateMgIowaBorder() {
             if (!mgIowaLayer) return;
-            mgIowaLayer.setStyle({ color: mgBaseLayer === 'satellite' ? '#ffffff' : '#888', weight: 1.5, opacity: 0.4 });
+            mgIowaLayer.setStyle({ color: mgBaseLayer === 'satellite' ? '#ffffff' : '#888', weight: 2.5, opacity: 0.4 });
         }
         fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 var iowa = data.features.find(function(f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 1.5, opacity: 0.4 } }).addTo(microgridMap);
+                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#ffffff', weight: 2.5, opacity: 0.4 } }).addTo(microgridMap);
                 }
             });
         mgToggleBtn.addTo(microgridMap);

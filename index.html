@@ -831,9 +831,9 @@
         function updateIowaBorder() {
             if (!iowaLayer) return;
             if (currentBaseLayer === 'satellite') {
-                iowaLayer.setStyle({ color: '#ffffff', weight: 1.5, opacity: 0.4 });
+                iowaLayer.setStyle({ color: '#ffffff', weight: 2.5, opacity: 0.4 });
             } else {
-                iowaLayer.setStyle({ color: '#888', weight: 1.5, opacity: 0.4 });
+                iowaLayer.setStyle({ color: '#888', weight: 2.5, opacity: 0.4 });
             }
         }
         fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
@@ -841,7 +841,7 @@
             .then(function (data) {
                 var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
                 if (iowa) {
-                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 1.5, opacity: 0.4 } }).addTo(map);
+                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 2.5, opacity: 0.4 } }).addTo(map);
                 }
             });
 
