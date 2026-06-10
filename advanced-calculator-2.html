@@ -169,7 +169,7 @@
             bottom: 12px;
             right: 16px;
             font-size: 11px;
-            color: white;
+            color: #2c3e50;
             pointer-events: none;
         }
         html.dark-mode .ac2-page-date { color: white; }
@@ -648,17 +648,18 @@
                 ctx.stroke();
                 angle += slice;
             });
+            var isDark = document.documentElement.classList.contains('dark-mode');
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#f0f0f0');
             ctx.fill();
-            ctx.fillStyle = '#2c3e50';
+            ctx.fillStyle = isDark ? '#e8f0fe' : '#2c3e50';
             ctx.font = 'bold 20px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(total.toLocaleString(), cx, cy - 7);
             ctx.font = '11px sans-serif';
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = isDark ? '#a0b8d8' : '#888';
             ctx.fillText(unit || 'total', cx, cy + 10);
             var legend = document.getElementById(legendId);
             legend.innerHTML = segments.map(function(seg) {
@@ -680,11 +681,12 @@
             ctx.arc(cx, cy, r, 0, 2 * Math.PI);
             ctx.fillStyle = '#ccc';
             ctx.fill();
+            var isDark = document.documentElement.classList.contains('dark-mode');
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#fff';
+            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#fff');
             ctx.fill();
-            ctx.fillStyle = '#2c3e50';
+            ctx.fillStyle = isDark ? '#e8f0fe' : '#2c3e50';
             ctx.font = 'bold 20px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -766,11 +768,12 @@
             ctx.setLineDash([6, 4]);
             ctx.stroke();
             ctx.setLineDash([]);
+            var isDark = document.documentElement.classList.contains('dark-mode');
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#f0f0f0';
+            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#f0f0f0');
             ctx.fill();
-            ctx.fillStyle = '#bbb';
+            ctx.fillStyle = isDark ? '#a0b8d8' : '#bbb';
             ctx.font = '13px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
