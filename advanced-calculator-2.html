@@ -1103,6 +1103,62 @@
             return aoiCenter !== null || aoiPolyPoints !== null;
         }
 
+        function saveAoiState() {
+            if (aoiCenter) {
+                localStorage.setItem('ac2Aoi', JSON.stringify({
+                    type: 'circle', lat: aoiCenter.lat, lng: aoiCenter.lng, radiusKm: aoiRadiusKm
+                }));
+            } else if (aoiPolyPoints) {
+                localStorage.setItem('ac2Aoi', JSON.stringify({ type: 'polygon', points: aoiPolyPoints }));
+            } else {
+                localStorage.removeItem('ac2Aoi');
+            }
+        }
+
+        function restoreAoiState() {
+            var saved = localStorage.getItem('ac2Aoi');
+            if (!saved) return;
+            try {
+                var data = JSON.parse(saved);
+                if (data.type === 'circle') {
+                    aoiCenter = L.latLng(data.lat, data.lng);
+                    aoiRadiusKm = data.radiusKm || 10;
+                    aoiPolyPoints = null;
+                    var radiusInput = document.getElementById('aoi-radius-input');
+                    if (radiusInput) {
+                        radiusInput.value = unitSystem === 'imperial'
+                            ? Math.round(aoiRadiusKm * 0.621371 * 10) / 10
+                            : Math.round(aoiRadiusKm * 10) / 10;
+                    }
+                    aoiLayer = L.circle([aoiCenter.lat, aoiCenter.lng], {
+                        radius: aoiRadiusKm * 1000,
+                        color: '#1a6fc4', weight: 4, opacity: 1,
+                        fillColor: '#4a90d9', fillOpacity: 0.08,
+                        interactive: false
+                    }).addTo(microgridMap);
+                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    document.getElementById('aoi-clear-btn').style.display = 'block';
+                    document.getElementById('aoi-radius-row').style.display = 'flex';
+                    updateAoiSidebar();
+                    updateCharts();
+                } else if (data.type === 'polygon' && data.points && data.points.length >= 3) {
+                    aoiPolyPoints = data.points;
+                    aoiCenter = null;
+                    aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
+                        color: '#1a6fc4', weight: 4, opacity: 1,
+                        fillColor: '#4a90d9', fillOpacity: 0.08,
+                        interactive: false
+                    }).addTo(microgridMap);
+                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    document.getElementById('aoi-clear-btn').style.display = 'block';
+                    updateAoiSidebar();
+                    updateCharts();
+                }
+            } catch(e) {
+                localStorage.removeItem('ac2Aoi');
+            }
+        }
+
         function hasAnyLoadedLayer() {
             return Object.keys(loadedLayers).length > 0;
         }
@@ -1378,6 +1434,7 @@
             document.getElementById('aoi-clear-btn').style.display = 'block';
             updateAoiSidebar();
             updateCharts();
+            saveAoiState();
         }
 
         microgridMap.on('click', function(e) {
@@ -1443,6 +1500,7 @@
             document.getElementById('aoi-radius-row').style.display = 'flex';
             updateAoiSidebar();
             updateCharts();
+            saveAoiState();
         });
 
         document.getElementById('aoi-radius-input').addEventListener('change', function() {
@@ -1453,6 +1511,7 @@
                 microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
                 updateAoiSidebar();
                 updateCharts();
+                saveAoiState();
             }
         });
 
@@ -1466,6 +1525,7 @@
             document.getElementById('aoi-radius-row').style.display = 'none';
             hideAoiSidebar();
             updateCharts();
+            saveAoiState();
         }
 
         // ===== AOI AREA SIDEBAR =====
@@ -1572,6 +1632,7 @@
         });
 
         restoreAc2LayerState();
+        restoreAoiState();
 
         // Restore unit system, energy unit, and time period
         (function() {
