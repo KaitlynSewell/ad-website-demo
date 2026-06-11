@@ -106,7 +106,7 @@ var translations = {
         'ac2-download': 'Download',
         // AC2 charts
         'ac2-chart-ad-inputs': 'Predicted Anaerobic Digestion Inputs by Source Type',
-        'ac2-chart-energy-gen': 'Current Energy Generation By Source Type',
+        'ac2-chart-energy-gen': 'Current Microgrid Energy Generation By Source Type',
         'ac2-chart-energy-used': 'Energy Used vs Stored by Type',
         'ac2-chart-used': 'Used',
         'ac2-chart-stored': 'Stored',
