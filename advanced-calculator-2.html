@@ -422,19 +422,20 @@
                             <label><input type="radio" name="energyUnit" value="MMBTU" onchange="setEnergyUnit('MMBTU')"> MMBTU</label>
                         </span>
                     </div>
+                    <div class="units-row">
+                        <span data-i18n="ac2-period-label">Period</span>
+                        <span>
+                            <label><input type="radio" name="timePeriod" value="yearly"  checked onchange="setPeriod('yearly')">  <span data-i18n="ac2-period-yearly">Yearly</span></label>
+                            <label><input type="radio" name="timePeriod" value="monthly"        onchange="setPeriod('monthly')"> <span data-i18n="ac2-period-monthly">Monthly</span></label>
+                            <label><input type="radio" name="timePeriod" value="weekly"         onchange="setPeriod('weekly')">  <span data-i18n="ac2-period-weekly">Weekly</span></label>
+                            <label><input type="radio" name="timePeriod" value="daily"          onchange="setPeriod('daily')">   <span data-i18n="ac2-period-daily">Daily</span></label>
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Time period -->
-            <select id="ac2-period">
-                <option value="yearly" data-i18n="ac2-period-yearly">Yearly</option>
-                <option value="monthly" data-i18n="ac2-period-monthly">Monthly</option>
-                <option value="weekly" data-i18n="ac2-period-weekly">Weekly</option>
-                <option value="daily" data-i18n="ac2-period-daily">Daily</option>
-            </select>
-
             <!-- Search Area -->
-            <input type="text" id="ac2-search" placeholder="Search Locations" style="width:180px;" />
+            <input type="text" id="ac2-search" placeholder="Search Locations" data-i18n-placeholder="ac2-search-placeholder" style="width:180px;" />
 
             <!-- Add button -->
             <div class="ac2-add-wrap">
@@ -497,6 +498,11 @@
                     <div class="ac2-map-box" style="flex:none;">
                         <div class="ac2-chart-title" data-i18n="ac2-map-title">My Microgrid</div>
                         <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
+                        <div id="aoi-radius-row" style="position:absolute;top:44px;left:50%;transform:translateX(-50%);z-index:1100;display:none;align-items:center;gap:6px;background:white;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;">
+                            <span>Radius:</span>
+                            <input type="number" id="aoi-radius-input" value="10" min="1" max="500" step="1" style="width:55px;padding:2px 5px;border:1px solid #ccc;border-radius:3px;font-size:12px;" />
+                            <span id="aoi-radius-unit">km</span>
+                        </div>
                         <div id="microgrid-map"></div>
                     </div>
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
@@ -566,9 +572,9 @@
     <!-- AOI mode selection panel -->
     <div class="aoi-mode-panel" id="aoi-mode-panel">
         <div class="aoi-mode-divider" data-i18n="ac2-aoi-select-method">Select method</div>
-        <button onclick="startAoiMode('rectangle')">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-            <span data-i18n="ac2-aoi-rectangle">Rectangle</span>
+        <button onclick="startAoiMode('circle')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span data-i18n="ac2-aoi-circle">Circle</span>
         </button>
         <button onclick="startAoiMode('polygon')">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 15,6 12,14 4,14 1,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -596,6 +602,12 @@
             var p = document.getElementById('ac2-units-panel');
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
+        var timePeriod = 'yearly';
+        function setPeriod(p) {
+            timePeriod = p;
+            localStorage.setItem('ac2Period', p);
+        }
+
         function setUnitSystem(sys) {
             unitSystem = sys;
             energyUnit = sys === 'metric' ? 'MWh' : 'MMBTU';
@@ -604,6 +616,17 @@
             });
             document.getElementById('energy-metric').style.display  = sys === 'metric'   ? '' : 'none';
             document.getElementById('energy-imperial').style.display = sys === 'imperial' ? '' : 'none';
+            var radiusInput = document.getElementById('aoi-radius-input');
+            var radiusUnitEl = document.getElementById('aoi-radius-unit');
+            if (radiusInput && radiusUnitEl) {
+                if (sys === 'imperial') {
+                    radiusInput.value = Math.round(aoiRadiusKm * 0.621371 * 10) / 10;
+                    radiusUnitEl.textContent = 'mi';
+                } else {
+                    radiusInput.value = Math.round(aoiRadiusKm * 10) / 10;
+                    radiusUnitEl.textContent = 'km';
+                }
+            }
             localStorage.setItem('ac2UnitSystem', sys);
             localStorage.setItem('ac2EnergyUnit', energyUnit);
             if (hasAoiActive()) updateAoiSidebar();
@@ -938,19 +961,29 @@
                 .catch(function() { bgCoordCache[key] = []; });
         }
 
+        function haversineKm(lat1, lng1, lat2, lng2) {
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLng = (lng2 - lng1) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
         function getAoiCount(key) {
             var features = loadedLayers[key]
                 ? loadedLayers[key].features
                 : bgCoordCache[key];
             if (!features) return null; // still loading
-            if (aoiBounds) {
+            if (aoiCenter) {
                 return features.filter(function(f) {
-                    return aoiBounds.contains(L.latLng(f.lat, f.lng));
+                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
                 }).length;
             }
             if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
                 return features.filter(function(f) {
-                    return pointInPolygon(f.lat, f.lng);
+                    return pointInPolygon(f, aoiPolyPoints);
                 }).length;
             }
             return features.length;
@@ -1018,15 +1051,12 @@
 
         // ===== AOI STATE =====
         var aoiMode = false;          // draw mode active
-        var aoiDrawType = null;       // 'rectangle' or 'polygon'
+        var aoiDrawType = null;       // 'circle' or 'polygon'
         var aoiLayer = null;          // finalized shape on map
-        var aoiBounds = null;         // L.LatLngBounds — set for rectangle AOI
+        var aoiBounds = null;         // unused (kept for safety)
         var aoiPolyPoints = null;     // [{lat,lng}] — set for polygon AOI
-
-        // Rectangle draw state
-        var rectDrawing = false;
-        var rectStartLatLng = null;
-        var aoiPreviewRect = null;
+        var aoiCenter = null;         // L.LatLng — set for circle AOI
+        var aoiRadiusKm = 10;         // circle radius in km
 
         // Polygon draw state
         var polyPoints = [];          // L.LatLng[] being collected
@@ -1055,9 +1085,9 @@
             var result = {};
             Object.keys(loadedLayers).forEach(function(key) {
                 var feats = loadedLayers[key].features;
-                if (aoiBounds) {
+                if (aoiCenter) {
                     feats = feats.filter(function(f) {
-                        return aoiBounds.contains(L.latLng(f.lat, f.lng));
+                        return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
                     });
                 } else if (aoiPolyPoints) {
                     feats = feats.filter(function(f) {
@@ -1070,7 +1100,7 @@
         }
 
         function hasAoiActive() {
-            return aoiBounds !== null || aoiPolyPoints !== null;
+            return aoiCenter !== null || aoiPolyPoints !== null;
         }
 
         function hasAnyLoadedLayer() {
@@ -1170,20 +1200,22 @@
         var mgToggleBtn = L.control({ position: 'topright' });
         mgToggleBtn.onAdd = function() {
             var btn = L.DomUtil.create('button', '');
-            btn.textContent = 'Switch to Satellite';
+            var lang = localStorage.getItem('language') || 'en';
+            btn.textContent = (translations[lang] || translations['en'])['ac2-map-satellite'] || 'Switch to Satellite';
             btn.style.cssText = 'padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
             L.DomEvent.on(btn, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
+                var t = translations[localStorage.getItem('language') || 'en'] || translations['en'];
                 if (mgBaseLayer === 'satellite') {
                     microgridMap.removeLayer(mgSatelliteLayer);
                     microgridMap.addLayer(mgStreetLayer);
                     mgBaseLayer = 'street';
-                    btn.textContent = 'Switch to Satellite';
+                    btn.textContent = t['ac2-map-satellite'] || 'Switch to Satellite';
                 } else {
                     microgridMap.removeLayer(mgStreetLayer);
                     microgridMap.addLayer(mgSatelliteLayer);
                     mgBaseLayer = 'satellite';
-                    btn.textContent = 'Switch to Street Map';
+                    btn.textContent = t['ac2-map-street'] || 'Switch to Street Map';
                 }
                 updateMgIowaBorder();
             });
@@ -1271,9 +1303,12 @@
 
             // If already in draw mode, cancel it
             if (aoiMode) {
+                var cancelType = aoiDrawType;
                 exitDrawMode();
                 clearPolyPreview();
-                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
+                if (cancelType === 'circle' && !aoiCenter) {
+                    document.getElementById('aoi-radius-row').style.display = 'none';
+                }
                 panel.classList.remove('open');
                 return;
             }
@@ -1304,35 +1339,16 @@
             btn.classList.add('aoi-active');
             mapEl.classList.add('aoi-draw-mode');
             microgridMap.dragging.disable();
-            if (type === 'rectangle') {
-                showAoiToast('Click and drag to draw a rectangle');
+            if (type === 'circle') {
+                document.getElementById('aoi-radius-row').style.display = 'flex';
+                showAoiToast('Click on the map to place circle center');
             } else {
                 showAoiToast('Click to add vertices \u2014 close shape to select area');
             }
         }
 
-        // ---- Rectangle draw events ----
-        microgridMap.on('mousedown', function(e) {
-            if (!aoiMode || aoiDrawType !== 'rectangle') return;
-            L.DomEvent.stopPropagation(e.originalEvent);
-            rectDrawing = true;
-            rectStartLatLng = e.latlng;
-            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-        });
-
+        // ---- Polygon rubber band on mousemove ----
         microgridMap.on('mousemove', function(e) {
-            if (aoiMode && aoiDrawType === 'rectangle' && rectDrawing && rectStartLatLng) {
-                var bounds = L.latLngBounds(rectStartLatLng, e.latlng);
-                if (aoiPreviewRect) {
-                    aoiPreviewRect.setBounds(bounds);
-                } else {
-                    aoiPreviewRect = L.rectangle(bounds, {
-                        color: '#1a6fc4', weight: 2, dashArray: '6 4',
-                        fillColor: '#4a90d9', fillOpacity: 0.15
-                    }).addTo(microgridMap);
-                }
-            }
-            // Polygon rubber band
             if (aoiMode && aoiDrawType === 'polygon' && polyPoints.length > 0) {
                 var latlngs = polyPoints.concat([e.latlng]);
                 if (polyRubberBand) {
@@ -1343,35 +1359,6 @@
                     }).addTo(microgridMap);
                 }
             }
-        });
-
-        microgridMap.on('mouseup', function(e) {
-            if (!aoiMode || aoiDrawType !== 'rectangle' || !rectDrawing) return;
-            rectDrawing = false;
-
-            var bounds = L.latLngBounds(rectStartLatLng, e.latlng);
-            var size = microgridMap.project(bounds.getNorthEast())
-                .distanceTo(microgridMap.project(bounds.getSouthWest()));
-            if (size < 10) {
-                if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-                return;
-            }
-            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
-            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
-
-            aoiBounds = bounds;
-            aoiPolyPoints = null;
-            aoiLayer = L.rectangle(bounds, {
-                color: '#1a6fc4', weight: 4, opacity: 1,
-                fillColor: '#4a90d9', fillOpacity: 0.08,
-                interactive: false
-            }).addTo(microgridMap);
-
-            microgridMap.fitBounds(aoiBounds, { padding: [24, 24] });
-            exitDrawMode();
-            document.getElementById('aoi-clear-btn').style.display = 'block';
-            updateAoiSidebar();
-            updateCharts();
         });
 
         // ---- Polygon draw events ----
@@ -1429,28 +1416,64 @@
             }
         });
 
+        // ---- Circle draw events ----
+        microgridMap.on('click', function(e) {
+            if (!aoiMode || aoiDrawType !== 'circle') return;
+            L.DomEvent.stopPropagation(e.originalEvent);
+
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+            aoiCenter = e.latlng;
+            aoiPolyPoints = null;
+            aoiBounds = null;
+
+            var radiusInput = document.getElementById('aoi-radius-input');
+            aoiRadiusKm = parseFloat(radiusInput ? radiusInput.value : 10) || 10;
+            if (unitSystem === 'imperial') aoiRadiusKm = aoiRadiusKm / 0.621371;
+
+            aoiLayer = L.circle([aoiCenter.lat, aoiCenter.lng], {
+                radius: aoiRadiusKm * 1000,
+                color: '#1a6fc4', weight: 4, opacity: 1,
+                fillColor: '#4a90d9', fillOpacity: 0.08,
+                interactive: false
+            }).addTo(microgridMap);
+
+            microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+            exitDrawMode();
+            document.getElementById('aoi-clear-btn').style.display = 'block';
+            document.getElementById('aoi-radius-row').style.display = 'flex';
+            updateAoiSidebar();
+            updateCharts();
+        });
+
+        document.getElementById('aoi-radius-input').addEventListener('change', function() {
+            var newVal = parseFloat(this.value) || 10;
+            aoiRadiusKm = unitSystem === 'imperial' ? newVal / 0.621371 : newVal;
+            if (aoiCenter && aoiLayer) {
+                aoiLayer.setRadius(aoiRadiusKm * 1000);
+                microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                updateAoiSidebar();
+                updateCharts();
+            }
+        });
+
         function clearAOI() {
             if (aoiLayer) { microgridMap.removeLayer(aoiLayer); aoiLayer = null; }
-            if (aoiPreviewRect) { microgridMap.removeLayer(aoiPreviewRect); aoiPreviewRect = null; }
             clearPolyPreview();
             aoiBounds = null;
             aoiPolyPoints = null;
-            rectDrawing = false;
+            aoiCenter = null;
             document.getElementById('aoi-clear-btn').style.display = 'none';
+            document.getElementById('aoi-radius-row').style.display = 'none';
             hideAoiSidebar();
             updateCharts();
         }
 
         // ===== AOI AREA SIDEBAR =====
         function calcAOIAreaKm2() {
-            var KM_PER_DEG_LAT = 111.1;
-            if (aoiBounds) {
-                var ne = aoiBounds.getNorthEast();
-                var sw = aoiBounds.getSouthWest();
-                var latMid = (ne.lat + sw.lat) / 2;
-                var kmPerDegLng = KM_PER_DEG_LAT * Math.cos(latMid * Math.PI / 180);
-                return Math.abs(ne.lng - sw.lng) * kmPerDegLng * Math.abs(ne.lat - sw.lat) * KM_PER_DEG_LAT;
+            if (aoiCenter) {
+                return Math.PI * aoiRadiusKm * aoiRadiusKm;
             }
+            var KM_PER_DEG_LAT = 111.1;
             if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
                 var pts = aoiPolyPoints;
                 var latMid = pts.reduce(function(s, p) { return s + p.lat; }, 0) / pts.length;
@@ -1564,14 +1587,10 @@
             }
             var savedPeriod = localStorage.getItem('ac2Period');
             if (savedPeriod) {
-                var sel = document.getElementById('ac2-period');
-                if (sel) sel.value = savedPeriod;
+                var pr = document.querySelector('input[name="timePeriod"][value="' + savedPeriod + '"]');
+                if (pr) { pr.checked = true; timePeriod = savedPeriod; }
             }
         })();
-
-        document.getElementById('ac2-period').addEventListener('change', function() {
-            localStorage.setItem('ac2Period', this.value);
-        });
 
         document.getElementById('ac2-search').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
