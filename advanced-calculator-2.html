@@ -1135,11 +1135,14 @@
                         fillColor: '#4a90d9', fillOpacity: 0.08,
                         interactive: false
                     }).addTo(microgridMap);
-                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
                     document.getElementById('aoi-clear-btn').style.display = 'block';
                     document.getElementById('aoi-radius-row').style.display = 'flex';
                     updateAoiSidebar();
                     updateCharts();
+                    setTimeout(function() {
+                        microgridMap.invalidateSize();
+                        microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    }, 0);
                 } else if (data.type === 'polygon' && data.points && data.points.length >= 3) {
                     aoiPolyPoints = data.points;
                     aoiCenter = null;
@@ -1148,10 +1151,13 @@
                         fillColor: '#4a90d9', fillOpacity: 0.08,
                         interactive: false
                     }).addTo(microgridMap);
-                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
                     document.getElementById('aoi-clear-btn').style.display = 'block';
                     updateAoiSidebar();
                     updateCharts();
+                    setTimeout(function() {
+                        microgridMap.invalidateSize();
+                        microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    }, 0);
                 }
             } catch(e) {
                 localStorage.removeItem('ac2Aoi');
