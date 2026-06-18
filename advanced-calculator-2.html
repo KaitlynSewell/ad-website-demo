@@ -148,6 +148,24 @@
             color: #555;
         }
 
+        .feedstock-use-btn {
+            font-size: 10px;
+            padding: 3px 9px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            background: #f4f4f4;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .feedstock-use-btn.active {
+            background: #FF7043;
+            color: white;
+            border-color: #FF7043;
+        }
+        .feedstock-use-btn:hover:not(.active) { background: #e0e0e0; }
+
         .ac2-legend-dot {
             width: 12px;
             height: 12px;
@@ -480,6 +498,7 @@
                             <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
                             <span><span style="display:inline-block;width:10px;height:10px;background:#FF7043;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>In User's Microgrid</span>
                         </div>
+                        <div id="feedstock-use-btns" style="display:flex;flex-wrap:wrap;gap:5px;width:100%;"></div>
                     </div>
                     <div class="ac2-chart-box">
                         <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Energy Generation By Source Type</div>
@@ -850,17 +869,35 @@
             });
         }
 
-        function drawNoInputsFeedstockBar() {
-            var canvas = document.getElementById('feedstock-bar');
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var isDark = document.documentElement.classList.contains('dark-mode');
-            ctx.fillStyle = isDark ? '#a0b8d8' : '#bbb';
-            ctx.font = '12px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('No Inputs Selected', canvas.width / 2, canvas.height / 2);
+        function toggleFeedstockUse(key) {
+            usedFeedstocks[key] = !usedFeedstocks[key];
+            if (!usedFeedstocks[key]) delete usedFeedstocks[key];
+            try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
+            renderFeedstockButtons();
+            drawFeedstockBar();
+        }
+
+        function renderFeedstockButtons() {
+            var container = document.getElementById('feedstock-use-btns');
+            if (!container) return;
+            container.innerHTML = '';
+            var hasAny = false;
+            FEEDSTOCK_BAR_KEYS.forEach(function(key) {
+                var n = getAoiCount(key);
+                if (!n) return;
+                hasAny = true;
+                var btn = document.createElement('button');
+                btn.className = 'feedstock-use-btn' + (usedFeedstocks[key] ? ' active' : '');
+                btn.textContent = FEEDSTOCK_BAR_LABELS[key] || key;
+                btn.onclick = function() { toggleFeedstockUse(key); };
+                container.appendChild(btn);
+            });
+            if (hasAny && container.children.length > 0) {
+                var lbl = document.createElement('div');
+                lbl.style.cssText = 'width:100%;font-size:10px;color:#888;margin-bottom:3px;';
+                lbl.textContent = 'Select feedstocks to include in your microgrid:';
+                container.insertBefore(lbl, container.firstChild);
+            }
         }
 
         function drawFeedstockBar() {
@@ -872,15 +909,13 @@
             var isDark = document.documentElement.classList.contains('dark-mode');
             var textColor = isDark ? '#e8f0fe' : '#555';
 
-            // Available = AOI count from bgCoordCache (or loadedLayers if not cached)
-            // Used      = features the user has added to their microgrid, filtered to AOI
-            var filtered = getFeaturesInAOI();
-
+            // Available = bgCoordCache AOI count — works without any loaded layers
+            // Used      = user-selected feedstock types via toggle buttons
             var bars = [];
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var avail = getAoiCount(key);
                 if (avail === null) avail = 0;
-                var used = filtered[key] ? filtered[key].length : 0;
+                var used = usedFeedstocks[key] ? avail : 0;
                 if (avail > 0 || used > 0) {
                     bars.push({ label: FEEDSTOCK_BAR_LABELS[key] || key, available: avail, used: used });
                 }
@@ -1060,6 +1095,10 @@
         // ===== LAYER STATE =====
         // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
         var loadedLayers = {};
+
+        // feedstock types the user has selected to include in their microgrid
+        var usedFeedstocks = {};
+        try { var _uf = localStorage.getItem('ac2UsedFeedstocks'); if (_uf) usedFeedstocks = JSON.parse(_uf); } catch(e) {}
 
         // Background coord cache — lightweight coords pre-loaded for AOI counting
         // regardless of whether the user has toggled the layer on.
@@ -1288,7 +1327,8 @@
         function updateCharts() {
             if (!hasAnyLoadedLayer()) {
                 drawNoInputsPie('pie-chart-1', 'pie-legend-1');
-                drawNoInputsFeedstockBar();
+                drawFeedstockBar();
+                renderFeedstockButtons();
                 drawNoInputsBar();
                 updateProdCost(null);
                 return;
@@ -1305,6 +1345,7 @@
 
             // --- Feedstock bar: available vs used ---
             drawFeedstockBar();
+            renderFeedstockButtons();
 
             // --- Production / Costs ---
             updateProdCost(filtered);
@@ -1637,6 +1678,8 @@
             document.getElementById('aoi-clear-btn').style.display = 'none';
             document.getElementById('aoi-radius-row').style.display = 'none';
             hideAoiSidebar();
+            usedFeedstocks = {};
+            try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
             updateCharts();
             saveAoiState();
         }
@@ -1684,6 +1727,8 @@
 
             document.getElementById('aoi-empty-msg').style.display = 'none';
             document.getElementById('aoi-stats').style.display = 'flex';
+            drawFeedstockBar();
+            renderFeedstockButtons();
         }
 
         function hideAoiSidebar() {
