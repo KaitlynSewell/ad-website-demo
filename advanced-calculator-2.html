@@ -148,23 +148,44 @@
             color: #555;
         }
 
-        .feedstock-use-btn {
-            font-size: 10px;
-            padding: 3px 9px;
-            border-radius: 12px;
-            border: 1px solid #ccc;
-            background: #f4f4f4;
-            color: #555;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-            white-space: nowrap;
+        .feedstock-dropdown { border-bottom: 1px solid #eee; padding: 6px 0; }
+        .feedstock-dropdown:last-child { border-bottom: none; }
+        .feedstock-dropdown-hdr {
+            display: flex; align-items: center; gap: 5px;
+            cursor: pointer; padding: 3px 0; user-select: none;
         }
-        .feedstock-use-btn.active {
-            background: #FF7043;
-            color: white;
-            border-color: #FF7043;
+        .feedstock-dropdown-hdr:hover { opacity: 0.8; }
+        .fds-arrow { font-size: 9px; color: #888; flex-shrink: 0; }
+        .fds-label { font-size: 11px; font-weight: 600; color: #2c3e50; flex: 1; }
+        .fds-count { font-weight: normal; color: #888; }
+        .fds-used-badge {
+            font-size: 9px; background: #FF7043; color: white;
+            border-radius: 8px; padding: 1px 5px; flex-shrink: 0;
         }
-        .feedstock-use-btn:hover:not(.active) { background: #e0e0e0; }
+        .fds-all-btn {
+            font-size: 9px; padding: 2px 6px; border-radius: 8px;
+            border: 1px solid #ccc; background: #f4f4f4; color: #555;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .fds-all-btn:hover { background: #e0e0e0; }
+        .feedstock-dropdown-list { padding: 3px 0 2px 12px; }
+        .fds-item {
+            display: flex; align-items: flex-start; gap: 5px;
+            font-size: 10px; color: #444; padding: 2px 0;
+            cursor: pointer; line-height: 1.3;
+        }
+        .fds-item input[type="checkbox"] { margin-top: 1px; flex-shrink: 0; cursor: pointer; }
+        .fds-loading { font-size: 10px; color: #aaa; font-style: italic; padding: 2px 0; }
+        .fds-section-hdr {
+            font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase;
+            letter-spacing: 0.4px; margin: 10px 0 6px; border-top: 1px solid #eee; padding-top: 10px;
+        }
+        html.dark-mode .feedstock-dropdown { border-bottom-color: #2a4a7a; }
+        html.dark-mode .fds-label { color: #e8f0fe; }
+        html.dark-mode .fds-count { color: #a0b8d8; }
+        html.dark-mode .fds-item { color: #c8d8f0; }
+        html.dark-mode .fds-all-btn { background: #243d5e; border-color: #4a6a9a; color: #c8d8f0; }
+        html.dark-mode .fds-section-hdr { color: #a0b8d8; border-top-color: #2a4a7a; }
 
         .ac2-legend-dot {
             width: 12px;
@@ -359,7 +380,7 @@
 
         /* AOI right sidebar */
         .aoi-right-sidebar {
-            width: 200px;
+            width: 240px;
             background: white;
             border-left: 1px solid #ddd;
             display: flex;
@@ -498,7 +519,6 @@
                             <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
                             <span><span style="display:inline-block;width:10px;height:10px;background:#FF7043;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>In User's Microgrid</span>
                         </div>
-                        <div id="feedstock-use-btns" style="display:flex;flex-wrap:wrap;gap:5px;width:100%;"></div>
                     </div>
                     <div class="ac2-chart-box">
                         <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Energy Generation By Source Type</div>
@@ -562,6 +582,10 @@
                     <div class="aoi-rs-label">Est. Population</div>
                     <div class="aoi-rs-value" id="aoi-population-display">—</div>
                     <div class="aoi-rs-unit">people (2020 census)</div>
+                </div>
+                <div>
+                    <div class="fds-section-hdr">Feedstock Sources in AOI</div>
+                    <div id="aoi-feedstock-panel"></div>
                 </div>
             </div>
         </div>
@@ -869,34 +893,111 @@
             });
         }
 
-        function toggleFeedstockUse(key) {
-            usedFeedstocks[key] = !usedFeedstocks[key];
-            if (!usedFeedstocks[key]) delete usedFeedstocks[key];
+        function toggleFacility(key, facId) {
+            if (!usedFeedstocks[key]) usedFeedstocks[key] = {};
+            if (usedFeedstocks[key][facId]) {
+                delete usedFeedstocks[key][facId];
+                if (!Object.keys(usedFeedstocks[key]).length) delete usedFeedstocks[key];
+            } else {
+                usedFeedstocks[key][facId] = true;
+            }
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
-            renderFeedstockButtons();
+            renderAoiFeedstockPanel();
             drawFeedstockBar();
         }
 
-        function renderFeedstockButtons() {
-            var container = document.getElementById('feedstock-use-btns');
-            if (!container) return;
-            container.innerHTML = '';
+        function selectAllFacilities(key) {
+            var feats = getAoiFeaturesWithNames(key);
+            if (!feats || !feats.length) return;
+            usedFeedstocks[key] = {};
+            feats.forEach(function(f) { usedFeedstocks[key][f.lat + ',' + f.lng] = true; });
+            try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
+            renderAoiFeedstockPanel();
+            drawFeedstockBar();
+        }
+
+        function toggleDropdown(key) {
+            var list  = document.getElementById('fds-list-' + key);
+            var arrow = document.getElementById('fds-arrow-' + key);
+            if (!list) return;
+            var open = list.style.display !== 'none';
+            list.style.display  = open ? 'none' : 'block';
+            if (arrow) arrow.textContent = open ? '▸' : '▾';
+        }
+
+        function renderAoiFeedstockPanel() {
+            var panel = document.getElementById('aoi-feedstock-panel');
+            if (!panel) return;
+            // Preserve open/closed state of each dropdown
+            var openKeys = {};
+            FEEDSTOCK_BAR_KEYS.forEach(function(k) {
+                var el = document.getElementById('fds-list-' + k);
+                if (el && el.style.display !== 'none') openKeys[k] = true;
+            });
+            panel.innerHTML = '';
             var hasAny = false;
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
-                var n = getAoiCount(key);
-                if (!n) return;
+                var count = getAoiCount(key);
+                if (!count) return;
                 hasAny = true;
-                var btn = document.createElement('button');
-                btn.className = 'feedstock-use-btn' + (usedFeedstocks[key] ? ' active' : '');
-                btn.textContent = FEEDSTOCK_BAR_LABELS[key] || key;
-                btn.onclick = function() { toggleFeedstockUse(key); };
-                container.appendChild(btn);
+                bgLoadFeatures(key);
+                var namedFeats = getAoiFeaturesWithNames(key);
+                var usedCount  = Object.keys(usedFeedstocks[key] || {}).length;
+                var isOpen     = !!openKeys[key];
+
+                var section = document.createElement('div');
+                section.className = 'feedstock-dropdown';
+
+                // Header
+                var hdr = document.createElement('div');
+                hdr.className = 'feedstock-dropdown-hdr';
+                var badge = usedCount
+                    ? '<span class="fds-used-badge">' + usedCount + ' used</span>'
+                    : '<span class="fds-used-badge" style="display:none">0</span>';
+                hdr.innerHTML =
+                    '<span class="fds-arrow" id="fds-arrow-' + key + '">' + (isOpen ? '▾' : '▸') + '</span>' +
+                    '<span class="fds-label">' + (FEEDSTOCK_BAR_LABELS[key] || key) +
+                    ' <span class="fds-count">(' + count + ')</span></span>' + badge;
+                var allBtn = document.createElement('button');
+                allBtn.className = 'fds-all-btn';
+                allBtn.textContent = 'Select All';
+                allBtn.onclick = (function(k) { return function(e) { e.stopPropagation(); selectAllFacilities(k); }; })(key);
+                hdr.appendChild(allBtn);
+                hdr.onclick = (function(k) { return function() { toggleDropdown(k); }; })(key);
+                section.appendChild(hdr);
+
+                // List
+                var list = document.createElement('div');
+                list.className = 'feedstock-dropdown-list';
+                list.id = 'fds-list-' + key;
+                list.style.display = isOpen ? 'block' : 'none';
+
+                if (namedFeats === null) {
+                    list.innerHTML = '<div class="fds-loading">Loading…</div>';
+                } else if (!namedFeats || !namedFeats.length) {
+                    list.innerHTML = '<div class="fds-loading">No locations found</div>';
+                } else {
+                    namedFeats.forEach(function(f) {
+                        var facId   = f.lat + ',' + f.lng;
+                        var checked = !!(usedFeedstocks[key] && usedFeedstocks[key][facId]);
+                        var lbl = document.createElement('label');
+                        lbl.className = 'fds-item';
+                        var cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.checked = checked;
+                        cb.onchange = (function(k, id) { return function() { toggleFacility(k, id); }; })(key, facId);
+                        lbl.appendChild(cb);
+                        var displayName = f.name + (f.city ? ' — ' + f.city : '');
+                        lbl.appendChild(document.createTextNode(' ' + displayName));
+                        list.appendChild(lbl);
+                    });
+                }
+                section.appendChild(list);
+                panel.appendChild(section);
             });
-            if (hasAny && container.children.length > 0) {
-                var lbl = document.createElement('div');
-                lbl.style.cssText = 'width:100%;font-size:10px;color:#888;margin-bottom:3px;';
-                lbl.textContent = 'Select feedstocks to include in your microgrid:';
-                container.insertBefore(lbl, container.firstChild);
+
+            if (!hasAny) {
+                panel.innerHTML = '<div class="fds-loading">No feedstock sources in selected area.</div>';
             }
         }
 
@@ -910,12 +1011,12 @@
             var textColor = isDark ? '#e8f0fe' : '#555';
 
             // Available = bgCoordCache AOI count — works without any loaded layers
-            // Used      = user-selected feedstock types via toggle buttons
+            // Used      = individually selected facilities in usedFeedstocks
             var bars = [];
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var avail = getAoiCount(key);
                 if (avail === null) avail = 0;
-                var used = usedFeedstocks[key] ? avail : 0;
+                var used = Object.keys(usedFeedstocks[key] || {}).length;
                 if (avail > 0 || used > 0) {
                     bars.push({ label: FEEDSTOCK_BAR_LABELS[key] || key, available: avail, used: used });
                 }
@@ -962,35 +1063,44 @@
             }
 
             var groupW = chartW / bars.length;
-            var barW = Math.min(groupW * 0.30, 18);
-            var gap  = barW * 0.25;
+            var barW   = Math.min(groupW * 0.55, 28);
 
             bars.forEach(function(b, i) {
-                var cx = padL + i * groupW + groupW / 2;
-                var x1 = cx - barW - gap / 2;
-                var x2 = cx + gap / 2;
+                var cx   = padL + i * groupW + groupW / 2;
+                var barX = cx - barW / 2;
 
+                // Grey available bar (background)
                 var availH = (b.available / maxVal) * chartH;
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillRect(x1, padT + chartH - availH, barW, availH || 1);
+                ctx.fillStyle = isDark ? '#445566' : '#ccc';
+                ctx.fillRect(barX, padT + chartH - availH, barW, availH || 1);
 
-                var usedH = (b.used / maxVal) * chartH;
-                ctx.fillStyle = '#FF7043';
-                ctx.fillRect(x2, padT + chartH - usedH, barW, usedH || 1);
+                // Orange used bar (foreground, overlaid)
+                var usedH = b.used > 0 ? (b.used / maxVal) * chartH : 0;
+                if (usedH > 0) {
+                    ctx.fillStyle = '#FF7043';
+                    ctx.fillRect(barX, padT + chartH - usedH, barW, usedH);
+                }
 
-                // Value labels
+                // Value labels: available above grey top, used inside orange if tall enough
                 ctx.font = '8px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 if (b.available > 0) {
-                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillStyle = isDark ? '#a0b8d8' : '#888';
                     var dA = b.available >= 1000 ? (b.available / 1000).toFixed(1) + 'k' : b.available;
-                    ctx.fillText(dA, x1 + barW / 2, padT + chartH - availH - 1);
+                    ctx.fillText(dA, cx, padT + chartH - availH - 1);
                 }
                 if (b.used > 0) {
                     ctx.fillStyle = '#FF7043';
                     var dU = b.used >= 1000 ? (b.used / 1000).toFixed(1) + 'k' : b.used;
-                    ctx.fillText(dU, x2 + barW / 2, padT + chartH - usedH - 1);
+                    var labelY = padT + chartH - usedH - 1;
+                    // place inside bar if tall enough, otherwise above
+                    if (usedH > 14) {
+                        ctx.fillStyle = 'white';
+                        ctx.textBaseline = 'top';
+                        labelY = padT + chartH - usedH + 2;
+                    }
+                    ctx.fillText(dU, cx, labelY);
                 }
 
                 // X-axis label
@@ -1096,9 +1206,58 @@
         // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
         var loadedLayers = {};
 
-        // feedstock types the user has selected to include in their microgrid
+        // usedFeedstocks[key] = { 'lat,lng': true } — individual facilities selected by user
         var usedFeedstocks = {};
-        try { var _uf = localStorage.getItem('ac2UsedFeedstocks'); if (_uf) usedFeedstocks = JSON.parse(_uf); } catch(e) {}
+        try { var _uf = localStorage.getItem('ac2UsedFeedstocks'); if (_uf) { var _p = JSON.parse(_uf); if (_p && typeof _p === 'object') usedFeedstocks = _p; } } catch(e) {}
+
+        // Cache of named features per feedstock key, loaded lazily from GeoJSON
+        var bgFeatureCache = {};
+        var FEEDSTOCK_NAME_FIELD = {
+            beef:'facName', dairy:'facName', swine:'facName', chickens:'facName',
+            turkeys:'facName', sheep:'facName', horses:'facName',
+            wastewater:'Name', landfill:'Name'
+        };
+        var FEEDSTOCK_CITY_FIELD = {
+            beef:'CityName', dairy:'CityName', swine:'CityName', chickens:'CityName',
+            turkeys:'CityName', sheep:'CityName', horses:'CityName',
+            wastewater:'City', landfill:'County'
+        };
+
+        function bgLoadFeatures(key) {
+            if (bgFeatureCache[key] !== undefined || !LAYER_FILES[key]) return;
+            bgFeatureCache[key] = null; // loading sentinel
+            fetch(LAYER_FILES[key])
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    bgFeatureCache[key] = [];
+                    data.features.forEach(function(f) {
+                        var coord = getFeatureCoord(f);
+                        if (!coord) return;
+                        var props = f.properties || {};
+                        bgFeatureCache[key].push({
+                            lat: coord.lat, lng: coord.lng,
+                            name: props[FEEDSTOCK_NAME_FIELD[key]] || 'Unknown',
+                            city: props[FEEDSTOCK_CITY_FIELD[key]] || ''
+                        });
+                    });
+                    if (hasAoiActive()) renderAoiFeedstockPanel();
+                })
+                .catch(function() { bgFeatureCache[key] = []; });
+        }
+
+        function getAoiFeaturesWithNames(key) {
+            var feats = bgFeatureCache[key];
+            if (feats === null || feats === undefined) return feats;
+            if (aoiCenter) {
+                return feats.filter(function(f) {
+                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
+                });
+            }
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
+                return feats.filter(function(f) { return pointInPolygon(f, aoiPolyPoints); });
+            }
+            return feats;
+        }
 
         // Background coord cache — lightweight coords pre-loaded for AOI counting
         // regardless of whether the user has toggled the layer on.
@@ -1328,7 +1487,7 @@
             if (!hasAnyLoadedLayer()) {
                 drawNoInputsPie('pie-chart-1', 'pie-legend-1');
                 drawFeedstockBar();
-                renderFeedstockButtons();
+                renderAoiFeedstockPanel();
                 drawNoInputsBar();
                 updateProdCost(null);
                 return;
@@ -1345,7 +1504,7 @@
 
             // --- Feedstock bar: available vs used ---
             drawFeedstockBar();
-            renderFeedstockButtons();
+            renderAoiFeedstockPanel();
 
             // --- Production / Costs ---
             updateProdCost(filtered);
@@ -1728,7 +1887,7 @@
             document.getElementById('aoi-empty-msg').style.display = 'none';
             document.getElementById('aoi-stats').style.display = 'flex';
             drawFeedstockBar();
-            renderFeedstockButtons();
+            renderAoiFeedstockPanel();
         }
 
         function hideAoiSidebar() {
