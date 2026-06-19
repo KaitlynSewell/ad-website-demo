@@ -271,34 +271,69 @@
             border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 9999;
-            min-width: 200px;
+            min-width: 210px;
             max-height: 60vh;
             overflow-y: auto;
-            padding: 6px 0;
+            padding: 8px 0 6px;
+            font-size: 13px;
+            line-height: 1.4;
         }
-
         .ac2-add-panel.open { display: block; }
 
-        .ac2-add-panel label {
+        .ac2-add-header {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 14px;
-            font-size: 13px;
-            color: #2c3e50;
+            justify-content: flex-end;
+            gap: 4px;
+            padding: 0 10px 6px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 4px;
+        }
+        .ac2-panel-btn {
+            font-size: 11px;
+            padding: 2px 7px;
+            background: #e0e0e0;
+            border: 1px solid #bbb;
+            border-radius: 3px;
             cursor: pointer;
         }
+        .ac2-panel-btn:hover { background: #c8c8c8; }
 
-        .ac2-add-panel label:hover { background: #f0f4ff; }
+        .ac2-add-item {
+            display: flex;
+            align-items: center;
+            padding: 3px 12px 3px 12px;
+            gap: 6px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+        .ac2-add-item input[type="checkbox"] { flex-shrink: 0; margin: 0; }
+        .ac2-add-item svg { flex-shrink: 0; }
+        .ac2-add-item:hover { background: #f0f4ff; }
 
-        .ac2-add-panel .panel-section {
+        .ac2-add-group {
             font-size: 11px;
             font-weight: bold;
-            color: #888;
+            color: #666;
             text-transform: uppercase;
-            padding: 8px 14px 3px;
             letter-spacing: 0.5px;
+            margin-top: 8px;
+            padding: 5px 12px 2px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+        .ac2-add-group.first { border-top: none; margin-top: 0; padding-top: 2px; }
+        .ac2-add-group input[type="checkbox"] { flex-shrink: 0; margin: 0; cursor: pointer; }
+        .ac2-add-group span { cursor: pointer; }
+
+        html.dark-mode .ac2-add-panel { background: #1e3050; border-color: #2a4a7a; }
+        html.dark-mode .ac2-add-header { border-bottom-color: #2a4a7a; }
+        html.dark-mode .ac2-panel-btn { background: #2a4a7a; border-color: #4a6a9a; color: #c8d8f0; }
+        html.dark-mode .ac2-panel-btn:hover { background: #3a5a8a; }
+        html.dark-mode .ac2-add-item { color: #e8f0fe; }
+        html.dark-mode .ac2-add-item:hover { background: #243d5e; }
+        html.dark-mode .ac2-add-group { color: #a0b8d8; border-top-color: #2a4a7a; }
 
         /* AOI drawing mode */
         #microgrid-map.aoi-draw-mode,
@@ -592,31 +627,7 @@
     </div>
 
     <!-- Add panel is a direct body child so it's always above Leaflet's stacking contexts -->
-    <div class="ac2-add-panel" id="ac2-add-panel">
-        <div class="panel-section" data-i18n="ac2-panel-ag-residue">Agricultural Residue</div>
-        <label><input type="checkbox" value="corn"> <span data-i18n="ac2-layer-corn">Corn</span></label>
-        <label><input type="checkbox" value="soybean"> <span data-i18n="ac2-layer-soybean">Soybean</span></label>
-        <div class="panel-section" data-i18n="ac2-panel-feedlot">Feedlot</div>
-        <label><input type="checkbox" value="beef"> <span data-i18n="ac2-layer-beef">Beef Cattle</span></label>
-        <label><input type="checkbox" value="dairy"> <span data-i18n="ac2-layer-dairy">Dairy Cattle</span></label>
-        <label><input type="checkbox" value="swine"> <span data-i18n="ac2-layer-swine">Swine</span></label>
-        <label><input type="checkbox" value="horses"> <span data-i18n="ac2-layer-horses">Horses</span></label>
-        <label><input type="checkbox" value="turkeys"> <span data-i18n="ac2-layer-turkeys">Turkeys</span></label>
-        <label><input type="checkbox" value="chickens"> <span data-i18n="ac2-layer-chickens">Chickens</span></label>
-        <label><input type="checkbox" value="sheep"> <span data-i18n="ac2-layer-sheep">Sheep / Goats</span></label>
-        <div class="panel-section" data-i18n="ac2-panel-human">Human Activity</div>
-        <label><input type="checkbox" value="paperfood"> <span data-i18n="ac2-layer-paperfood">Paper / Food Waste</span></label>
-        <label><input type="checkbox" value="biodiesel"> <span data-i18n="ac2-layer-biodiesel">Biodiesel Plants</span></label>
-        <label><input type="checkbox" value="ethanol"> <span data-i18n="ac2-layer-ethanol">Ethanol Plants</span></label>
-        <label><input type="checkbox" value="wastewater"> <span data-i18n="ac2-layer-wastewater">Wastewater Treatment</span></label>
-        <label><input type="checkbox" value="digesters"> <span data-i18n="ac2-layer-digesters">Anaerobic Digesters</span></label>
-        <label><input type="checkbox" value="lmop"> <span data-i18n="ac2-layer-lmop">LMOP Sites</span></label>
-        <div class="panel-section" data-i18n="ac2-panel-utilities">Utilities</div>
-        <label><input type="checkbox" value="utilities"> <span data-i18n="ac2-layer-utilities">Electric / Gas Utilities</span></label>
-        <label><input type="checkbox" value="powerplants"> <span data-i18n="ac2-layer-powerplants">Power Plants</span></label>
-        <label><input type="checkbox" value="pipelines"> <span data-i18n="ac2-layer-pipelines">Gas Pipelines</span></label>
-        <label><input type="checkbox" value="landfill"> <span data-i18n="ac2-layer-landfill">Landfill Sites</span></label>
-    </div>
+    <div class="ac2-add-panel" id="ac2-add-panel"></div>
 
     <!-- AOI mode selection panel -->
     <div class="aoi-mode-panel" id="aoi-mode-panel">
@@ -1938,10 +1949,130 @@
 
         function saveAc2LayerState() {
             var state = {};
-            document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
+            document.querySelectorAll('#ac2-add-panel input.ac2-layer-cb').forEach(function(cb) {
                 state[cb.value] = cb.checked;
             });
             localStorage.setItem('ac2LayerState', JSON.stringify(state));
+        }
+
+        function buildAddPanel() {
+            var panel = document.getElementById('ac2-add-panel');
+            if (!panel) return;
+
+            function circ(c)  { return '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
+            function rect(c)  { return '<svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
+            function dash(c)  { return '<svg width="14" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="'+c+'" stroke-width="3"/></svg>'; }
+            function drop(c)  { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
+            function blade(c) { return '<svg width="10" height="14" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
+            function paper(c) { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
+
+            function li(key, svg, label, i18nKey) {
+                return '<label class="ac2-add-item"><input type="checkbox" class="ac2-layer-cb" value="'+key+'"/>'+svg+'<span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+label+'</span></label>';
+            }
+            function grp(title, isFirst, secId, i18nKey) {
+                return '<div class="ac2-add-group'+(isFirst?' first':'')+'"><input type="checkbox" id="'+secId+'"><span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+title+'</span></div>';
+            }
+
+            var sectionKeys = {
+                'ac2s-agr':  ['corn','soybean'],
+                'ac2s-feed': ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
+                'ac2s-hum':  ['paperfood','biodiesel','ethanol','wastewater','digesters','lmop'],
+                'ac2s-util': ['utilities','powerplants','pipelines','landfill']
+            };
+            var allLayerKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
+                                'biodiesel','ethanol','wastewater','digesters','lmop',
+                                'utilities','powerplants','pipelines','landfill'];
+
+            panel.innerHTML =
+                '<div class="ac2-add-header">'+
+                '<button class="ac2-panel-btn" id="ac2-select-all-btn">Select All</button>'+
+                '<button class="ac2-panel-btn" id="ac2-clear-all-btn" style="display:none">Clear All</button>'+
+                '</div>'+
+                grp('Agricultural Residue', true, 'ac2s-agr', 'ac2-panel-ag-residue')+
+                li('corn',       blade('#f5c518'), 'Corn',                  'ac2-layer-corn')+
+                li('soybean',    blade('#7bc47f'), 'Soybean',               'ac2-layer-soybean')+
+                grp('Feedlot', false, 'ac2s-feed', 'ac2-panel-feedlot')+
+                li('beef',       circ('#c87533'),  'Beef Cattle',           'ac2-layer-beef')+
+                li('dairy',      circ('#4a90d9'),  'Dairy Cattle',          'ac2-layer-dairy')+
+                li('swine',      circ('#ff9eb5'),  'Swine',                 'ac2-layer-swine')+
+                li('horses',     circ('#a0a0a0'),  'Horses',                'ac2-layer-horses')+
+                li('turkeys',    circ('#f4a460'),  'Turkeys',               'ac2-layer-turkeys')+
+                li('chickens',   circ('#ffd700'),  'Chickens',              'ac2-layer-chickens')+
+                li('sheep',      circ('#d2b48c'),  'Sheep / Goats',         'ac2-layer-sheep')+
+                grp('Human Activity', false, 'ac2s-hum', 'ac2-panel-human')+
+                li('paperfood',  paper('#7f8c8d'), 'Paper / Food Waste',    'ac2-layer-paperfood')+
+                li('biodiesel',  drop('#1abc9c'),  'Biodiesel Plants',      'ac2-layer-biodiesel')+
+                li('ethanol',    drop('#e6c229'),  'Ethanol Plants',        'ac2-layer-ethanol')+
+                li('wastewater', drop('#3498db'),  'Wastewater Treatment',  'ac2-layer-wastewater')+
+                li('digesters',  circ('#2ecc71'),  'Anaerobic Digesters',   'ac2-layer-digesters')+
+                li('lmop',       circ('#8e44ad'),  'LMOP Sites',            'ac2-layer-lmop')+
+                grp('Utilities', false, 'ac2s-util', 'ac2-panel-utilities')+
+                li('utilities',  rect('#e67e22'),  'Electric / Gas Utilities','ac2-layer-utilities')+
+                li('powerplants',rect('#d94a4a'),  'Power Plants',          'ac2-layer-powerplants')+
+                li('pipelines',  dash('#4a5568'),  'Gas Pipelines',         'ac2-layer-pipelines')+
+                li('landfill',   rect('#8b4513'),  'Landfill Sites',        'ac2-layer-landfill');
+
+            function getCb(key) { return panel.querySelector('.ac2-layer-cb[value="'+key+'"]'); }
+
+            function updateSectionCheckboxes() {
+                Object.keys(sectionKeys).forEach(function(secId) {
+                    var secCb = panel.querySelector('#'+secId);
+                    if (!secCb) return;
+                    var keys = sectionKeys[secId];
+                    var n = keys.filter(function(k) { var cb = getCb(k); return cb && cb.checked; }).length;
+                    secCb.checked = (n === keys.length);
+                    secCb.indeterminate = (n > 0 && n < keys.length);
+                });
+            }
+
+            function updateButtons() {
+                var n = allLayerKeys.filter(function(k) { var cb = getCb(k); return cb && cb.checked; }).length;
+                var selBtn = panel.querySelector('#ac2-select-all-btn');
+                var clrBtn = panel.querySelector('#ac2-clear-all-btn');
+                if (n === 0)                    { selBtn.style.display=''; clrBtn.style.display='none'; }
+                else if (n === allLayerKeys.length) { selBtn.style.display='none'; clrBtn.style.display=''; }
+                else                            { selBtn.style.display=''; clrBtn.style.display=''; }
+            }
+
+            panel.querySelector('#ac2-select-all-btn').addEventListener('click', function() {
+                allLayerKeys.forEach(function(k) {
+                    var cb = getCb(k); if (cb && !cb.checked) { cb.checked=true; loadLayer(k); }
+                });
+                updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
+            });
+
+            panel.querySelector('#ac2-clear-all-btn').addEventListener('click', function() {
+                allLayerKeys.forEach(function(k) {
+                    var cb = getCb(k); if (cb && cb.checked) { cb.checked=false; unloadLayer(k); }
+                });
+                updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
+            });
+
+            Object.keys(sectionKeys).forEach(function(secId) {
+                var secCb = panel.querySelector('#'+secId);
+                if (!secCb) return;
+                secCb.addEventListener('change', function() {
+                    var checked = this.checked;
+                    sectionKeys[secId].forEach(function(k) {
+                        var cb = getCb(k);
+                        if (cb && cb.checked !== checked) { cb.checked=checked; checked ? loadLayer(k) : unloadLayer(k); }
+                    });
+                    updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
+                });
+            });
+
+            panel.querySelectorAll('.ac2-layer-cb').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    this.checked ? loadLayer(this.value) : unloadLayer(this.value);
+                    updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
+                });
+            });
+
+            // expose updaters so restoreAc2LayerState can call them
+            panel._updateSectionCheckboxes = updateSectionCheckboxes;
+            panel._updateButtons = updateButtons;
+
+            if (typeof applyTranslations === 'function') applyTranslations();
         }
 
         function restoreAc2LayerState() {
@@ -1949,27 +2080,16 @@
             if (!saved) return;
             try {
                 var state = JSON.parse(saved);
-                document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
-                    if (state[cb.value] === true) {
-                        cb.checked = true;
-                        loadLayer(cb.value);
-                    }
+                document.querySelectorAll('#ac2-add-panel .ac2-layer-cb').forEach(function(cb) {
+                    if (state[cb.value] === true) { cb.checked = true; loadLayer(cb.value); }
                 });
-            } catch (e) {}
+                var panel = document.getElementById('ac2-add-panel');
+                if (panel && panel._updateSectionCheckboxes) panel._updateSectionCheckboxes();
+                if (panel && panel._updateButtons) panel._updateButtons();
+            } catch(e) {}
         }
 
-        // Wire checkboxes to load/unload GeoJSON layers
-        document.querySelectorAll('#ac2-add-panel input[type="checkbox"]').forEach(function(cb) {
-            cb.addEventListener('change', function() {
-                if (this.checked) {
-                    loadLayer(this.value);
-                } else {
-                    unloadLayer(this.value);
-                }
-                saveAc2LayerState();
-            });
-        });
-
+        buildAddPanel();
         restoreAc2LayerState();
         restoreAoiState();
 
