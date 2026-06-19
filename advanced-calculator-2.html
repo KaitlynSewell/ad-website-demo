@@ -696,10 +696,11 @@
 
         // ===== PIE CHART DRAWING =====
         var DEFAULT_PIE1 = [
-            { label: 'Biogas',   value: 35, color: '#2ecc71' },
-            { label: 'Heat',     value: 28, color: '#e74c3c' },
-            { label: 'Electric', value: 25, color: '#f1c40f' },
-            { label: 'Solar',    value: 12, color: '#3498db' }
+            { label: 'Biogas',   value: 30, color: '#2ecc71' },
+            { label: 'Wind',     value: 22, color: '#00BCD4' },
+            { label: 'Heat',     value: 22, color: '#e74c3c' },
+            { label: 'Electric', value: 18, color: '#f1c40f' },
+            { label: 'Solar',    value:  8, color: '#3498db' }
         ];
         var BAR_DATA = [
             { label: 'Biogas',   used: 420, stored: 180, color: '#2ecc71' },
@@ -1182,7 +1183,7 @@
             // Solar → unassigned until solar layer added
         };
         var PIE1_COLORS = {
-            'Biogas': '#2ecc71', 'Heat': '#e74c3c',
+            'Biogas': '#2ecc71', 'Wind': '#00BCD4', 'Heat': '#e74c3c',
             'Electric': '#f1c40f', 'Solar': '#3498db'
         };
 
