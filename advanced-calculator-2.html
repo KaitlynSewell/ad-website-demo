@@ -452,6 +452,33 @@
         html.dark-mode .aoi-right-sidebar { background: #1e3050; border-left-color: #2a4a7a; }
         html.dark-mode .aoi-rs-header { color: #e8f0fe; border-bottom-color: #2a4a7a; }
         html.dark-mode .aoi-rs-value { color: #e8f0fe; }
+
+        .aoi-digester-hdr {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; cursor: pointer;
+        }
+        .aoi-digester-hdr:hover { opacity: 0.8; }
+        .aoi-digester-arrow { font-size: 10px; color: #888; margin-top: 4px; flex-shrink: 0; }
+        .aoi-digester-item {
+            background: #f6f8fc; border: 1px solid #e0e8f0;
+            border-radius: 6px; padding: 8px 10px; margin: 5px 0;
+        }
+        .aoi-digester-name { font-weight: 600; font-size: 11.5px; color: #2c3e50; margin-bottom: 2px; }
+        .aoi-digester-meta { font-size: 10px; color: #666; margin-bottom: 3px; }
+        .aoi-digester-stats { font-size: 10px; color: #888; margin-bottom: 5px; }
+        .aoi-map-btn {
+            font-size: 10px; padding: 3px 0; border-radius: 4px;
+            border: 1px solid #1a6fc4; background: #e8f0fe;
+            color: #1a6fc4; cursor: pointer; width: 100%;
+        }
+        .aoi-map-btn.active { background: #1a6fc4; color: white; }
+        .aoi-map-btn:hover:not(.active) { background: #d0e4ff; }
+        html.dark-mode .aoi-digester-item { background: #162238; border-color: #2a4a7a; }
+        html.dark-mode .aoi-digester-name { color: #e8f0fe; }
+        html.dark-mode .aoi-digester-meta { color: #a0b8d8; }
+        html.dark-mode .aoi-digester-stats { color: #7090a8; }
+        html.dark-mode .aoi-map-btn { border-color: #4a90d9; background: #1a3050; color: #7ab8f0; }
+        html.dark-mode .aoi-map-btn.active { background: #4a90d9; color: white; }
     </style>
 </head>
 <body>
@@ -609,9 +636,17 @@
                     <div class="aoi-rs-unit" id="aoi-area-unit">sq km</div>
                 </div>
                 <div class="aoi-rs-section">
-                    <div class="aoi-rs-label" data-i18n="ac2-sidebar-digesters-label">Digesters</div>
-                    <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
-                    <div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>
+                    <div class="aoi-digester-hdr" onclick="toggleAoiDigesterPanel()">
+                        <div>
+                            <div class="aoi-rs-label" data-i18n="ac2-sidebar-digesters-label">Digesters</div>
+                            <div style="display:flex;align-items:baseline;gap:5px;">
+                                <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
+                                <div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>
+                            </div>
+                        </div>
+                        <span class="aoi-digester-arrow" id="aoi-digester-arrow">▸</span>
+                    </div>
+                    <div id="aoi-digester-panel" style="display:none;margin-top:6px;"></div>
                 </div>
                 <div class="aoi-rs-section">
                     <div class="aoi-rs-label">Est. Population</div>
@@ -951,6 +986,118 @@
             if (arrow) arrow.textContent = open ? '▸' : '▾';
         }
 
+        // ===== DIGESTER PANEL =====
+        function loadDigesterData() {
+            if (digesterDataCache !== null) return;
+            digesterDataCache = [];
+            fetch(LAYER_FILES['digesters'])
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    digesterDataCache = [];
+                    data.features.forEach(function(f) {
+                        var coord = getFeatureCoord(f);
+                        if (!coord) return;
+                        var p = f.properties || {};
+                        digesterDataCache.push({
+                            lat: coord.lat, lng: coord.lng,
+                            name:   p.facName    || 'Unknown Digester',
+                            city:   p.CityName   || '',
+                            county: p.countyName || '',
+                            swine:  Number(p.Swine)       || 0,
+                            beef:   Number(p.CattleBeef)  || 0,
+                            au:     Number(p.AnimalUnit)  || 0
+                        });
+                    });
+                    if (hasAoiActive()) renderAoiDigesterPanel();
+                })
+                .catch(function() { digesterDataCache = []; });
+        }
+
+        function getAoiDigesters() {
+            if (!digesterDataCache || !digesterDataCache.length) return [];
+            if (aoiCenter) {
+                return digesterDataCache.filter(function(f) {
+                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
+                });
+            }
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
+                return digesterDataCache.filter(function(f) { return pointInPolygon(f, aoiPolyPoints); });
+            }
+            return digesterDataCache;
+        }
+
+        function toggleAoiDigesterPanel() {
+            var panel = document.getElementById('aoi-digester-panel');
+            var arrow = document.getElementById('aoi-digester-arrow');
+            if (!panel) return;
+            var isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
+            if (!isOpen) renderAoiDigesterPanel();
+        }
+
+        function toggleDigesterOnMap(facId) {
+            if (digesterHighlightMarkers[facId]) {
+                microgridMap.removeLayer(digesterHighlightMarkers[facId]);
+                delete digesterHighlightMarkers[facId];
+                delete selectedDigesters[facId];
+            } else {
+                var d = digesterDataCache && digesterDataCache.filter(function(f) {
+                    return (f.lat + ',' + f.lng) === facId;
+                })[0];
+                if (!d) return;
+                var animalLine = [
+                    d.swine ? 'Swine: ' + d.swine : '',
+                    d.beef  ? 'Beef: '  + d.beef  : '',
+                    d.au    ? 'AU: '    + d.au    : ''
+                ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+                var popupHtml =
+                    '<strong>' + d.name + '</strong>' +
+                    (d.city || d.county ? '<br>' + [d.city, d.county].filter(Boolean).join(', ') : '') +
+                    (animalLine ? '<br><span style="color:#666;font-size:11px;">' + animalLine + '</span>' : '');
+                var marker = L.circleMarker([d.lat, d.lng], {
+                    radius: 12, color: '#FF5722', fillColor: '#FF5722',
+                    fillOpacity: 0.75, weight: 3
+                }).bindPopup(popupHtml).addTo(microgridMap);
+                marker.openPopup();
+                microgridMap.panTo([d.lat, d.lng]);
+                digesterHighlightMarkers[facId] = marker;
+                selectedDigesters[facId] = true;
+            }
+            renderAoiDigesterPanel();
+        }
+
+        function renderAoiDigesterPanel() {
+            var panel = document.getElementById('aoi-digester-panel');
+            if (!panel) return;
+            var digesters = getAoiDigesters();
+            panel.innerHTML = '';
+            if (!digesters.length) {
+                panel.innerHTML = '<div style="font-size:11px;color:#888;font-style:italic;">No digesters in selected area.</div>';
+                return;
+            }
+            digesters.forEach(function(d) {
+                var facId      = d.lat + ',' + d.lng;
+                var isSelected = !!selectedDigesters[facId];
+                var item = document.createElement('div');
+                item.className = 'aoi-digester-item';
+                var animalParts = [];
+                if (d.swine) animalParts.push('Swine: ' + d.swine);
+                if (d.beef)  animalParts.push('Beef: '  + d.beef);
+                if (d.au)    animalParts.push('AU: '    + d.au);
+                item.innerHTML =
+                    '<div class="aoi-digester-name">' + d.name + '</div>' +
+                    (d.city || d.county ? '<div class="aoi-digester-meta">' + [d.city, d.county].filter(Boolean).join(', ') + '</div>' : '') +
+                    (animalParts.length ? '<div class="aoi-digester-stats">' + animalParts.join(' &nbsp;·&nbsp; ') + '</div>' : '');
+                var btn = document.createElement('button');
+                btn.className = 'aoi-map-btn' + (isSelected ? ' active' : '');
+                btn.textContent = isSelected ? 'Remove from Map' : 'Show on Map';
+                btn.onclick = (function(id) { return function() { toggleDigesterOnMap(id); }; })(facId);
+                item.appendChild(btn);
+                panel.appendChild(item);
+            });
+        }
+
         function renderAoiFeedstockPanel() {
             var panel = document.getElementById('aoi-feedstock-panel');
             if (!panel) return;
@@ -1237,6 +1384,9 @@
 
         // usedFeedstocks[key] = { 'lat,lng': true } — individual facilities selected by user
         var usedFeedstocks = {};
+        var selectedDigesters     = {};  // facId → true
+        var digesterDataCache     = null; // null=not started, []=loading/empty, [...]= loaded
+        var digesterHighlightMarkers = {}; // facId → L.circleMarker
         try { var _uf = localStorage.getItem('ac2UsedFeedstocks'); if (_uf) { var _p = JSON.parse(_uf); if (_p && typeof _p === 'object') usedFeedstocks = _p; } } catch(e) {}
 
         // Cache of named features per feedstock key, loaded lazily from GeoJSON
@@ -1776,6 +1926,11 @@
             document.getElementById('aoi-clear-btn').style.display = 'block';
             usedFeedstocks = {};
             try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
+            selectedDigesters = {};
+            Object.keys(digesterHighlightMarkers).forEach(function(id) {
+                microgridMap.removeLayer(digesterHighlightMarkers[id]);
+            });
+            digesterHighlightMarkers = {};
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
@@ -1844,6 +1999,11 @@
             document.getElementById('aoi-radius-row').style.display = 'flex';
             usedFeedstocks = {};
             try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
+            selectedDigesters = {};
+            Object.keys(digesterHighlightMarkers).forEach(function(id) {
+                microgridMap.removeLayer(digesterHighlightMarkers[id]);
+            });
+            digesterHighlightMarkers = {};
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
@@ -1872,6 +2032,11 @@
             hideAoiSidebar();
             usedFeedstocks = {};
             try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
+            selectedDigesters = {};
+            Object.keys(digesterHighlightMarkers).forEach(function(id) {
+                microgridMap.removeLayer(digesterHighlightMarkers[id]);
+            });
+            digesterHighlightMarkers = {};
             updateCharts();
             saveAoiState();
         }
@@ -1919,6 +2084,8 @@
 
             document.getElementById('aoi-empty-msg').style.display = 'none';
             document.getElementById('aoi-stats').style.display = 'flex';
+            loadDigesterData();
+            renderAoiDigesterPanel();
             drawFeedstockBar();
             renderAoiFeedstockPanel();
         }
