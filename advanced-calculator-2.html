@@ -916,6 +916,20 @@
             drawFeedstockBar();
         }
 
+        function deselectAllFacilities(key) {
+            delete usedFeedstocks[key];
+            try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
+            renderAoiFeedstockPanel();
+            drawFeedstockBar();
+        }
+
+        function allFacilitiesSelected(key) {
+            var feats = getAoiFeaturesWithNames(key);
+            if (!feats || !feats.length) return false;
+            var used = usedFeedstocks[key] || {};
+            return feats.every(function(f) { return used[f.lat + ',' + f.lng]; });
+        }
+
         function toggleDropdown(key) {
             var list  = document.getElementById('fds-list-' + key);
             var arrow = document.getElementById('fds-arrow-' + key);
@@ -958,10 +972,13 @@
                     '<span class="fds-arrow" id="fds-arrow-' + key + '">' + (isOpen ? '▾' : '▸') + '</span>' +
                     '<span class="fds-label">' + (FEEDSTOCK_BAR_LABELS[key] || key) +
                     ' <span class="fds-count">(' + count + ')</span></span>' + badge;
+                var allSelected = allFacilitiesSelected(key);
                 var allBtn = document.createElement('button');
                 allBtn.className = 'fds-all-btn';
-                allBtn.textContent = 'Select All';
-                allBtn.onclick = (function(k) { return function(e) { e.stopPropagation(); selectAllFacilities(k); }; })(key);
+                allBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+                allBtn.onclick = (function(k, sel) {
+                    return function(e) { e.stopPropagation(); sel ? deselectAllFacilities(k) : selectAllFacilities(k); };
+                })(key, allSelected);
                 hdr.appendChild(allBtn);
                 hdr.onclick = (function(k) { return function() { toggleDropdown(k); }; })(key);
                 section.appendChild(hdr);
