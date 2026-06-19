@@ -259,6 +259,7 @@
         html.dark-mode .ac2-units-panel { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
         html.dark-mode .ac2-units-panel .units-row + .units-row { border-top-color: #2a4a7a; }
         html.dark-mode .main-content { background-color: #0d1b2a; }
+        .custom-marker-icon { background: none; border: none; }
 
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
@@ -1370,13 +1371,36 @@
             powerplants: 1100, pipelines: 150, landfill: 240
         };
         var LAYER_COLORS = {
-            beef: '#c87533', dairy: '#4a90d9', swine: '#ff9eb5',
-            horses: '#8B4513', turkeys: '#DAA520', chickens: '#FFD700',
-            sheep: '#708090', biodiesel: '#2ecc71', ethanol: '#27ae60',
-            wastewater: '#3498db', digesters: '#9b59b6', lmop: '#e6c229',
-            utilities: '#e67e22', powerplants: '#e74c3c',
-            pipelines: '#95a5a6', landfill: '#7f8c8d'
+            beef:'#c87533', dairy:'#4a90d9', swine:'#ff9eb5',
+            horses:'#a0a0a0', turkeys:'#f4a460', chickens:'#ffd700',
+            sheep:'#d2b48c', biodiesel:'#1abc9c', ethanol:'#e6c229',
+            wastewater:'#3498db', digesters:'#2ecc71', lmop:'#8e44ad',
+            utilities:'#e67e22', powerplants:'#d94a4a',
+            pipelines:'#4a5568', landfill:'#8b4513'
         };
+        var LAYER_SHAPES = {
+            beef:'circle', dairy:'circle', swine:'circle', horses:'circle',
+            turkeys:'circle', chickens:'circle', sheep:'circle',
+            digesters:'circle', lmop:'circle',
+            biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
+            utilities:'square', powerplants:'square', landfill:'square'
+        };
+
+        function makeIconSvg(shape, color, size) {
+            if (shape === 'square') {
+                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
+            } else if (shape === 'droplet') {
+                var w = Math.round(size * 0.75);
+                return '<svg width="'+w+'" height="'+size+'" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
+            }
+            return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
+        }
+
+        function makeMarkerIcon(shape, color) {
+            var h = 14, w = shape === 'droplet' ? 11 : 14;
+            return L.divIcon({ html: makeIconSvg(shape, color, h), className: 'custom-marker-icon',
+                               iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
+        }
 
         // ===== LAYER STATE =====
         // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
@@ -1519,12 +1543,8 @@
                         var coord = getFeatureCoord(f);
                         if (!coord) return;
                         features.push(coord);
-                        var m = L.circleMarker([coord.lat, coord.lng], {
-                            radius: 5,
-                            color: LAYER_COLORS[key] || '#888',
-                            fillColor: LAYER_COLORS[key] || '#888',
-                            fillOpacity: 0.75,
-                            weight: 1
+                        var m = L.marker([coord.lat, coord.lng], {
+                            icon: makeMarkerIcon(LAYER_SHAPES[key] || 'circle', LAYER_COLORS[key] || '#888')
                         });
                         markers.push(m);
                     });
