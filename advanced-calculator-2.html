@@ -1762,6 +1762,8 @@
             microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
+            usedFeedstocks = {};
+            try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
@@ -1828,6 +1830,8 @@
             exitDrawMode();
             document.getElementById('aoi-clear-btn').style.display = 'block';
             document.getElementById('aoi-radius-row').style.display = 'flex';
+            usedFeedstocks = {};
+            try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
