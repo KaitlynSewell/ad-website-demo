@@ -584,11 +584,6 @@
                         </div>
                     </div>
                     <div class="ac2-chart-box">
-                        <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Energy Generation By Source Type</div>
-                        <canvas id="pie-chart-1" width="220" height="220"></canvas>
-                        <div class="ac2-chart-legend" id="pie-legend-1"></div>
-                    </div>
-                    <div class="ac2-chart-box">
                         <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Energy Used vs Stored by Type</div>
                         <canvas id="bar-chart-1" width="260" height="180"></canvas>
                         <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
@@ -609,6 +604,18 @@
                             </div>
                         </div>
                         <div id="microgrid-map"></div>
+                    </div>
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                        <div class="ac2-chart-box" style="flex:1;min-width:240px;">
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Microgrid Energy Generation By Source Type</div>
+                            <canvas id="pie-chart-1" width="220" height="220"></canvas>
+                            <div class="ac2-chart-legend" id="pie-legend-1"></div>
+                        </div>
+                        <div class="ac2-chart-box" style="flex:1;min-width:240px;">
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-proposed-energy-gen">Proposed Microgrid Energy Generation By Source Type</div>
+                            <canvas id="pie-chart-3" width="220" height="220"></canvas>
+                            <div class="ac2-chart-legend" id="pie-legend-3"></div>
+                        </div>
                     </div>
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
                         <div style="display:flex;">
@@ -952,6 +959,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
+            drawProposedPie();
         }
 
         function selectAllFacilities(key) {
@@ -962,6 +970,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
+            drawProposedPie();
         }
 
         function deselectAllFacilities(key) {
@@ -969,6 +978,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
+            drawProposedPie();
         }
 
         function allFacilitiesSelected(key) {
@@ -1066,6 +1076,7 @@
                 selectedDigesters[facId] = true;
             }
             renderAoiDigesterPanel();
+            drawProposedPie();
         }
 
         function renderAoiDigesterPanel() {
@@ -1287,6 +1298,49 @@
                 ctx.textBaseline = 'top';
                 ctx.fillText(b.label, cx, padT + chartH + 4);
             });
+        }
+
+        function drawProposedPie() {
+            var eu = ENERGY_UNITS[energyUnit];
+            var production = {};
+
+            // User-selected feedstock sources (via AOI sidebar toggles)
+            Object.keys(usedFeedstocks).forEach(function(key) {
+                var count = Object.keys(usedFeedstocks[key]).length;
+                if (!count) return;
+                var cat = PIE1_CAT[key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+            });
+
+            // User-selected digesters (via AOI sidebar Show on Map)
+            var dCount = Object.keys(selectedDigesters).length;
+            if (dCount > 0) {
+                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor;
+            }
+
+            // Loaded non-feedstock layers in AOI (lmop, powerplants, utilities, ethanol)
+            var filtered = getFeaturesInAOI();
+            ['lmop', 'powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+                var count = filtered[key] ? filtered[key].length : 0;
+                if (!count) return;
+                var cat = PIE1_CAT[key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+            });
+
+            var zerosegs = Object.keys(PIE1_COLORS).map(function(cat) {
+                return { label: cat, value: 0, color: PIE1_COLORS[cat] };
+            });
+            var segs = Object.keys(PIE1_COLORS)
+                .map(function(cat) { return { label: cat, value: Math.round(production[cat] || 0), color: PIE1_COLORS[cat] }; })
+                .filter(function(s) { return s.value > 0; });
+
+            if (segs.length === 0) {
+                drawZeroPie('pie-chart-3', 'pie-legend-3', zerosegs);
+            } else {
+                drawPie('pie-chart-3', 'pie-legend-3', segs, eu.label);
+            }
         }
 
         function drawZeroPie(canvasId, legendId, segments) {
@@ -1685,6 +1739,7 @@
         function updateCharts() {
             if (!hasAnyLoadedLayer()) {
                 drawNoInputsPie('pie-chart-1', 'pie-legend-1');
+                drawProposedPie();
                 drawFeedstockBar();
                 renderAoiFeedstockPanel();
                 drawNoInputsBar();
@@ -1694,6 +1749,7 @@
 
             // Pie 1 and bar chart are static when layers are loaded
             drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, ENERGY_UNITS[energyUnit].label);
+            drawProposedPie();
             var ef = ENERGY_UNITS[energyUnit].factor;
             drawBarChart(BAR_DATA.map(function(d) {
                 return { label: d.label, used: Math.round(d.used * ef), stored: Math.round(d.stored * ef), color: d.color };
