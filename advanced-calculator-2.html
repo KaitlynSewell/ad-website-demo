@@ -2335,7 +2335,7 @@
         }
 
         buildAddPanel();
-        restoreAc2LayerState();
+        try { localStorage.removeItem('ac2LayerState'); } catch(e) {}
         restoreAoiState();
 
         // Restore unit system, energy unit, and time period
