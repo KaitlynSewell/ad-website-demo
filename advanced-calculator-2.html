@@ -1701,7 +1701,7 @@
                         radius: aoiRadiusKm * 1000,
                         color: '#1a6fc4', weight: 4, opacity: 1,
                         fillColor: '#4a90d9', fillOpacity: 0.08,
-                        interactive: false
+                        interactive: false, pane: 'aoiPane'
                     }).addTo(microgridMap);
                     document.getElementById('aoi-clear-btn').style.display = 'block';
                     document.getElementById('aoi-radius-row').style.display = 'flex';
@@ -1717,7 +1717,7 @@
                     aoiLayer = L.polygon(aoiPolyPoints.map(function(p) { return [p.lat, p.lng]; }), {
                         color: '#1a6fc4', weight: 4, opacity: 1,
                         fillColor: '#4a90d9', fillOpacity: 0.08,
-                        interactive: false
+                        interactive: false, pane: 'aoiPane'
                     }).addTo(microgridMap);
                     document.getElementById('aoi-clear-btn').style.display = 'block';
                     updateAoiSidebar();
@@ -1808,6 +1808,8 @@
 
         // ===== MAP SETUP =====
         var microgridMap = L.map('microgrid-map', { zoomControl: true }).setView([41.88, -93.10], 7);
+        microgridMap.createPane('aoiPane');
+        microgridMap.getPane('aoiPane').style.zIndex = 650;
 
         var mgStreetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
