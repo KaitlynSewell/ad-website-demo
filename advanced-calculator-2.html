@@ -538,7 +538,8 @@
                         <span data-i18n="ac2-energy">Energy</span>
                         <span id="energy-metric">
                             <label><input type="radio" name="energyUnit" value="kWh"  onchange="setEnergyUnit('kWh')">  kWh</label>
-                            <label><input type="radio" name="energyUnit" value="MWh"  checked onchange="setEnergyUnit('MWh')">  MWh</label>
+                            <label><input type="radio" name="energyUnit" value="MWh"  onchange="setEnergyUnit('MWh')">  MWh</label>
+                            <label><input type="radio" name="energyUnit" value="MW"   checked onchange="setEnergyUnit('MW')">   MW</label>
                             <label><input type="radio" name="energyUnit" value="GWh"  onchange="setEnergyUnit('GWh')">  GWh</label>
                             <label><input type="radio" name="energyUnit" value="GJ"   onchange="setEnergyUnit('GJ')">   GJ</label>
                         </span>
@@ -715,11 +716,12 @@
     <script>
         // ===== UNITS =====
         var unitSystem = 'metric';
-        var energyUnit = 'MWh';
+        var energyUnit = 'MW';
         var ENERGY_UNITS = {
             // Metric
             'kWh':   { label: 'kWh',    factor: 1000,        system: 'metric'   },
             'MWh':   { label: 'MWh',    factor: 1,           system: 'metric'   },
+            'MW':    { label: 'MW',     factor: 1/8760,      system: 'metric'   },
             'GWh':   { label: 'GWh',    factor: 0.001,       system: 'metric'   },
             'GJ':    { label: 'GJ',     factor: 3.6,         system: 'metric'   },
             // Imperial
@@ -739,7 +741,7 @@
 
         function setUnitSystem(sys) {
             unitSystem = sys;
-            energyUnit = sys === 'metric' ? 'MWh' : 'MMBTU';
+            energyUnit = sys === 'metric' ? 'MW' : 'MMBTU';
             document.querySelectorAll('input[name="energyUnit"]').forEach(function(r) {
                 r.checked = r.value === energyUnit;
             });
