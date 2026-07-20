@@ -1387,17 +1387,29 @@
             pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson'
         };
 
-        // Map each layer key to a pie-1 category (energy generation by source type)
+        // Map each layer key to a pie category (energy generation by source type)
         var PIE1_CAT = {
-            digesters: 'Biogas', lmop: 'Biogas', wastewater: 'Biogas',
+            digesters: 'Biogas', lmop: 'Biogas', wastewater: 'Biogas', landfill: 'Biogas', biodiesel: 'Biogas',
             beef: 'Heat', dairy: 'Heat', swine: 'Heat', horses: 'Heat',
             turkeys: 'Heat', chickens: 'Heat', sheep: 'Heat',
-            powerplants: 'Electric', utilities: 'Electric', ethanol: 'Electric'
-            // Solar → unassigned until solar layer added
+            utilities: 'Wind',                       // Iowa utility layer is predominantly wind farms
+            powerplants: 'Electric', ethanol: 'Electric'
         };
         var PIE1_COLORS = {
             'Biogas': '#2ecc71', 'Wind': '#00BCD4', 'Heat': '#e74c3c',
             'Electric': '#f1c40f', 'Solar': '#3498db'
+        };
+
+        // Iowa statewide energy density constants (EIA 2023)
+        // Wind: ~11,800 MW installed at 40% CF over 145,746 km² Iowa area
+        // Solar: ~3,100 MW installed at 18% CF over 145,746 km²
+        var IOWA_WIND_MWH_PER_KM2  = 11800 * 8760 * 0.40 / 145746;  // ≈ 284 MWh/km²/yr
+        var IOWA_SOLAR_MWH_PER_KM2 = 3100  * 8760 * 0.18 / 145746;  // ≈ 33 MWh/km²/yr
+
+        // Dispatch factors: fraction of generated energy "used" directly vs stored
+        // Based on MILP model dispatch patterns (dispatchable vs intermittent sources)
+        var DISPATCH_USED = {
+            'Biogas': 0.90, 'Wind': 0.65, 'Solar': 0.60, 'Heat': 0.85, 'Electric': 0.80
         };
 
         // Feedstock bar chart — ordered list of feedstock layer keys and their display labels
@@ -1558,6 +1570,29 @@
                 }).length;
             }
             return features.length;
+        }
+
+        // Compute AOI area in km² for wind/solar density estimates
+        function getAoiAreaKm2() {
+            if (aoiCenter) {
+                return Math.PI * aoiRadiusKm * aoiRadiusKm;
+            }
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
+                var n = aoiPolyPoints.length;
+                var centerLat = aoiPolyPoints.reduce(function(s, p) { return s + p.lat; }, 0) / n;
+                var cosLat = Math.cos(centerLat * Math.PI / 180);
+                var area = 0;
+                for (var i = 0; i < n; i++) {
+                    var j = (i + 1) % n;
+                    var xi = aoiPolyPoints[i].lng * 111.32 * cosLat;
+                    var yi = aoiPolyPoints[i].lat * 111.32;
+                    var xj = aoiPolyPoints[j].lng * 111.32 * cosLat;
+                    var yj = aoiPolyPoints[j].lat * 111.32;
+                    area += xi * yj - xj * yi;
+                }
+                return Math.abs(area) / 2;
+            }
+            return 0;
         }
 
         // Pre-load coords for all non-pipeline layers so AOI sidebar counts work
@@ -1736,34 +1771,125 @@
             return Object.keys(loadedLayers).length > 0;
         }
 
-        function updateCharts() {
-            if (!hasAnyLoadedLayer()) {
-                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
-                drawProposedPie();
-                drawFeedstockBar();
-                renderAoiFeedstockPanel();
-                drawNoInputsBar();
-                updateProdCost(null);
-                return;
+        // ===== CURRENT ENERGY PIE (Available in AOI — any facility, whether selected or not) =====
+        function drawCurrentPie() {
+            var eu = ENERGY_UNITS[energyUnit];
+            var production = {};
+
+            // Existing energy-producing facilities in AOI (from bgCoordCache, pre-loaded for all layers)
+            var energyKeys = ['digesters', 'lmop', 'wastewater', 'landfill',
+                              'powerplants', 'utilities', 'ethanol', 'biodiesel'];
+            energyKeys.forEach(function(key) {
+                var count = getAoiCount(key);
+                if (!count) return;
+                var cat = PIE1_CAT[key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+            });
+
+            // Wind and Solar: Iowa statewide capacity density × AOI area
+            // Represents the proportional share of existing Iowa wind/solar in the AOI
+            var areaKm2 = getAoiAreaKm2();
+            if (areaKm2 > 0) {
+                production['Wind']  = (production['Wind']  || 0) + areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor;
+                production['Solar'] = (production['Solar'] || 0) + areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor;
             }
 
-            // Pie 1 and bar chart are static when layers are loaded
-            drawPie('pie-chart-1', 'pie-legend-1', DEFAULT_PIE1, ENERGY_UNITS[energyUnit].label);
-            drawProposedPie();
-            var ef = ENERGY_UNITS[energyUnit].factor;
-            drawBarChart(BAR_DATA.map(function(d) {
-                return { label: d.label, used: Math.round(d.used * ef), stored: Math.round(d.stored * ef), color: d.color };
-            }), ENERGY_UNITS[energyUnit].label);
+            var zerosegs = Object.keys(PIE1_COLORS).map(function(cat) {
+                return { label: cat, value: 0, color: PIE1_COLORS[cat] };
+            });
+            var segs = Object.keys(PIE1_COLORS)
+                .map(function(cat) { return { label: cat, value: Math.round(production[cat] || 0), color: PIE1_COLORS[cat] }; })
+                .filter(function(s) { return s.value > 0; });
+
+            if (!segs.length) {
+                drawZeroPie('pie-chart-1', 'pie-legend-1', zerosegs);
+            } else {
+                drawPie('pie-chart-1', 'pie-legend-1', segs, eu.label);
+            }
+        }
+
+        // ===== ENERGY USED VS STORED BAR (model-driven from proposed selections) =====
+        function drawModeledBar() {
+            var eu = ENERGY_UNITS[energyUnit];
+            var production = {};
+
+            // Mirror of drawProposedPie logic — aggregate by energy category
+            Object.keys(usedFeedstocks).forEach(function(key) {
+                var count = Object.keys(usedFeedstocks[key]).length;
+                if (!count) return;
+                var cat = PIE1_CAT[key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+            });
+
+            var dCount = Object.keys(selectedDigesters).length;
+            if (dCount > 0) {
+                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor;
+            }
 
             var filtered = getFeaturesInAOI();
+            ['lmop', 'powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+                var count = filtered[key] ? filtered[key].length : 0;
+                if (!count) return;
+                var cat = PIE1_CAT[key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+            });
 
-            // --- Feedstock bar: available vs used ---
+            // Apply dispatch factors: fraction used immediately vs stored (battery/thermal)
+            var barData = Object.keys(PIE1_COLORS)
+                .filter(function(cat) { return (production[cat] || 0) > 0; })
+                .map(function(cat) {
+                    var total = production[cat];
+                    var uf = DISPATCH_USED[cat] || 0.80;
+                    return {
+                        label: cat,
+                        used:   Math.round(total * uf),
+                        stored: Math.round(total * (1 - uf)),
+                        color:  PIE1_COLORS[cat]
+                    };
+                });
+
+            if (!barData.length) {
+                drawNoInputsBar();
+            } else {
+                drawBarChart(barData, eu.label);
+            }
+        }
+
+        function updateCharts() {
+            var hasAoi    = hasAoiActive();
+            var hasLayers = hasAnyLoadedLayer();
+            var hasProposed = Object.keys(usedFeedstocks).length > 0
+                           || Object.keys(selectedDigesters).length > 0
+                           || hasLayers;
+
+            // Current Energy pie — AOI area model (works without any loaded layers)
+            if (hasAoi || hasLayers) {
+                drawCurrentPie();
+            } else {
+                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
+            }
+
+            // Proposed pie — user selections
+            drawProposedPie();
+
+            // Feedstock availability bar — AOI counts vs user selected
             drawFeedstockBar();
             renderAoiFeedstockPanel();
 
-            // --- Production / Costs ---
-            updateProdCost(filtered);
-            if (hasAoiActive()) updateAoiSidebar();
+            // Energy used vs stored — dispatch model from proposed selections
+            if (hasProposed) {
+                drawModeledBar();
+            } else {
+                drawNoInputsBar();
+            }
+
+            // Production/Cost summary panel
+            var filtered = getFeaturesInAOI();
+            updateProdCost(hasLayers ? filtered : null);
+            if (hasAoi) updateAoiSidebar();
         }
 
         function updateProdCost(filtered) {
