@@ -732,9 +732,14 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
         var timePeriod = 'yearly';
+        var PERIOD_FACTORS = { yearly: 1, monthly: 1/12, weekly: 1/52.1775, daily: 1/365 };
+        var PERIOD_LABELS  = { yearly: 'yr', monthly: 'mo', weekly: 'wk', daily: 'day' };
+        function periodFactor() { return PERIOD_FACTORS[timePeriod] || 1; }
+        function unitPeriodLabel() { return ENERGY_UNITS[energyUnit].label + '/' + (PERIOD_LABELS[timePeriod] || 'yr'); }
         function setPeriod(p) {
             timePeriod = p;
             localStorage.setItem('ac2Period', p);
+            updateCharts();
         }
 
         function setUnitSystem(sys) {
@@ -1328,6 +1333,7 @@
 
         function drawProposedPie() {
             var eu = ENERGY_UNITS[energyUnit];
+            var pf = periodFactor();
             var production = {};
 
             // User-placed theoretical items from Add panel
@@ -1335,7 +1341,7 @@
                 var item = placedItems[id];
                 var cat = PIE1_CAT[item.key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor;
+                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor * pf;
             });
 
             // User-selected feedstock sources (via AOI sidebar toggles)
@@ -1344,13 +1350,13 @@
                 if (!count) return;
                 var cat = PIE1_CAT[key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
             });
 
             // User-selected digesters (via AOI sidebar Show on Map)
             var dCount = Object.keys(selectedDigesters).length;
             if (dCount > 0) {
-                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor;
+                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor * pf;
             }
 
             // Loaded non-feedstock layers in AOI (lmop, powerplants, utilities, ethanol)
@@ -1360,7 +1366,7 @@
                 if (!count) return;
                 var cat = PIE1_CAT[key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
             });
 
             var zerosegs = Object.keys(PIE1_COLORS).map(function(cat) {
@@ -1373,7 +1379,7 @@
             if (segs.length === 0) {
                 drawZeroPie('pie-chart-3', 'pie-legend-3', zerosegs);
             } else {
-                drawPie('pie-chart-3', 'pie-legend-3', segs, eu.label);
+                drawPie('pie-chart-3', 'pie-legend-3', segs, unitPeriodLabel());
             }
         }
 
@@ -1859,11 +1865,12 @@
             }
 
             var eu      = ENERGY_UNITS[energyUnit];
+            var pf      = periodFactor();
             var areaKm2 = getAoiAreaKm2();
 
             // Total energy demand of the AOI — Iowa average consumption density
             // Source: EIA 2019 Iowa retail sales (~50,200 GWh) / Iowa area (145,746 km²)
-            var totalDemand = Math.round(areaKm2 * IOWA_MWH_DEMAND_PER_KM2 * eu.factor);
+            var totalDemand = Math.round(areaKm2 * IOWA_MWH_DEMAND_PER_KM2 * eu.factor * pf);
 
             // Local generation from existing energy facilities in AOI (bgCoordCache, always pre-loaded)
             var production = {};
@@ -1872,13 +1879,13 @@
                 if (!count) return;
                 var cat = PIE1_CAT[key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
             });
 
             // Wind and Solar: area-based share of Iowa's installed capacity
             if (areaKm2 > 0) {
-                var windLocal  = Math.round(areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor);
-                var solarLocal = Math.round(areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor);
+                var windLocal  = Math.round(areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor * pf);
+                var solarLocal = Math.round(areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor * pf);
                 if (windLocal  > 0) production['Wind']  = (production['Wind']  || 0) + windLocal;
                 if (solarLocal > 0) production['Solar'] = (production['Solar'] || 0) + solarLocal;
             }
@@ -1905,13 +1912,14 @@
             if (!segs.length) {
                 drawZeroPie('pie-chart-1', 'pie-legend-1', zerosegs);
             } else {
-                drawPie('pie-chart-1', 'pie-legend-1', segs, eu.label);
+                drawPie('pie-chart-1', 'pie-legend-1', segs, unitPeriodLabel());
             }
         }
 
         // ===== ENERGY USED VS STORED BAR (model-driven from proposed selections) =====
         function drawModeledBar() {
             var eu = ENERGY_UNITS[energyUnit];
+            var pf = periodFactor();
             var production = {};
 
             // User-placed theoretical items from Add panel
@@ -1919,7 +1927,7 @@
                 var item = placedItems[id];
                 var cat = PIE1_CAT[item.key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor;
+                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor * pf;
             });
 
             // Mirror of drawProposedPie logic — aggregate by energy category
@@ -1928,12 +1936,12 @@
                 if (!count) return;
                 var cat = PIE1_CAT[key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
             });
 
             var dCount = Object.keys(selectedDigesters).length;
             if (dCount > 0) {
-                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor;
+                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor * pf;
             }
 
             var filtered = getFeaturesInAOI();
@@ -1942,7 +1950,7 @@
                 if (!count) return;
                 var cat = PIE1_CAT[key];
                 if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor;
+                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
             });
 
             // Apply dispatch factors: fraction used immediately vs stored (battery/thermal)
@@ -1962,7 +1970,7 @@
             if (!barData.length) {
                 drawNoInputsBar();
             } else {
-                drawBarChart(barData, eu.label);
+                drawBarChart(barData, unitPeriodLabel());
             }
         }
 
@@ -2067,16 +2075,6 @@
             var label = LAYER_LABELS[key] || key;
             var iconHtml = makeKeyIconHtml(key, 18);
             var prod = PROD_PER_FEAT[key] || 0;
-            var prodTxt = prod > 0 ? 'Est. ' + prod.toLocaleString() + ' MWh/yr' : 'Infrastructure only';
-
-            var popupHtml =
-                '<div style="min-width:170px;font-size:12px">' +
-                '<strong>' + label + '</strong>' +
-                '<div style="margin:5px 0 4px;padding:3px 7px;background:#fff8e1;border-left:3px solid #f39c12;font-size:11px;color:#7a5000;">' +
-                '&#9651; Theoretical — user placed</div>' +
-                '<div style="color:#555;margin-bottom:7px">' + prodTxt + '</div>' +
-                '<button onclick="removePlacedItem(' + id + ')" style="font-size:11px;padding:2px 9px;cursor:pointer;background:#e74c3c;color:#fff;border:none;border-radius:3px;">Remove</button>' +
-                '</div>';
 
             var marker = L.marker([latlng.lat, latlng.lng], {
                 icon: L.divIcon({
@@ -2084,7 +2082,20 @@
                     className: 'custom-marker-icon',
                     iconSize: [22, 22], iconAnchor: [11, 11]
                 })
-            }).bindPopup(popupHtml).addTo(microgridMap);
+            }).bindPopup(function() {
+                var eu2  = ENERGY_UNITS[energyUnit];
+                var pf2  = periodFactor();
+                var upl2 = unitPeriodLabel();
+                var prodVal = Math.round(prod * eu2.factor * pf2);
+                var prodTxt = prod > 0 ? 'Est. ' + prodVal.toLocaleString() + ' ' + upl2 : 'Infrastructure only';
+                return '<div style="min-width:170px;font-size:12px">' +
+                    '<strong>' + label + '</strong>' +
+                    '<div style="margin:5px 0 4px;padding:3px 7px;background:#fff8e1;border-left:3px solid #f39c12;font-size:11px;color:#7a5000;">' +
+                    '&#9651; Theoretical — user placed</div>' +
+                    '<div style="color:#555;margin-bottom:7px">' + prodTxt + '</div>' +
+                    '<button onclick="removePlacedItem(' + id + ')" style="font-size:11px;padding:2px 9px;cursor:pointer;background:#e74c3c;color:#fff;border:none;border-radius:3px;">Remove</button>' +
+                    '</div>';
+            }).addTo(microgridMap);
 
             placedItems[id] = { key: key, lat: latlng.lat, lng: latlng.lng, marker: marker };
             updateCharts();
@@ -2109,7 +2120,10 @@
             var costEl = document.getElementById('cost-content');
             if (!prodEl || !costEl) return;
 
-            var eu = ENERGY_UNITS[energyUnit];
+            var eu  = ENERGY_UNITS[energyUnit];
+            var pf  = periodFactor();
+            var upl = unitPeriodLabel();
+            var per = PERIOD_LABELS[timePeriod] || 'yr';
 
             if (!filtered) {
                 prodEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
@@ -2125,23 +2139,24 @@
                 totalCost += (COST_PER_FEAT[key] || 0) * n;
             });
 
-            var prodConverted = Math.round(totalProd * eu.factor);
+            var prodConverted = Math.round(totalProd * eu.factor * pf);
+            var costConverted = Math.round(totalCost * pf);
 
             if (totalFeat === 0) {
                 prodEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">0</div>' +
-                    '<div style="font-size:11px;color:#888;">' + eu.label + ' / year</div>';
+                    '<div style="font-size:11px;color:#888;">' + upl + '</div>';
                 costEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
-                    '<div style="font-size:11px;color:#888;">$ thousand / year</div>';
+                    '<div style="font-size:11px;color:#888;">$ thousand / ' + per + '</div>';
                 return;
             }
 
             prodEl.innerHTML =
                 '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">' + prodConverted.toLocaleString() + '</div>' +
-                '<div style="font-size:11px;color:#888;">' + eu.label + ' / year (est.)</div>' +
+                '<div style="font-size:11px;color:#888;">' + upl + ' (est.)</div>' +
                 '<div style="font-size:11px;color:#888;margin-top:4px;">' + totalFeat + ' facilit' + (totalFeat === 1 ? 'y' : 'ies') + '</div>';
             costEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + totalCost.toLocaleString() + 'k</div>' +
-                '<div style="font-size:11px;color:#888;">$ thousand / year (est.)</div>';
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + costConverted.toLocaleString() + 'k</div>' +
+                '<div style="font-size:11px;color:#888;">$ thousand / ' + per + ' (est.)</div>';
         }
 
         // ===== MAP SETUP =====
