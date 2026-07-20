@@ -1300,9 +1300,21 @@
             });
         }
 
+        function isAddChecked(key) {
+            var cb = document.querySelector('#ac2-add-panel .ac2-layer-cb[value="' + key + '"]');
+            return !!(cb && cb.checked);
+        }
+
         function drawProposedPie() {
             var eu = ENERGY_UNITS[energyUnit];
             var production = {};
+
+            // Wind and Solar: checked in Add panel → area-based Iowa capacity model
+            var areaKm2 = getAoiAreaKm2();
+            if (areaKm2 > 0) {
+                if (isAddChecked('wind'))  production['Wind']  = (production['Wind']  || 0) + areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor;
+                if (isAddChecked('solar')) production['Solar'] = (production['Solar'] || 0) + areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor;
+            }
 
             // User-selected feedstock sources (via AOI sidebar toggles)
             Object.keys(usedFeedstocks).forEach(function(key) {
@@ -1389,6 +1401,7 @@
 
         // Map each layer key to a pie category (energy generation by source type)
         var PIE1_CAT = {
+            wind: 'Wind', solar: 'Solar',
             digesters: 'Biogas', lmop: 'Biogas', wastewater: 'Biogas', landfill: 'Biogas', biodiesel: 'Biogas',
             beef: 'Heat', dairy: 'Heat', swine: 'Heat', horses: 'Heat',
             turkeys: 'Heat', chickens: 'Heat', sheep: 'Heat',
@@ -1813,6 +1826,13 @@
         function drawModeledBar() {
             var eu = ENERGY_UNITS[energyUnit];
             var production = {};
+
+            // Wind and Solar from Add panel checkboxes
+            var areaKm2 = getAoiAreaKm2();
+            if (areaKm2 > 0) {
+                if (isAddChecked('wind'))  production['Wind']  = (production['Wind']  || 0) + areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor;
+                if (isAddChecked('solar')) production['Solar'] = (production['Solar'] || 0) + areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor;
+            }
 
             // Mirror of drawProposedPie logic — aggregate by energy category
             Object.keys(usedFeedstocks).forEach(function(key) {
@@ -2336,33 +2356,29 @@
             function drop(c)  { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
             function blade(c) { return '<svg width="10" height="14" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
             function paper(c) { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
+            function wind(c)  { return '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="1.8" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(120,8,8)"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(240,8,8)"/></svg>'; }
+            function solar(c) { return '<svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" fill="'+c+'" stroke="#333" stroke-width="0.8" rx="0.5"/><line x1="6" y1="3" x2="6" y2="13" stroke="#333" stroke-width="0.6"/><line x1="11" y1="3" x2="11" y2="13" stroke="#333" stroke-width="0.6"/><line x1="1" y1="8" x2="15" y2="8" stroke="#333" stroke-width="0.6"/></svg>'; }
 
             function li(key, svg, label, i18nKey) {
                 return '<label class="ac2-add-item"><input type="checkbox" class="ac2-layer-cb" value="'+key+'"/>'+svg+'<span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+label+'</span></label>';
             }
-            function grp(title, isFirst, secId, i18nKey) {
-                return '<div class="ac2-add-group'+(isFirst?' first':'')+'"><input type="checkbox" id="'+secId+'"><span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+title+'</span></div>';
+            function grp(title, isFirst, i18nKey) {
+                return '<div class="ac2-add-group'+(isFirst?' first':'')+'"><span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+title+'</span></div>';
             }
 
-            var sectionKeys = {
-                'ac2s-hum':  ['biodiesel','ethanol','wastewater','digesters','lmop'],
-                'ac2s-util': ['utilities','powerplants','pipelines','landfill']
-            };
-            var allLayerKeys = ['biodiesel','ethanol','wastewater','digesters','lmop',
+            var allLayerKeys = ['wind','solar','biodiesel','ethanol','wastewater','digesters','lmop',
                                 'utilities','powerplants','pipelines','landfill'];
 
             panel.innerHTML =
-                '<div class="ac2-add-header">'+
-                '<button class="ac2-panel-btn" id="ac2-select-all-btn">Select All</button>'+
-                '<button class="ac2-panel-btn" id="ac2-clear-all-btn" style="display:none">Clear All</button>'+
-                '</div>'+
-                grp('Human Activity', true, 'ac2s-hum', 'ac2-panel-human')+
+                grp('Energy Production', true, 'ac2-panel-eprod')+
+                li('wind',       wind('#00BCD4'),  'Wind Turbines',         'ac2-layer-wind')+
+                li('solar',      solar('#f39c12'), 'Solar Panels',          'ac2-layer-solar')+
                 li('biodiesel',  drop('#1abc9c'),  'Biodiesel Plants',      'ac2-layer-biodiesel')+
                 li('ethanol',    drop('#e6c229'),  'Ethanol Plants',        'ac2-layer-ethanol')+
                 li('wastewater', drop('#3498db'),  'Wastewater Treatment',  'ac2-layer-wastewater')+
                 li('digesters',  circ('#2ecc71'),  'Anaerobic Digesters',   'ac2-layer-digesters')+
                 li('lmop',       circ('#8e44ad'),  'LMOP Sites',            'ac2-layer-lmop')+
-                grp('Utilities', false, 'ac2s-util', 'ac2-panel-utilities')+
+                grp('Utilities', false, 'ac2-panel-utilities')+
                 li('utilities',  rect('#e67e22'),  'Electric / Gas Utilities','ac2-layer-utilities')+
                 li('powerplants',rect('#d94a4a'),  'Power Plants',          'ac2-layer-powerplants')+
                 li('pipelines',  dash('#4a5568'),  'Gas Pipelines',         'ac2-layer-pipelines')+
@@ -2370,63 +2386,27 @@
 
             function getCb(key) { return panel.querySelector('.ac2-layer-cb[value="'+key+'"]'); }
 
-            function updateSectionCheckboxes() {
-                Object.keys(sectionKeys).forEach(function(secId) {
-                    var secCb = panel.querySelector('#'+secId);
-                    if (!secCb) return;
-                    var keys = sectionKeys[secId];
-                    var n = keys.filter(function(k) { var cb = getCb(k); return cb && cb.checked; }).length;
-                    secCb.checked = (n === keys.length);
-                    secCb.indeterminate = (n > 0 && n < keys.length);
-                });
-            }
+            var noFileKeys = { wind: true, solar: true };
 
-            function updateButtons() {
-                var n = allLayerKeys.filter(function(k) { var cb = getCb(k); return cb && cb.checked; }).length;
-                var selBtn = panel.querySelector('#ac2-select-all-btn');
-                var clrBtn = panel.querySelector('#ac2-clear-all-btn');
-                if (n === 0)                    { selBtn.style.display=''; clrBtn.style.display='none'; }
-                else if (n === allLayerKeys.length) { selBtn.style.display='none'; clrBtn.style.display=''; }
-                else                            { selBtn.style.display=''; clrBtn.style.display=''; }
-            }
-
-            panel.querySelector('#ac2-select-all-btn').addEventListener('click', function() {
-                allLayerKeys.forEach(function(k) {
-                    var cb = getCb(k); if (cb && !cb.checked) { cb.checked=true; loadLayer(k); }
-                });
-                updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
-            });
-
-            panel.querySelector('#ac2-clear-all-btn').addEventListener('click', function() {
-                allLayerKeys.forEach(function(k) {
-                    var cb = getCb(k); if (cb && cb.checked) { cb.checked=false; unloadLayer(k); }
-                });
-                updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
-            });
-
-            Object.keys(sectionKeys).forEach(function(secId) {
-                var secCb = panel.querySelector('#'+secId);
-                if (!secCb) return;
-                secCb.addEventListener('change', function() {
-                    var checked = this.checked;
-                    sectionKeys[secId].forEach(function(k) {
-                        var cb = getCb(k);
-                        if (cb && cb.checked !== checked) { cb.checked=checked; checked ? loadLayer(k) : unloadLayer(k); }
-                    });
-                    updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
-                });
-            });
-
+            // Single-selection: checking one item unchecks and unloads all others
             panel.querySelectorAll('.ac2-layer-cb').forEach(function(cb) {
                 cb.addEventListener('change', function() {
-                    this.checked ? loadLayer(this.value) : unloadLayer(this.value);
-                    updateSectionCheckboxes(); updateButtons(); saveAc2LayerState();
+                    var key = this.value;
+                    if (this.checked) {
+                        panel.querySelectorAll('.ac2-layer-cb').forEach(function(other) {
+                            if (other === cb || !other.checked) return;
+                            other.checked = false;
+                            if (!noFileKeys[other.value]) unloadLayer(other.value);
+                        });
+                        if (noFileKeys[key]) { updateCharts(); }
+                        else { loadLayer(key); }
+                    } else {
+                        if (noFileKeys[key]) { updateCharts(); }
+                        else { unloadLayer(key); }
+                    }
+                    saveAc2LayerState();
                 });
             });
-
-            // expose updaters so restoreAc2LayerState can call them
-            panel._updateSectionCheckboxes = updateSectionCheckboxes;
-            panel._updateButtons = updateButtons;
 
             if (typeof applyTranslations === 'function') applyTranslations();
         }
@@ -2436,12 +2416,14 @@
             if (!saved) return;
             try {
                 var state = JSON.parse(saved);
+                var restored = false;
                 document.querySelectorAll('#ac2-add-panel .ac2-layer-cb').forEach(function(cb) {
-                    if (state[cb.value] === true) { cb.checked = true; loadLayer(cb.value); }
+                    if (state[cb.value] === true && !restored) {
+                        restored = true;
+                        cb.checked = true;
+                        if (cb.value !== 'wind' && cb.value !== 'solar') loadLayer(cb.value);
+                    }
                 });
-                var panel = document.getElementById('ac2-add-panel');
-                if (panel && panel._updateSectionCheckboxes) panel._updateSectionCheckboxes();
-                if (panel && panel._updateButtons) panel._updateButtons();
             } catch(e) {}
         }
 
