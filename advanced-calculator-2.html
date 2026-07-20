@@ -306,10 +306,34 @@
             gap: 6px;
             cursor: pointer;
             color: #2c3e50;
+            user-select: none;
         }
-        .ac2-add-item input[type="checkbox"] { flex-shrink: 0; margin: 0; }
         .ac2-add-item svg { flex-shrink: 0; }
         .ac2-add-item:hover { background: #f0f4ff; }
+        .ac2-add-radio {
+            width: 11px; height: 11px;
+            border-radius: 50%;
+            border: 2px solid #999;
+            background: transparent;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .ac2-add-item.placing .ac2-add-radio {
+            background: #1a6fc4;
+            border-color: #1a6fc4;
+        }
+        .ac2-placement-tip {
+            position: absolute;
+            background: rgba(20,20,20,0.82);
+            color: #fff;
+            padding: 4px 9px;
+            border-radius: 4px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+            display: none;
+        }
 
         .ac2-add-group {
             font-size: 11px;
@@ -334,6 +358,8 @@
         html.dark-mode .ac2-panel-btn:hover { background: #3a5a8a; }
         html.dark-mode .ac2-add-item { color: #e8f0fe; }
         html.dark-mode .ac2-add-item:hover { background: #243d5e; }
+        html.dark-mode .ac2-add-radio { border-color: #7090b8; }
+        html.dark-mode .ac2-add-item.placing .ac2-add-radio { background: #4a90d9; border-color: #4a90d9; }
         html.dark-mode .ac2-add-group { color: #a0b8d8; border-top-color: #2a4a7a; }
 
         /* AOI drawing mode */
@@ -1300,21 +1326,17 @@
             });
         }
 
-        function isAddChecked(key) {
-            var cb = document.querySelector('#ac2-add-panel .ac2-layer-cb[value="' + key + '"]');
-            return !!(cb && cb.checked);
-        }
-
         function drawProposedPie() {
             var eu = ENERGY_UNITS[energyUnit];
             var production = {};
 
-            // Wind and Solar: checked in Add panel → area-based Iowa capacity model
-            var areaKm2 = getAoiAreaKm2();
-            if (areaKm2 > 0) {
-                if (isAddChecked('wind'))  production['Wind']  = (production['Wind']  || 0) + areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor;
-                if (isAddChecked('solar')) production['Solar'] = (production['Solar'] || 0) + areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor;
-            }
+            // User-placed theoretical items from Add panel
+            Object.keys(placedItems).forEach(function(id) {
+                var item = placedItems[id];
+                var cat = PIE1_CAT[item.key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor;
+            });
 
             // User-selected feedstock sources (via AOI sidebar toggles)
             Object.keys(usedFeedstocks).forEach(function(key) {
@@ -1436,13 +1458,16 @@
             wastewater:'Wastewater', landfill:'Landfill'
         };
 
-        // Approximate annual biogas production potential (MWh) per facility
+        // Approximate annual production potential (MWh) per facility / placed unit
+        // Wind: ~2 MW turbine at 34% CF; Solar: ~800 kW array at 17% CF
         var PROD_PER_FEAT = {
             beef: 520, dairy: 840, swine: 310, horses: 90,
             turkeys: 160, chickens: 210, sheep: 70,
             biodiesel: 2800, ethanol: 3200, wastewater: 1300,
             digesters: 2100, lmop: 1600, utilities: 900,
-            powerplants: 4800, pipelines: 400, landfill: 1050
+            powerplants: 4800, pipelines: 400, landfill: 1050,
+            wind: 5956, solar: 1192,
+            'elec-connection': 0, 'gas-connection': 0
         };
         // Approximate annual cost (thousand $) per facility
         var COST_PER_FEAT = {
@@ -1458,7 +1483,9 @@
             sheep:'#d2b48c', biodiesel:'#1abc9c', ethanol:'#e6c229',
             wastewater:'#3498db', digesters:'#2ecc71', lmop:'#8e44ad',
             utilities:'#e67e22', powerplants:'#d94a4a',
-            pipelines:'#4a5568', landfill:'#8b4513'
+            pipelines:'#4a5568', landfill:'#8b4513',
+            wind:'#00BCD4', solar:'#f39c12',
+            'elec-connection':'#f1c40f', 'gas-connection':'#e67e22'
         };
         var LAYER_SHAPES = {
             beef:'circle', dairy:'circle', swine:'circle', horses:'circle',
@@ -1466,6 +1493,16 @@
             digesters:'circle', lmop:'circle',
             biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
             utilities:'square', powerplants:'square', landfill:'square'
+        };
+        var LAYER_LABELS = {
+            wind:'Wind Turbine', solar:'Solar Panel Array',
+            digesters:'Anaerobic Digester', lmop:'LMOP Site',
+            'elec-connection':'Electric Connection', 'gas-connection':'Gas Connection',
+            beef:'Beef Cattle', dairy:'Dairy Cattle', swine:'Swine', horses:'Horses',
+            turkeys:'Turkeys', chickens:'Chickens', sheep:'Sheep',
+            biodiesel:'Biodiesel Plant', ethanol:'Ethanol Plant',
+            wastewater:'Wastewater Treatment', utilities:'Utility',
+            powerplants:'Power Plant', pipelines:'Pipeline', landfill:'Landfill'
         };
 
         function makeIconSvg(shape, color, size) {
@@ -1483,6 +1520,33 @@
             return L.divIcon({ html: makeIconSvg(shape, color, h), className: 'custom-marker-icon',
                                iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
         }
+
+        // Returns SVG HTML for any panel key, including wind/solar/elec/gas specials
+        function makeKeyIconHtml(key, size) {
+            var s = size || 16;
+            var c = LAYER_COLORS[key] || '#888';
+            switch (key) {
+                case 'wind':
+                    return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 16 16"><circle cx="8" cy="8" r="1.8" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(120,8,8)"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(240,8,8)"/></svg>';
+                case 'solar':
+                    return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" fill="'+c+'" stroke="#333" stroke-width="0.8" rx="0.5"/><line x1="6" y1="3" x2="6" y2="13" stroke="#333" stroke-width="0.6"/><line x1="11" y1="3" x2="11" y2="13" stroke="#333" stroke-width="0.6"/><line x1="1" y1="8" x2="15" y2="8" stroke="#333" stroke-width="0.6"/></svg>';
+                case 'elec-connection':
+                    return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 16 16"><polygon points="9,1 4,9 8,9 7,15 12,7 8,7" fill="'+c+'" stroke="#333" stroke-width="0.8"/></svg>';
+                case 'gas-connection':
+                    return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 16 16"><line x1="1" y1="8" x2="15" y2="8" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/><circle cx="4" cy="8" r="2" fill="'+c+'" stroke="#333" stroke-width="0.6"/><circle cx="12" cy="8" r="2" fill="'+c+'" stroke="#333" stroke-width="0.6"/></svg>';
+                default:
+                    return makeIconSvg(LAYER_SHAPES[key] || 'circle', c, s);
+            }
+        }
+
+        // ===== PLACEMENT MODE STATE =====
+        var placedItems   = {};   // id → { key, lat, lng, marker }
+        var placedItemId  = 0;
+        var placementMode = null; // key currently being placed, null when inactive
+        var _placeFn      = null; // bound map click handler
+        var _moveFn       = null; // bound map mousemove handler
+        var _cursorMarker = null; // temporary L.Marker following cursor
+        var _cursorTip    = null; // DOM tooltip element
 
         // ===== LAYER STATE =====
         // key → { leafletLayer: L.LayerGroup, features: [{lat, lng}] }
@@ -1850,12 +1914,13 @@
             var eu = ENERGY_UNITS[energyUnit];
             var production = {};
 
-            // Wind and Solar from Add panel checkboxes
-            var areaKm2 = getAoiAreaKm2();
-            if (areaKm2 > 0) {
-                if (isAddChecked('wind'))  production['Wind']  = (production['Wind']  || 0) + areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor;
-                if (isAddChecked('solar')) production['Solar'] = (production['Solar'] || 0) + areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor;
-            }
+            // User-placed theoretical items from Add panel
+            Object.keys(placedItems).forEach(function(id) {
+                var item = placedItems[id];
+                var cat = PIE1_CAT[item.key];
+                if (!cat) return;
+                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor;
+            });
 
             // Mirror of drawProposedPie logic — aggregate by energy category
             Object.keys(usedFeedstocks).forEach(function(key) {
@@ -1906,7 +1971,8 @@
             var hasLayers = hasAnyLoadedLayer();
             var hasProposed = Object.keys(usedFeedstocks).length > 0
                            || Object.keys(selectedDigesters).length > 0
-                           || hasLayers;
+                           || hasLayers
+                           || Object.keys(placedItems).length > 0;
 
             // Current Energy pie — requires AOI to compute demand + local sources + grid import
             drawCurrentPie();
@@ -1929,6 +1995,113 @@
             var filtered = getFeaturesInAOI();
             updateProdCost(hasLayers ? filtered : null);
             if (hasAoi) updateAoiSidebar();
+        }
+
+        // ===== PLACEMENT MODE FUNCTIONS =====
+        function _escHandler(e) { if (e.key === 'Escape') exitPlacementMode(); }
+
+        function enterPlacementMode(key) {
+            exitPlacementMode(); // clean up any active mode first
+            placementMode = key;
+            var container = microgridMap.getContainer();
+            container.style.cursor = 'crosshair';
+
+            _cursorTip = document.createElement('div');
+            _cursorTip.className = 'ac2-placement-tip';
+            _cursorTip.textContent = 'Click map to place  ·  Esc to cancel';
+            container.appendChild(_cursorTip);
+
+            _moveFn = function(e) {
+                var iconHtml = makeKeyIconHtml(key, 22);
+                if (!_cursorMarker) {
+                    _cursorMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+                        icon: L.divIcon({
+                            html: '<div style="opacity:0.75;filter:drop-shadow(0 0 5px rgba(26,111,196,0.9))">' + iconHtml + '</div>',
+                            className: 'custom-marker-icon',
+                            iconSize: [22, 22], iconAnchor: [11, 11]
+                        }),
+                        interactive: false,
+                        zIndexOffset: 9000
+                    }).addTo(microgridMap);
+                } else {
+                    _cursorMarker.setLatLng(e.latlng);
+                }
+                if (_cursorTip) {
+                    var pt = microgridMap.latLngToContainerPoint(e.latlng);
+                    _cursorTip.style.display = 'block';
+                    _cursorTip.style.left = (pt.x + 18) + 'px';
+                    _cursorTip.style.top  = (pt.y - 12) + 'px';
+                }
+            };
+
+            _placeFn = function(e) {
+                placeItem(key, e.latlng);
+                exitPlacementMode();
+            };
+
+            microgridMap.on('mousemove', _moveFn);
+            microgridMap.on('click', _placeFn);
+            document.addEventListener('keydown', _escHandler);
+            updatePlacementUI();
+        }
+
+        function exitPlacementMode() {
+            if (_moveFn)  { microgridMap.off('mousemove', _moveFn); _moveFn = null; }
+            if (_placeFn) { microgridMap.off('click', _placeFn);    _placeFn = null; }
+            if (_cursorMarker) { microgridMap.removeLayer(_cursorMarker); _cursorMarker = null; }
+            if (_cursorTip)    { _cursorTip.remove(); _cursorTip = null; }
+            document.removeEventListener('keydown', _escHandler);
+            microgridMap.getContainer().style.cursor = '';
+            placementMode = null;
+            updatePlacementUI();
+        }
+
+        function updatePlacementUI() {
+            document.querySelectorAll('#ac2-add-panel .ac2-add-item[data-key]').forEach(function(el) {
+                el.classList.toggle('placing', el.dataset.key === placementMode);
+            });
+        }
+
+        function placeItem(key, latlng) {
+            var id = ++placedItemId;
+            var label = LAYER_LABELS[key] || key;
+            var iconHtml = makeKeyIconHtml(key, 18);
+            var prod = PROD_PER_FEAT[key] || 0;
+            var prodTxt = prod > 0 ? 'Est. ' + prod.toLocaleString() + ' MWh/yr' : 'Infrastructure only';
+
+            var popupHtml =
+                '<div style="min-width:170px;font-size:12px">' +
+                '<strong>' + label + '</strong>' +
+                '<div style="margin:5px 0 4px;padding:3px 7px;background:#fff8e1;border-left:3px solid #f39c12;font-size:11px;color:#7a5000;">' +
+                '&#9651; Theoretical — user placed</div>' +
+                '<div style="color:#555;margin-bottom:7px">' + prodTxt + '</div>' +
+                '<button onclick="removePlacedItem(' + id + ')" style="font-size:11px;padding:2px 9px;cursor:pointer;background:#e74c3c;color:#fff;border:none;border-radius:3px;">Remove</button>' +
+                '</div>';
+
+            var marker = L.marker([latlng.lat, latlng.lng], {
+                icon: L.divIcon({
+                    html: '<div style="outline:2px dashed #f39c12;outline-offset:2px;border-radius:2px;background:transparent">' + iconHtml + '</div>',
+                    className: 'custom-marker-icon',
+                    iconSize: [22, 22], iconAnchor: [11, 11]
+                })
+            }).bindPopup(popupHtml).addTo(microgridMap);
+
+            placedItems[id] = { key: key, lat: latlng.lat, lng: latlng.lng, marker: marker };
+            updateCharts();
+        }
+
+        function removePlacedItem(id) {
+            if (!placedItems[id]) return;
+            microgridMap.removeLayer(placedItems[id].marker);
+            delete placedItems[id];
+            updateCharts();
+        }
+
+        function clearAllPlacedItems() {
+            Object.keys(placedItems).forEach(function(id) {
+                microgridMap.removeLayer(placedItems[id].marker);
+            });
+            placedItems = {};
         }
 
         function updateProdCost(filtered) {
@@ -2280,6 +2453,8 @@
                 microgridMap.removeLayer(digesterHighlightMarkers[id]);
             });
             digesterHighlightMarkers = {};
+            exitPlacementMode();
+            clearAllPlacedItems();
             updateCharts();
             saveAoiState();
         }
@@ -2357,94 +2532,44 @@
             }
         });
 
-        function saveAc2LayerState() {
-            var state = {};
-            document.querySelectorAll('#ac2-add-panel input.ac2-layer-cb').forEach(function(cb) {
-                state[cb.value] = cb.checked;
-            });
-            localStorage.setItem('ac2LayerState', JSON.stringify(state));
-        }
-
         function buildAddPanel() {
             var panel = document.getElementById('ac2-add-panel');
             if (!panel) return;
 
-            function circ(c)  { return '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
-            function rect(c)  { return '<svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
-            function dash(c)  { return '<svg width="14" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="'+c+'" stroke-width="3"/></svg>'; }
-            function drop(c)  { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+c+'" stroke="#333" stroke-width="1"/></svg>'; }
-            function blade(c) { return '<svg width="10" height="14" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
-            function paper(c) { return '<svg width="10" height="14" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="'+c+'" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
-            function wind(c)    { return '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="1.8" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(120,8,8)"/><path d="M8,6.5 L8,1 C9.5,2 10.5,5.5 8,6.5Z" fill="'+c+'" stroke="#333" stroke-width="0.6" transform="rotate(240,8,8)"/></svg>'; }
-            function solar(c)   { return '<svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" fill="'+c+'" stroke="#333" stroke-width="0.8" rx="0.5"/><line x1="6" y1="3" x2="6" y2="13" stroke="#333" stroke-width="0.6"/><line x1="11" y1="3" x2="11" y2="13" stroke="#333" stroke-width="0.6"/><line x1="1" y1="8" x2="15" y2="8" stroke="#333" stroke-width="0.6"/></svg>'; }
-            function elec(c)    { return '<svg width="14" height="14" viewBox="0 0 16 16"><polygon points="9,1 4,9 8,9 7,15 12,7 8,7" fill="'+c+'" stroke="#333" stroke-width="0.8"/></svg>'; }
-            function gasline(c) { return '<svg width="14" height="14" viewBox="0 0 16 16"><line x1="1" y1="8" x2="15" y2="8" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/><circle cx="4" cy="8" r="2" fill="'+c+'" stroke="#333" stroke-width="0.6"/><circle cx="12" cy="8" r="2" fill="'+c+'" stroke="#333" stroke-width="0.6"/></svg>'; }
-
-            function li(key, svg, label, i18nKey) {
-                return '<label class="ac2-add-item"><input type="checkbox" class="ac2-layer-cb" value="'+key+'"/>'+svg+'<span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+label+'</span></label>';
+            function li(key, i18nKey, labelText) {
+                return '<div class="ac2-add-item" data-key="'+key+'">' +
+                    '<div class="ac2-add-radio"></div>' +
+                    makeKeyIconHtml(key, 14) +
+                    '<span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+labelText+'</span>' +
+                    '</div>';
             }
             function grp(title, isFirst, i18nKey) {
                 return '<div class="ac2-add-group'+(isFirst?' first':'')+'"><span'+(i18nKey?' data-i18n="'+i18nKey+'"':'')+'>'+title+'</span></div>';
             }
 
-            var allLayerKeys = ['wind','solar','digesters','lmop',
-                                'elec-connection','gas-connection'];
-
             panel.innerHTML =
-                grp('Energy Production', true, 'ac2-panel-eprod')+
-                li('wind',            wind('#00BCD4'),  'Wind Turbines',       'ac2-layer-wind')+
-                li('solar',           solar('#f39c12'), 'Solar Panels',        'ac2-layer-solar')+
-                li('digesters',       circ('#2ecc71'),  'Anaerobic Digesters', 'ac2-layer-digesters')+
-                li('lmop',            circ('#8e44ad'),  'LMOP Sites',          'ac2-layer-lmop')+
-                grp('Utilities', false, 'ac2-panel-utilities')+
-                li('elec-connection', elec('#f1c40f'),  'Electric Connection', 'ac2-layer-elec-connection')+
-                li('gas-connection',  gasline('#e67e22'),'Gas Connection',     'ac2-layer-gas-connection');
+                grp('Energy Production', true, 'ac2-panel-eprod') +
+                li('wind',            'ac2-layer-wind',            'Wind Turbines') +
+                li('solar',           'ac2-layer-solar',           'Solar Panels') +
+                li('digesters',       'ac2-layer-digesters',       'Anaerobic Digesters') +
+                li('lmop',            'ac2-layer-lmop',            'LMOP Sites') +
+                grp('Utilities', false, 'ac2-panel-utilities') +
+                li('elec-connection', 'ac2-layer-elec-connection', 'Electric Connection') +
+                li('gas-connection',  'ac2-layer-gas-connection',  'Gas Connection');
 
-            function getCb(key) { return panel.querySelector('.ac2-layer-cb[value="'+key+'"]'); }
-
-            var noFileKeys = { wind: true, solar: true, 'elec-connection': true, 'gas-connection': true };
-
-            // Single-selection: checking one item unchecks and unloads all others
-            panel.querySelectorAll('.ac2-layer-cb').forEach(function(cb) {
-                cb.addEventListener('change', function() {
-                    var key = this.value;
-                    if (this.checked) {
-                        panel.querySelectorAll('.ac2-layer-cb').forEach(function(other) {
-                            if (other === cb || !other.checked) return;
-                            other.checked = false;
-                            if (!noFileKeys[other.value]) unloadLayer(other.value);
-                        });
-                        if (noFileKeys[key]) { updateCharts(); }
-                        else { loadLayer(key); }
-                    } else {
-                        if (noFileKeys[key]) { updateCharts(); }
-                        else { unloadLayer(key); }
-                    }
-                    saveAc2LayerState();
+            // Click an item → enter placement mode (click again to cancel)
+            panel.querySelectorAll('.ac2-add-item[data-key]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    var key = this.dataset.key;
+                    if (placementMode === key) { exitPlacementMode(); }
+                    else { enterPlacementMode(key); }
                 });
             });
 
             if (typeof applyTranslations === 'function') applyTranslations();
         }
 
-        function restoreAc2LayerState() {
-            var saved = localStorage.getItem('ac2LayerState');
-            if (!saved) return;
-            try {
-                var state = JSON.parse(saved);
-                var restored = false;
-                document.querySelectorAll('#ac2-add-panel .ac2-layer-cb').forEach(function(cb) {
-                    if (state[cb.value] === true && !restored) {
-                        restored = true;
-                        cb.checked = true;
-                        if (cb.value !== 'wind' && cb.value !== 'solar') loadLayer(cb.value);
-                    }
-                });
-            } catch(e) {}
-        }
-
         buildAddPanel();
-        try { localStorage.removeItem('ac2LayerState'); } catch(e) {}
         restoreAoiState();
 
         // Restore unit system, energy unit, and time period
