@@ -2345,13 +2345,10 @@
             }
 
             var sectionKeys = {
-                'ac2s-agr':  ['corn','soybean'],
-                'ac2s-feed': ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'ac2s-hum':  ['paperfood','biodiesel','ethanol','wastewater','digesters','lmop'],
+                'ac2s-hum':  ['biodiesel','ethanol','wastewater','digesters','lmop'],
                 'ac2s-util': ['utilities','powerplants','pipelines','landfill']
             };
-            var allLayerKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
-                                'biodiesel','ethanol','wastewater','digesters','lmop',
+            var allLayerKeys = ['biodiesel','ethanol','wastewater','digesters','lmop',
                                 'utilities','powerplants','pipelines','landfill'];
 
             panel.innerHTML =
@@ -2359,19 +2356,7 @@
                 '<button class="ac2-panel-btn" id="ac2-select-all-btn">Select All</button>'+
                 '<button class="ac2-panel-btn" id="ac2-clear-all-btn" style="display:none">Clear All</button>'+
                 '</div>'+
-                grp('Agricultural Residue', true, 'ac2s-agr', 'ac2-panel-ag-residue')+
-                li('corn',       blade('#f5c518'), 'Corn',                  'ac2-layer-corn')+
-                li('soybean',    blade('#7bc47f'), 'Soybean',               'ac2-layer-soybean')+
-                grp('Feedlot', false, 'ac2s-feed', 'ac2-panel-feedlot')+
-                li('beef',       circ('#c87533'),  'Beef Cattle',           'ac2-layer-beef')+
-                li('dairy',      circ('#4a90d9'),  'Dairy Cattle',          'ac2-layer-dairy')+
-                li('swine',      circ('#ff9eb5'),  'Swine',                 'ac2-layer-swine')+
-                li('horses',     circ('#a0a0a0'),  'Horses',                'ac2-layer-horses')+
-                li('turkeys',    circ('#f4a460'),  'Turkeys',               'ac2-layer-turkeys')+
-                li('chickens',   circ('#ffd700'),  'Chickens',              'ac2-layer-chickens')+
-                li('sheep',      circ('#d2b48c'),  'Sheep / Goats',         'ac2-layer-sheep')+
-                grp('Human Activity', false, 'ac2s-hum', 'ac2-panel-human')+
-                li('paperfood',  paper('#7f8c8d'), 'Paper / Food Waste',    'ac2-layer-paperfood')+
+                grp('Human Activity', true, 'ac2s-hum', 'ac2-panel-human')+
                 li('biodiesel',  drop('#1abc9c'),  'Biodiesel Plants',      'ac2-layer-biodiesel')+
                 li('ethanol',    drop('#e6c229'),  'Ethanol Plants',        'ac2-layer-ethanol')+
                 li('wastewater', drop('#3498db'),  'Wastewater Treatment',  'ac2-layer-wastewater')+
