@@ -670,6 +670,11 @@
                     <div class="aoi-rs-unit" id="aoi-area-unit">sq km</div>
                 </div>
                 <div class="aoi-rs-section">
+                    <div class="aoi-rs-label">Energy Demand</div>
+                    <div class="aoi-rs-value" id="aoi-demand-display">—</div>
+                    <div class="aoi-rs-unit">avg. MW required</div>
+                </div>
+                <div class="aoi-rs-section">
                     <div class="aoi-digester-hdr" onclick="toggleAoiDigesterPanel()">
                         <div>
                             <div class="aoi-rs-label" data-i18n="ac2-sidebar-digesters-label">Digesters</div>
@@ -2507,6 +2512,12 @@
             } else {
                 display.textContent = km2.toLocaleString(undefined, { maximumFractionDigits: 2 });
                 unitEl.textContent = 'sq km';
+            }
+
+            var demandEl = document.getElementById('aoi-demand-display');
+            if (demandEl) {
+                var demandMW = km2 * IOWA_MWH_DEMAND_PER_KM2 / 8760;
+                demandEl.textContent = demandMW.toLocaleString(undefined, { maximumFractionDigits: 1 });
             }
 
             var digestersEl = document.getElementById('aoi-digesters-display');
