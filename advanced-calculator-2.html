@@ -672,7 +672,7 @@
                 <div class="aoi-rs-section">
                     <div class="aoi-rs-label">Energy Demand</div>
                     <div class="aoi-rs-value" id="aoi-demand-display">—</div>
-                    <div class="aoi-rs-unit">avg. MW required</div>
+                    <div class="aoi-rs-unit" id="aoi-demand-unit">MWh/yr required</div>
                 </div>
                 <div class="aoi-rs-section">
                     <div class="aoi-digester-hdr" onclick="toggleAoiDigesterPanel()">
@@ -2516,8 +2516,11 @@
 
             var demandEl = document.getElementById('aoi-demand-display');
             if (demandEl) {
-                var demandMW = km2 * IOWA_MWH_DEMAND_PER_KM2 / 8760;
-                demandEl.textContent = demandMW.toLocaleString(undefined, { maximumFractionDigits: 1 });
+                var eu = ENERGY_UNITS[energyUnit];
+                var demandVal = Math.round(km2 * IOWA_MWH_DEMAND_PER_KM2 * eu.factor * periodFactor());
+                demandEl.textContent = demandVal.toLocaleString();
+                var demandUnitEl = document.getElementById('aoi-demand-unit');
+                if (demandUnitEl) demandUnitEl.textContent = unitPeriodLabel() + ' required';
             }
 
             var digestersEl = document.getElementById('aoi-digesters-display');
