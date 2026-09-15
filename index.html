@@ -14,7 +14,7 @@
         #map {
             width: 100%;
             height: calc(100vh - 80px - 16px);
-            max-width: calc(100vw - 220px - 240px - 20px);
+            max-width: calc(100vw - 220px - 20px);
             max-height: calc(100vh - 80px - 16px);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -193,7 +193,7 @@
         html.dark-mode .search-result-sub  { color: #888; }
 
         .page-layout.sidebar-hidden #map {
-            max-width: calc(100vw - 34px - 240px - 20px);
+            max-width: calc(100vw - 34px - 20px);
         }
 
         #map-error {
@@ -212,150 +212,6 @@
             max-width: 420px;
             text-align: center;
             pointer-events: none;
-        }
-
-        .calculator-panel {
-            width: 240px;
-            flex-shrink: 0;
-            background: #d0d4db;
-            border-left: 1px solid #b0b5bc;
-            padding: 12px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            overflow: hidden;
-            transition: width 0.25s ease;
-        }
-
-        .calc-panel-body {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            flex: 1;
-        }
-
-        .advanced-calc-btn {
-            margin-top: auto;
-        }
-
-        .calculator-panel.collapsed {
-            width: 34px;
-            padding: 0;
-        }
-
-        .calculator-panel h3 {
-            font-size: 16px;
-            color: #2c3e50;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 14px 10px 14px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-            transition: background-color 0.25s ease, padding 0.25s ease;
-        }
-
-        .calculator-panel.collapsed h3 {
-            background-color: #c5ddf7;
-            border-bottom: none;
-            padding: 0;
-            justify-content: flex-start;
-            align-items: stretch;
-            min-height: 48px;
-        }
-
-        .calculator-panel.collapsed h3 span {
-            display: none;
-        }
-
-        .calc-panel-toggle {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #888;
-            padding: 0;
-            line-height: 1;
-            flex-shrink: 0;
-        }
-
-        .calculator-panel.collapsed .calc-panel-toggle {
-            color: white;
-            width: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .calc-panel-toggle:hover { color: #444; }
-        .calculator-panel.collapsed .calc-panel-toggle:hover { color: white; background: rgba(0, 0, 0, 0.2); }
-
-        .calc-field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .calc-field label {
-            font-size: 12px;
-            color: #555;
-            font-weight: bold;
-        }
-
-        .calc-field input {
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 13px;
-            width: 100%;
-        }
-
-        .calc-btn {
-            padding: 8px;
-            background: #4169e1;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 4px;
-        }
-
-        .calc-btn:hover {
-            background: #2a52cc;
-        }
-
-        .advanced-calc-btn {
-            background: #2c3e50;
-            text-align: center;
-            text-decoration: none;
-            display: block;
-        }
-
-        .advanced-calc-btn:hover {
-            background: #1a252f;
-        }
-
-        html.dark-mode .calculator-panel {
-            background: #2c2c3e;
-            border-left-color: #444;
-            color: #e0e0e0;
-        }
-
-        html.dark-mode .calculator-panel h3 {
-            color: #e0e0e0;
-            border-bottom-color: #444;
-        }
-
-        html.dark-mode .calc-field label {
-            color: #bbb;
-        }
-
-        html.dark-mode .calc-field input {
-            background: #1a1a2e;
-            border-color: #555;
-            color: #e0e0e0;
         }
 
         .custom-marker-icon {
@@ -422,33 +278,6 @@
             <div id="map" style="position:relative;">
                 <div id="map-error">Map data requires an HTTP server. Open via <strong>http://localhost:5500/index.html</strong> — not as a local file.</div>
             </div>
-        </div>
-        <div class="calculator-panel" id="calculator-panel">
-            <h3><button class="calc-panel-toggle" id="calc-panel-toggle" onclick="toggleCalcPanel()" title="Hide calculator">&#9654;</button><span data-i18n="calc-panel-title">Calculator</span></h3>
-            <div class="calc-panel-body">
-                <div class="calc-field">
-                    <label for="calc-1">Prompt 1</label>
-                    <input type="number" id="calc-1" placeholder="Enter value">
-                </div>
-                <div class="calc-field">
-                    <label for="calc-2">Prompt 2</label>
-                    <input type="number" id="calc-2" placeholder="Enter value">
-                </div>
-                <div class="calc-field">
-                    <label for="calc-3">Prompt 3</label>
-                    <input type="number" id="calc-3" placeholder="Enter value">
-                </div>
-                <div class="calc-field">
-                    <label for="calc-4">Prompt 4</label>
-                    <input type="number" id="calc-4" placeholder="Enter value">
-                </div>
-                <div class="calc-field">
-                    <label for="calc-5">Prompt 5</label>
-                    <input type="number" id="calc-5" placeholder="Enter value">
-                </div>
-                <button class="calc-btn" data-i18n="btn-calculate">Calculate</button>
-            </div>
-            <a href="advanced-calculator.html" class="calc-btn advanced-calc-btn" data-i18n="btn-advanced">Advanced Calculator</a>
         </div>
     </div>
 
@@ -961,15 +790,6 @@
             var t = document.getElementById('sidebar-toggle-btn');
             if (t) t.innerHTML = '&#8594;';
         }
-        function toggleCalcPanel() {
-            var panel = document.getElementById('calculator-panel');
-            var btn = document.getElementById('calc-panel-toggle');
-            var collapsed = panel.classList.toggle('collapsed');
-            btn.innerHTML = collapsed ? '&#9664;' : '&#9654;';
-            btn.title = collapsed ? 'Show calculator' : 'Hide calculator';
-            setTimeout(function () { map.invalidateSize(); }, 260);
-        }
-
         function toggleSidebar() {
             var layout = document.querySelector('.page-layout');
             layout.classList.toggle('sidebar-hidden');
