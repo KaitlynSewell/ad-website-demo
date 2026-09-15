@@ -646,13 +646,13 @@
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
                         <div style="display:flex;">
                             <div style="flex:1; padding:14px 16px;">
-                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-production">Production</div>
-                                <div id="prod-content"></div>
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-startup-cost">Startup Cost</div>
+                                <div id="startup-cost-content"></div>
                             </div>
                             <div style="width:1px; background:#ddd;"></div>
                             <div style="flex:1; padding:14px 16px;">
-                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-costs">Costs</div>
-                                <div id="cost-content"></div>
+                                <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:6px;" data-i18n="ac2-savings">Savings</div>
+                                <div id="savings-content"></div>
                             </div>
                         </div>
                     </div>
@@ -1480,14 +1480,17 @@
             wind: 5956, solar: 1192,
             'elec-connection': 0, 'gas-connection': 0
         };
-        // Approximate annual cost (thousand $) per facility
-        var COST_PER_FEAT = {
+        // Approximate one-time capital/build cost (thousand $) per facility
+        var CAPITAL_COST_PER_FEAT = {
             beef: 180, dairy: 290, swine: 110, horses: 40,
             turkeys: 60, chickens: 80, sheep: 30,
             biodiesel: 650, ethanol: 740, wastewater: 380,
             digesters: 520, lmop: 310, utilities: 270,
-            powerplants: 1100, pipelines: 150, landfill: 240
+            powerplants: 1100, pipelines: 150, landfill: 240,
+            wind: 4200, solar: 950
         };
+        // Assumed avoided grid electricity price ($ per MWh) used to estimate Savings
+        var GRID_PRICE_PER_MWH = 90;
         var LAYER_COLORS = {
             beef:'#c87533', dairy:'#4a90d9', swine:'#ff9eb5',
             horses:'#a0a0a0', turkeys:'#f4a460', chickens:'#ffd700',
@@ -2121,47 +2124,45 @@
         }
 
         function updateProdCost(filtered) {
-            var prodEl = document.getElementById('prod-content');
-            var costEl = document.getElementById('cost-content');
-            if (!prodEl || !costEl) return;
+            var startupEl = document.getElementById('startup-cost-content');
+            var savingsEl = document.getElementById('savings-content');
+            if (!startupEl || !savingsEl) return;
 
-            var eu  = ENERGY_UNITS[energyUnit];
             var pf  = periodFactor();
-            var upl = unitPeriodLabel();
             var per = PERIOD_LABELS[timePeriod] || 'yr';
 
             if (!filtered) {
-                prodEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
-                costEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
+                startupEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
+                savingsEl.innerHTML = '<div style="font-size:12px;color:#888;font-style:italic;">No Inputs Selected</div>';
                 return;
             }
 
-            var totalProd = 0, totalCost = 0, totalFeat = 0;
+            var totalProd = 0, totalCapital = 0, totalFeat = 0;
             Object.keys(filtered).forEach(function(key) {
                 var n = filtered[key].length;
                 totalFeat += n;
                 totalProd += (PROD_PER_FEAT[key] || 0) * n;
-                totalCost += (COST_PER_FEAT[key] || 0) * n;
+                totalCapital += (CAPITAL_COST_PER_FEAT[key] || 0) * n;
             });
 
-            var prodConverted = Math.round(totalProd * eu.factor * pf);
-            var costConverted = Math.round(totalCost * pf);
+            // Savings is period-scaled (recurring benefit); startup cost is a one-time total.
+            var savingsThousands = Math.round(totalProd * pf * GRID_PRICE_PER_MWH / 1000);
 
             if (totalFeat === 0) {
-                prodEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">0</div>' +
-                    '<div style="font-size:11px;color:#888;">' + upl + '</div>';
-                costEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
+                startupEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
+                    '<div style="font-size:11px;color:#888;">$ thousand, one-time</div>';
+                savingsEl.innerHTML = '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$0</div>' +
                     '<div style="font-size:11px;color:#888;">$ thousand / ' + per + '</div>';
                 return;
             }
 
-            prodEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">' + prodConverted.toLocaleString() + '</div>' +
-                '<div style="font-size:11px;color:#888;">' + upl + ' (est.)</div>' +
+            startupEl.innerHTML =
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + totalCapital.toLocaleString() + 'k</div>' +
+                '<div style="font-size:11px;color:#888;">$ thousand, one-time (est.)</div>' +
                 '<div style="font-size:11px;color:#888;margin-top:4px;">' + totalFeat + ' facilit' + (totalFeat === 1 ? 'y' : 'ies') + '</div>';
-            costEl.innerHTML =
-                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + costConverted.toLocaleString() + 'k</div>' +
-                '<div style="font-size:11px;color:#888;">$ thousand / ' + per + ' (est.)</div>';
+            savingsEl.innerHTML =
+                '<div style="font-size:22px;font-weight:bold;color:#2c3e50;">$' + savingsThousands.toLocaleString() + 'k</div>' +
+                '<div style="font-size:11px;color:#888;">$ thousand / ' + per + ' avoided grid cost (est.)</div>';
         }
 
         // ===== MAP SETUP =====
