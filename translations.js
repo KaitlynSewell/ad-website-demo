@@ -2,7 +2,7 @@ var translations = {
     en: {
         // Site & nav
         'site-title': 'Anaerobic Digestion Pathways',
-        'nav-home': 'Home',
+        'nav-home': 'Discover',
         'nav-about': 'About',
         'nav-funding': 'Funding Information',
         'nav-how': 'How does this website work?',
