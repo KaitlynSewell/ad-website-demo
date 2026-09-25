@@ -149,14 +149,9 @@ body {
     gap: 6px;
 }
 
-.logo svg {
+.logo img {
+    display: block;
     flex-shrink: 0;
-}
-
-.logo span {
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
 }
 
 .section-heading {
