@@ -15,9 +15,9 @@
     <style>
         #map {
             width: 100%;
-            height: calc(100vh - 120px - 16px);
+            height: calc(100vh - 80px - 16px);
             max-width: calc(100vw - 280px - 20px);
-            max-height: calc(100vh - 120px - 16px);
+            max-height: calc(100vh - 80px - 16px);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
@@ -160,6 +160,27 @@
             pointer-events: none;
             color: #bbb;
         }
+        .map-search {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(280px, calc(100% - 20px));
+            margin: 0;
+            z-index: 1000;
+        }
+        .map-search .legend-search {
+            padding: 8px 10px 8px 28px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            color: #333;
+        }
+        .map-search .legend-search:focus { color: #333; }
+        .map-search .legend-search-icon { color: #888; }
+        .map-search .legend-search-dropdown { border-radius: 0 0 8px 8px; }
+        html.dark-mode .map-search .legend-search { background: #2c2c3e; color: #ddd; }
         .legend-search-dropdown {
             display: none;
             position: absolute;
@@ -247,14 +268,6 @@
         <span data-i18n="site-title">Anaerobic Digestion Pathways</span>
         <a href="settings.html" class="header-gear-btn" title="Settings" onclick="localStorage.setItem('prevPage', location.href)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.61.07-.93s-.03-.64-.07-.93l2-1.57c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2 1.57c-.04.3-.07.61-.07.93s.03.64.07.93l-2 1.57c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2-1.57z"/></svg></a>
     </h1>
-    <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
-        <span style="font-weight:bold; position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;" data-i18n="nav-home">Discover</span>
-        <div class="legend-search-wrap" style="margin-left:auto; width:240px;">
-            <svg class="legend-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
-            <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search the map" autocomplete="off" />
-            <ul class="legend-search-dropdown" id="sidebar-search-dropdown"></ul>
-        </div>
-    </div>
     <div class="page-layout">
         <nav class="sidebar">
             <ul>
@@ -275,6 +288,11 @@
         </nav>
         <div class="main-content">
             <div id="map" style="position:relative;">
+                <div class="legend-search-wrap map-search" id="map-search">
+                    <svg class="legend-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+                    <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search the map" autocomplete="off" />
+                    <ul class="legend-search-dropdown" id="sidebar-search-dropdown"></ul>
+                </div>
                 <div id="map-error">Map data requires an HTTP server. Open via <strong>http://localhost:5500/index.html</strong> — not as a local file.</div>
             </div>
         </div>
@@ -703,6 +721,9 @@
         (function() {
             var searchInput = document.getElementById('sidebar-search-input');
             var searchDropdown = document.getElementById('sidebar-search-dropdown');
+            var mapSearch = document.getElementById('map-search');
+            L.DomEvent.disableClickPropagation(mapSearch);
+            L.DomEvent.disableScrollPropagation(mapSearch);
             var searchTimer = null;
 
             function showSearchResults(farmResults, locResults) {
