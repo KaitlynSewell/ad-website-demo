@@ -507,8 +507,8 @@
             }
             var sectionKeys = {
                 'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop','foodwaste'],
-                'sec-utilities': ['utilities','powerplants','pipelines','landfill']
+                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop','landfill','foodwaste'],
+                'sec-utilities': ['utilities','powerplants','pipelines']
             };
             div.innerHTML =
                 '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
@@ -526,12 +526,12 @@
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters', 'legend-digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites', 'legend-lmop') +
+                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
                 li('toggle-foodwaste',  peel('#ffd43b'), 'Food Waste', 'legend-foodwaste') +
                 grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities', 'legend-utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
-                li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines') +
-                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill');
+                li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines');
 
             // Food Waste has no map data yet
             div.querySelector('#toggle-foodwaste').parentElement.title = 'No items';
