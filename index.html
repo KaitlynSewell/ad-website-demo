@@ -453,7 +453,6 @@
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
                        'biodiesel','ethanol','wastewater',
                        'utilities','powerplants','pipelines','landfill','digesters','lmop'];
-        var noLayerKeys = ['corn','soybean','paperfood'];
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
@@ -485,8 +484,6 @@
             function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
             function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
-            function blade(c) { return '<svg width="12" height="16" viewBox="0 0 12 16"><path d="M2,15 C0,10 2,4 7,0 C9,2 9,7 7,13 C6,16 3,16 2,15Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M4,14 C4,9 5,4 7,0" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/></svg>'; }
-            function paper(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M0,0 L9,0 L12,3 L12,16 L0,16 Z" fill="' + c + '" stroke="#333" stroke-width="1"/><path d="M9,0 L9,3 L12,3" fill="rgba(0,0,0,0.18)" stroke="#333" stroke-width="0.8"/></svg>'; }
             function grp(t, f, secId, i18nKey) {
                 if (secId) {
                     return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></label></div>';
@@ -494,17 +491,13 @@
                 return '<div class="legend-group' + (f ? ' first' : '') + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></div>';
             }
             var sectionKeys = {
-                'sec-agresidue': ['corn','soybean'],
                 'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'sec-human':     ['paperfood','biodiesel','ethanol','wastewater','digesters','lmop'],
+                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop'],
                 'sec-utilities': ['utilities','powerplants','pipelines','landfill']
             };
             div.innerHTML =
                 '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
-                grp('Agricultural Residue', true, 'sec-agresidue', 'legend-ag-residue') +
-                li('toggle-corn',        blade('#f5c518'),  'Corn Residue', 'legend-corn') +
-                li('toggle-soybean',     blade('#7bc47f'),  'Soybean Residue', 'legend-soybean') +
-                grp('Feedlot Waste / Manure', false, 'sec-feedlot', 'legend-feedlot') +
+                grp('Feedlot Waste / Manure', true, 'sec-feedlot', 'legend-feedlot') +
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
                 li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle', 'legend-dairy') +
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
@@ -513,7 +506,6 @@
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
                 li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats', 'legend-sheep') +
                 grp('Human Activity', false, 'sec-human', 'legend-human') +
-                li('toggle-paperfood',   paper('#7f8c8d'), 'Paper / Food Mfg.', 'legend-paperfood') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
@@ -524,11 +516,6 @@
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
                 li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill');
-
-            ['toggle-corn','toggle-soybean','toggle-paperfood'].forEach(function(id) {
-                var item = div.querySelector('#' + id);
-                if (item) item.parentElement.title = 'No items';
-            });
 
             function updateSectionCheckboxes() {
                 Object.keys(sectionKeys).forEach(function (secId) {
@@ -564,7 +551,7 @@
             }
 
             div.querySelector('#legend-select-all-btn').addEventListener('click', function () {
-                allKeys.concat(noLayerKeys).forEach(function (key) {
+                allKeys.forEach(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
                 });
@@ -574,7 +561,7 @@
             });
 
             div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
-                allKeys.concat(noLayerKeys).forEach(function (key) {
+                allKeys.forEach(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb && cb.checked) { cb.checked = false; toggleLayer(key, false); }
                 });
@@ -614,7 +601,7 @@
 
             function saveLegendState() {
                 var state = {};
-                allKeys.concat(noLayerKeys).forEach(function (key) {
+                allKeys.forEach(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb) state[key] = cb.checked;
                 });
@@ -626,7 +613,7 @@
                 if (!saved) return;
                 try {
                     var state = JSON.parse(saved);
-                    allKeys.concat(noLayerKeys).forEach(function (key) {
+                    allKeys.forEach(function (key) {
                         if (state[key] === true) {
                             var cb = div.querySelector('#toggle-' + key);
                             if (cb && !cb.checked) {
