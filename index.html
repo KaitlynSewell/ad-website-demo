@@ -466,7 +466,7 @@
 
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
                        'biodiesel','ethanol','wastewater',
-                       'utilities','powerplants','pipelines','landfill','digesters','lmop'];
+                       'utilities','powerplants','pipelines','landfill','digesters','lmop','foodwaste'];
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
@@ -498,6 +498,7 @@
             function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
             function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function peel(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><path d="M6.2,3.5 C5.6,8 6.8,12.5 8,15 C9.2,12.5 10.4,8 9.8,3.5 Z" fill="#fbeec1" stroke="#333" stroke-width="0.8" stroke-linejoin="round"/><path d="M6.8,3.2 C4.2,4 1.6,7.2 1,12.2 C2.6,11.8 3.6,10.2 4.2,8.8 C5,7.2 6.2,5.8 7.6,4.6 Z" fill="' + c + '" stroke="#333" stroke-width="0.8" stroke-linejoin="round"/><path d="M9.2,3.2 C11.8,4 14.4,7.2 15,12.2 C13.4,11.8 12.4,10.2 11.8,8.8 C11,7.2 9.8,5.8 8.4,4.6 Z" fill="' + c + '" stroke="#333" stroke-width="0.8" stroke-linejoin="round"/><rect x="7" y="0.6" width="2" height="3" rx="0.6" fill="#6b4f1d" stroke="#333" stroke-width="0.7"/></svg>'; }
             function grp(t, f, secId, i18nKey) {
                 if (secId) {
                     return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></label></div>';
@@ -506,7 +507,7 @@
             }
             var sectionKeys = {
                 'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop'],
+                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop','foodwaste'],
                 'sec-utilities': ['utilities','powerplants','pipelines','landfill']
             };
             div.innerHTML =
@@ -525,11 +526,15 @@
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
                 li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters', 'legend-digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites', 'legend-lmop') +
+                li('toggle-foodwaste',  peel('#f4d03f'), 'Food Waste', 'legend-foodwaste') +
                 grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities', 'legend-utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
                 li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill');
+
+            // Food Waste has no map data yet
+            div.querySelector('#toggle-foodwaste').parentElement.title = 'No items';
 
             function updateSectionCheckboxes() {
                 Object.keys(sectionKeys).forEach(function (secId) {
