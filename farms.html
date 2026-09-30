@@ -243,7 +243,7 @@
                         </optgroup>
                         <optgroup label="Display Layers">
                             <option value="landfill">Landfill Sites (88)</option>
-                            <option value="digesters">Anaerobic Digesters (203)</option>
+                            <option value="digesters">Anaerobic Digesters (66)</option>
                             <option value="lmop">LMOP Sites (32)</option>
                         </optgroup>
                     </select>
@@ -276,7 +276,7 @@
             utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true}] },
             powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true}] },
             landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons (FY2013)',p:'TonsFY2013',num:true}] },
-            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Animal Units',p:'AnimalUnit',num:true}] },
+            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'}] },
             lmop:        { file: 'geojson/lmop.geojson',        cols: [{h:'Landfill Name',p:'LandfillNa'},{h:'City',p:'City'},{h:'Status',p:'Status'},{h:'Waste (Tons)',p:'TotWst_ton',num:true}] }
         };
 
