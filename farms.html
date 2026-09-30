@@ -203,7 +203,7 @@
                 <li><a href="help.html" data-i18n="nav-help">Help</a></li>
             </ul>
         </nav>
-        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+        <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; min-width: 0;">
             <h2 class="section-heading" data-i18n="farms-title">Farms &amp; Facilities</h2>
             <div class="farms-container">
                 <div class="summary-chips" id="summary-chips">
@@ -220,7 +220,7 @@
                     <span class="chip" id="chip-utilities"   onclick="selectCategory('utilities')"><span data-i18n="farms-chip-utilities">Utilities</span> <strong>186</strong></span>
                     <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')"><span data-i18n="farms-chip-powerplants">Power Plants</span> <strong>217</strong></span>
                     <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')"><span data-i18n="farms-chip-landfill">Landfill Sites</span> <strong>88</strong></span>
-                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')"><span data-i18n="farms-chip-digesters">Anaerobic Digesters</span> <strong>203</strong></span>
+                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')"><span data-i18n="farms-chip-digesters">Anaerobic Digesters</span> <strong>66</strong></span>
                     <span class="chip" id="chip-lmop"        onclick="selectCategory('lmop')"><span data-i18n="farms-chip-lmop">LMOP Sites</span> <strong>32</strong></span>
                 </div>
                 <div class="farms-toolbar">
@@ -276,7 +276,7 @@
             utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true}] },
             powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true}] },
             landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons (FY2013)',p:'TonsFY2013',num:true}] },
-            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'}] },
+            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Address',p:'Address'},{h:'ZIP Code',p:'ZipCode'},{h:'Food Waste Accepted?',p:'FoodWaste'},{h:'Feedstock',p:'Feedstock',minW:260},{h:'Source',p:'Source'}] },
             lmop:        { file: 'geojson/lmop.geojson',        cols: [{h:'Landfill Name',p:'LandfillNa'},{h:'City',p:'City'},{h:'Status',p:'Status'},{h:'Waste (Tons)',p:'TotWst_ton',num:true}] }
         };
 
@@ -380,7 +380,7 @@
                     var val = f.properties[c.p];
                     if (val === null || val === undefined) val = '';
                     if (c.num && val !== '') val = Number(val).toLocaleString();
-                    return '<td>' + val + '</td>';
+                    return '<td' + (c.minW ? ' style="min-width:' + c.minW + 'px"' : '') + '>' + val + '</td>';
                 }).join('') + '</tr>';
             }).join('');
 
