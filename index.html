@@ -437,9 +437,10 @@
                 .then(function (data) {
                     var markers = data.map(function (p) {
                         var m = L.marker([p[1], p[0]], { icon: makeMarkerIcon(cfg.shape, cfg.color) });
-                        var name = p[2] || '', city = p[3] || '';
-                        if (name || city) {
-                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label + (city ? '<br>' + city + ', IA' : ''));
+                        var name = p[2] || '', city = p[3] || '', head = p[4];
+                        if (name || city || head != null) {
+                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label + (city ? '<br>' + city + ', IA' : '') +
+                                        (head != null ? '<br>Head Count: ' + head.toLocaleString('en-US') : ''));
                         }
                         return m;
                     });
