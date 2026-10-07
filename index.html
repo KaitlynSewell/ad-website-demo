@@ -438,11 +438,13 @@
                     var markers = data.map(function (p) {
                         var m = L.marker([p[1], p[0]], { icon: makeMarkerIcon(cfg.shape, cfg.color) });
                         // p[4]: head count (livestock layers) or a detail line (e.g. digester facility type)
+                        // p[5]: 1 = livestock farm that has an on-farm digester
                         var name = p[2] || '', city = p[3] || '', extra = p[4];
                         if (name || city || extra != null) {
                             m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label + (city ? '<br>' + city + ', IA' : '') +
                                         (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
-                                         extra ? '<br>' + extra : ''));
+                                         extra ? '<br>' + extra : '') +
+                                        (p[5] ? '<br>On-Farm Digester' : ''));
                         }
                         return m;
                     });
