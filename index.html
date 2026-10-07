@@ -449,11 +449,15 @@
                         // p[4]: head count (livestock layers) or a detail line (e.g. digester facility type)
                         // p[5]: 1 = livestock farm that has an on-farm digester
                         var name = p[2] || '', city = p[3] || '', extra = p[4];
-                        if (name || city || extra != null) {
-                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label + (city ? '<br>' + city + ', IA' : '') +
+                        // Farm digesters carry 'On-Farm Digester' as their detail line; show it above the location
+                        var onFarm = p[5] || extra === 'On-Farm Digester';
+                        if (extra === 'On-Farm Digester') extra = null;
+                        if (name || city || extra != null || onFarm) {
+                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label +
+                                        (onFarm ? '<br>On-Farm Digester' : '') +
+                                        (city ? '<br>' + city + ', IA' : '') +
                                         (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
-                                         extra ? '<br>' + extra : '') +
-                                        (p[5] ? '<br>On-Farm Digester' : ''));
+                                         extra ? '<br>' + extra : ''));
                         }
                         return m;
                     });
