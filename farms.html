@@ -210,10 +210,8 @@
                     <span class="chip" id="chip-beef"        onclick="selectCategory('beef')"><span data-i18n="farms-chip-beef">Beef Cattle</span> <strong>2,085</strong></span>
                     <span class="chip" id="chip-dairy"       onclick="selectCategory('dairy')"><span data-i18n="farms-chip-dairy">Dairy Cattle</span> <strong>305</strong></span>
                     <span class="chip" id="chip-swine"       onclick="selectCategory('swine')"><span data-i18n="farms-chip-swine">Swine</span> <strong>447</strong></span>
-                    <span class="chip" id="chip-horses"      onclick="selectCategory('horses')"><span data-i18n="farms-chip-horses">Horses</span> <strong>65</strong></span>
                     <span class="chip" id="chip-turkeys"     onclick="selectCategory('turkeys')"><span data-i18n="farms-chip-turkeys">Turkeys</span> <strong>119</strong></span>
                     <span class="chip" id="chip-chickens"    onclick="selectCategory('chickens')"><span data-i18n="farms-chip-chickens">Chickens</span> <strong>164</strong></span>
-                    <span class="chip" id="chip-sheep"       onclick="selectCategory('sheep')"><span data-i18n="farms-chip-sheep">Sheep &amp; Goats</span> <strong>64</strong></span>
                     <span class="chip" id="chip-biodiesel"   onclick="selectCategory('biodiesel')"><span data-i18n="farms-chip-biodiesel">Biodiesel Plants</span> <strong>15</strong></span>
                     <span class="chip" id="chip-ethanol"     onclick="selectCategory('ethanol')"><span data-i18n="farms-chip-ethanol">Ethanol Plants</span> <strong>44</strong></span>
                     <span class="chip" id="chip-wastewater"  onclick="selectCategory('wastewater')"><span data-i18n="farms-chip-wastewater">Wastewater Treatment</span> <strong>1,099</strong></span>
@@ -228,10 +226,8 @@
                             <option value="beef">Beef Cattle (2,085)</option>
                             <option value="dairy">Dairy Cattle (305)</option>
                             <option value="swine">Swine (447)</option>
-                            <option value="horses">Horses (65)</option>
                             <option value="turkeys">Turkeys (119)</option>
                             <option value="chickens">Chickens (164)</option>
-                            <option value="sheep">Sheep &amp; Goats (64)</option>
                         </optgroup>
                         <optgroup label="Human Activity">
                             <option value="biodiesel">Biodiesel Plants (15)</option>
@@ -264,10 +260,8 @@
             beef:        { file: 'geojson/beef.geojson',        cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleBeef',num:true}] },
             dairy:       { file: 'geojson/dairy.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleDair',num:true}] },
             swine:       { file: 'geojson/swine.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'Swine',num:true}] },
-            horses:      { file: 'geojson/horses.geojson',      cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Horses',num:true}] },
             turkeys:     { file: 'geojson/turkeys.geojson',     cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Turkeys',num:true}] },
             chickens:    { file: 'geojson/chickens.geojson',    cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Chickens',num:true}] },
-            sheep:       { file: 'geojson/sheep.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'SheepLGoat',num:true}] },
             biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (MGb/yr)',p:'CapMGb',num:true}] },
             ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (MGe/yr)',p:'CapMGe',num:true}] },
             wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'Class',p:'Class'}] },

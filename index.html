@@ -482,7 +482,7 @@
             });
         }
 
-        var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
+        var allKeys = ['beef','dairy','swine','turkeys','chickens',
                        'biodiesel','ethanol','wastewater',
                        'utilities','powerplants','pipelines','landfill','digesters','foodwaste'];
 
@@ -490,10 +490,8 @@
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
             dairy:       { file: 'geojson/dairy.geojson',       color: '#4a90d9', shape: 'circle',  label: 'Dairy Cattle' },
             swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle',  label: 'Swine' },
-            horses:      { file: 'geojson/horses.geojson',      color: '#a0a0a0', shape: 'circle',  label: 'Horses' },
             turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle',  label: 'Turkeys' },
             chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
-            sheep:       { file: 'geojson/sheep.geojson',       color: '#d2b48c', shape: 'circle',  label: 'Sheep / Goats' },
             biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'droplet', label: 'Biodiesel Plants' },
             ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
             wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
@@ -523,7 +521,7 @@
                 return '<div class="legend-group' + (f ? ' first' : '') + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></div>';
             }
             var sectionKeys = {
-                'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
+                'sec-feedlot':   ['beef','dairy','swine','turkeys','chickens'],
                 'sec-human':     ['biodiesel','ethanol','wastewater','digesters','landfill','foodwaste'],
                 'sec-utilities': ['utilities','powerplants','pipelines']
             };
@@ -533,10 +531,8 @@
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
                 li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle', 'legend-dairy') +
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
-                li('toggle-horses',      circ('#a0a0a0'), 'Horses', 'legend-horses') +
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
-                li('toggle-sheep',       circ('#d2b48c'), 'Sheep / Goats', 'legend-sheep') +
                 grp('Human Activity', false, 'sec-human', 'legend-human') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
