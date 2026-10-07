@@ -484,7 +484,7 @@
 
         var allKeys = ['beef','dairy','swine','horses','turkeys','chickens','sheep',
                        'biodiesel','ethanol','wastewater',
-                       'utilities','powerplants','pipelines','landfill','digesters','lmop','foodwaste'];
+                       'utilities','powerplants','pipelines','landfill','digesters','foodwaste'];
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
@@ -501,8 +501,7 @@
             powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square',  label: 'Power Plants' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
             landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
-            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'digester',  label: 'Anaerobic Digesters' },
-            lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle',  label: 'LMOP Sites' }
+            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'digester',  label: 'Anaerobic Digesters' }
         };
 
         function buildLegend() {
@@ -525,7 +524,7 @@
             }
             var sectionKeys = {
                 'sec-feedlot':   ['beef','dairy','swine','horses','turkeys','chickens','sheep'],
-                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','lmop','landfill','foodwaste'],
+                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','landfill','foodwaste'],
                 'sec-utilities': ['utilities','powerplants','pipelines']
             };
             div.innerHTML =
@@ -543,7 +542,6 @@
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
                 li('toggle-digesters',   digesterSvg('#2ecc71', 16, 1), 'Anaerobic Digesters', 'legend-digesters') +
-                li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites', 'legend-lmop') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
                 li('toggle-foodwaste',  peel('#ffd43b'), 'Food Waste', 'legend-foodwaste') +
                 grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
