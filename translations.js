@@ -147,7 +147,16 @@ var translations = {
         // AC2 AOI panel
         'ac2-aoi-select-method': 'Select method',
         'ac2-aoi-circle': 'Circle',
-        'ac2-aoi-polygon': 'Polygon (Draw)'
+        'ac2-aoi-polygon': 'Polygon (Draw)',
+        'ac2-aoi-municipality': 'Municipality',
+        'ac2-muni-city': 'City',
+        'ac2-muni-county': 'County',
+        'ac2-muni-back': 'Back',
+        'ac2-muni-add-city': 'Add Another City',
+        'ac2-muni-find-city': 'Find a city or town in Iowa',
+        'ac2-muni-find-county': 'Find a county in Iowa',
+        'ac2-muni-city-ph': 'Type a city or town name…',
+        'ac2-muni-county-ph': 'Type a county name…'
     },
     es: {
         'site-title': 'Vías de Digestión Anaeróbica',
@@ -282,7 +291,16 @@ var translations = {
         'ac2-layer-landfill': 'Rellenos Sanitarios',
         'ac2-aoi-select-method': 'Seleccionar método',
         'ac2-aoi-circle': 'Círculo',
-        'ac2-aoi-polygon': 'Polígono (Dibujar)'
+        'ac2-aoi-polygon': 'Polígono (Dibujar)',
+        'ac2-aoi-municipality': 'Municipio',
+        'ac2-muni-city': 'Ciudad',
+        'ac2-muni-county': 'Condado',
+        'ac2-muni-back': 'Atrás',
+        'ac2-muni-add-city': 'Agregar otra ciudad',
+        'ac2-muni-find-city': 'Busque una ciudad o pueblo en Iowa',
+        'ac2-muni-find-county': 'Busque un condado en Iowa',
+        'ac2-muni-city-ph': 'Escriba el nombre de una ciudad…',
+        'ac2-muni-county-ph': 'Escriba el nombre de un condado…'
     },
     fr: {
         'site-title': 'Voies de Digestion Anaérobie',
@@ -417,7 +435,16 @@ var translations = {
         'ac2-layer-landfill': "Sites d'Enfouissement",
         'ac2-aoi-select-method': 'Sélectionner la méthode',
         'ac2-aoi-circle': 'Cercle',
-        'ac2-aoi-polygon': 'Polygone (Dessiner)'
+        'ac2-aoi-polygon': 'Polygone (Dessiner)',
+        'ac2-aoi-municipality': 'Municipalité',
+        'ac2-muni-city': 'Ville',
+        'ac2-muni-county': 'Comté',
+        'ac2-muni-back': 'Retour',
+        'ac2-muni-add-city': 'Ajouter une autre ville',
+        'ac2-muni-find-city': 'Trouver une ville en Iowa',
+        'ac2-muni-find-county': 'Trouver un comté en Iowa',
+        'ac2-muni-city-ph': 'Saisissez le nom d’une ville…',
+        'ac2-muni-county-ph': 'Saisissez le nom d’un comté…'
     },
     de: {
         'site-title': 'Anaerobe Vergärungswege',
@@ -552,7 +579,16 @@ var translations = {
         'ac2-layer-landfill': 'Deponiestandorte',
         'ac2-aoi-select-method': 'Methode auswählen',
         'ac2-aoi-circle': 'Kreis',
-        'ac2-aoi-polygon': 'Polygon (Zeichnen)'
+        'ac2-aoi-polygon': 'Polygon (Zeichnen)',
+        'ac2-aoi-municipality': 'Gemeinde',
+        'ac2-muni-city': 'Stadt',
+        'ac2-muni-county': 'Landkreis',
+        'ac2-muni-back': 'Zurück',
+        'ac2-muni-add-city': 'Weitere Stadt hinzufügen',
+        'ac2-muni-find-city': 'Stadt oder Ort in Iowa suchen',
+        'ac2-muni-find-county': 'Landkreis in Iowa suchen',
+        'ac2-muni-city-ph': 'Stadt- oder Ortsnamen eingeben…',
+        'ac2-muni-county-ph': 'Landkreisnamen eingeben…'
     }
 };
 

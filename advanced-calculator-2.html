@@ -442,6 +442,68 @@
             padding: 6px 16px 2px;
         }
 
+        /* Municipality AOI picker */
+        .aoi-muni-panel {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            z-index: 9999;
+            width: 280px;
+            padding: 10px 12px 12px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+        .aoi-muni-panel.open { display: block; }
+        .muni-header { display: flex; align-items: center; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+        .muni-close, .muni-back { background: none; border: none; cursor: pointer; color: #888; font-size: 13px; padding: 2px 4px; }
+        .muni-close:hover, .muni-back:hover { color: #2c3e50; }
+        .muni-back { padding: 0 0 6px; }
+        .muni-kind-btns { display: flex; gap: 8px; }
+        .muni-kind-btns button {
+            flex: 1; padding: 9px 0; border: 1px solid #4169e1; background: white; color: #4169e1;
+            border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer;
+        }
+        .muni-kind-btns button:hover { background: #4169e1; color: white; }
+        .muni-search-title { font-size: 11px; color: #888; margin-bottom: 6px; }
+        .muni-search-wrap { position: relative; }
+        .muni-search-input {
+            width: 100%; box-sizing: border-box; padding: 7px 9px; font-size: 13px;
+            border: 1px solid #ccc; border-radius: 4px; outline: none;
+        }
+        .muni-search-input:focus { border-color: #4169e1; }
+        .muni-suggest {
+            display: none; position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 0;
+            list-style: none; background: white; border: 1px solid #ddd; border-top: none;
+            border-radius: 0 0 4px 4px; max-height: 220px; overflow-y: auto; z-index: 2;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .muni-suggest li { padding: 6px 9px; cursor: pointer; font-size: 12px; }
+        .muni-suggest li:hover { background: #f0f4ff; }
+        .muni-suggest li.muni-suggest-none { color: #999; cursor: default; font-style: italic; }
+        .muni-suggest li.muni-suggest-none:hover { background: none; }
+        .muni-chip {
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            background: #eef2fd; border: 1px solid #c9d5f7; border-radius: 4px;
+            padding: 5px 8px; margin-bottom: 6px; font-size: 12px;
+        }
+        .muni-chip-x { background: none; border: none; color: #888; cursor: pointer; font-size: 11px; padding: 0 2px; }
+        .muni-chip-x:hover { color: #c0392b; }
+        .muni-add-btn {
+            width: 100%; margin-top: 2px; padding: 7px 0; border: 1px dashed #4169e1; background: white;
+            color: #4169e1; border-radius: 4px; font-size: 12px; cursor: pointer;
+        }
+        .muni-add-btn:hover { background: #f0f4ff; }
+        .muni-status { font-size: 11px; color: #c0392b; margin-top: 4px; }
+        html.dark-mode .aoi-muni-panel { background: #2c2c3e; border-color: #555; color: #e0e0e0; }
+        html.dark-mode .muni-search-input { background: #3a3a4e; border-color: #555; color: #e0e0e0; }
+        html.dark-mode .muni-suggest { background: #2c2c3e; border-color: #555; }
+        html.dark-mode .muni-suggest li:hover { background: #3a3a55; }
+        html.dark-mode .muni-chip { background: #3a3a55; border-color: #555; }
+        html.dark-mode .muni-kind-btns button, html.dark-mode .muni-add-btn { background: #2c2c3e; }
+
         /* AOI right sidebar */
         .aoi-right-sidebar {
             width: 240px;
@@ -710,6 +772,32 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 15,6 12,14 4,14 1,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
             <span data-i18n="ac2-aoi-polygon">Polygon (Draw)</span>
         </button>
+        <button onclick="startMunicipalityMode()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M1.5 14.5h13M2.5 14.5V7l3-2 3 2v7.5M8.5 14.5V3.5l5-2v13"/><path d="M4.5 9h2M4.5 11.5h2M10.5 5.5h1.5M10.5 8h1.5M10.5 10.5h1.5"/></svg>
+            <span data-i18n="ac2-aoi-municipality">Municipality</span>
+        </button>
+    </div>
+
+    <!-- Municipality AOI picker: one or more Iowa cities, or an Iowa county -->
+    <div class="aoi-muni-panel" id="aoi-muni-panel">
+        <div class="muni-header">
+            <span data-i18n="ac2-aoi-municipality">Municipality</span>
+            <button class="muni-close" onclick="closeMuniPanel()" title="Close">&#10005;</button>
+        </div>
+        <div id="muni-step-kind">
+            <div class="muni-kind-btns">
+                <button onclick="showMuniStep('city')" data-i18n="ac2-muni-city">City</button>
+                <button onclick="showMuniStep('county')" data-i18n="ac2-muni-county">County</button>
+            </div>
+        </div>
+        <div id="muni-step-search" style="display:none;">
+            <button class="muni-back" onclick="showMuniStep(null)">&#8249; <span data-i18n="ac2-muni-back">Back</span></button>
+            <div class="muni-search-title" id="muni-search-title" data-i18n="ac2-muni-find-city">Find a city or town in Iowa</div>
+            <div id="muni-selected"></div>
+            <div id="muni-search-rows"></div>
+            <button class="muni-add-btn" id="muni-add-city-btn" onclick="addMuniSearchRow()" style="display:none;">+ <span data-i18n="ac2-muni-add-city">Add Another City</span></button>
+            <div class="muni-status" id="muni-status"></div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1058,14 +1146,7 @@
 
         function getAoiDigesters() {
             if (!digesterDataCache || !digesterDataCache.length) return [];
-            if (aoiCenter) {
-                return digesterDataCache.filter(function(f) {
-                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
-                });
-            }
-            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
-                return digesterDataCache.filter(function(f) { return pointInPolygon(f, aoiPolyPoints); });
-            }
+            if (hasAoiActive()) return digesterDataCache.filter(aoiContains);
             return digesterDataCache;
         }
 
@@ -1607,14 +1688,7 @@
         function getAoiFeaturesWithNames(key) {
             var feats = bgFeatureCache[key];
             if (feats === null || feats === undefined) return feats;
-            if (aoiCenter) {
-                return feats.filter(function(f) {
-                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
-                });
-            }
-            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
-                return feats.filter(function(f) { return pointInPolygon(f, aoiPolyPoints); });
-            }
+            if (hasAoiActive()) return feats.filter(aoiContains);
             return feats;
         }
 
@@ -1649,21 +1723,13 @@
                 ? loadedLayers[key].features
                 : bgCoordCache[key];
             if (!features) return null; // still loading
-            if (aoiCenter) {
-                return features.filter(function(f) {
-                    return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
-                }).length;
-            }
-            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
-                return features.filter(function(f) {
-                    return pointInPolygon(f, aoiPolyPoints);
-                }).length;
-            }
+            if (hasAoiActive()) return features.filter(aoiContains).length;
             return features.length;
         }
 
         // Compute AOI area in km² for wind/solar density estimates
         function getAoiAreaKm2() {
+            if (aoiMultiPolys) return multiPolysAreaKm2(aoiMultiPolys);
             if (aoiCenter) {
                 return Math.PI * aoiRadiusKm * aoiRadiusKm;
             }
@@ -1749,6 +1815,8 @@
         var aoiPolyPoints = null;     // [{lat,lng}] — set for polygon AOI
         var aoiCenter = null;         // L.LatLng — set for circle AOI
         var aoiRadiusKm = 10;         // circle radius in km
+        var aoiMultiPolys = null;     // [[ring, hole, ...], ...] of {lat,lng} — set for Municipality AOI
+        var aoiMuniInfo = null;       // { kind: 'city'|'county', names: [...] } for Municipality AOI
 
         // Polygon draw state
         var polyPoints = [];          // L.LatLng[] being collected
@@ -1777,22 +1845,53 @@
             var result = {};
             Object.keys(loadedLayers).forEach(function(key) {
                 var feats = loadedLayers[key].features;
-                if (aoiCenter) {
-                    feats = feats.filter(function(f) {
-                        return haversineKm(aoiCenter.lat, aoiCenter.lng, f.lat, f.lng) <= aoiRadiusKm;
-                    });
-                } else if (aoiPolyPoints) {
-                    feats = feats.filter(function(f) {
-                        return pointInPolygon(f, aoiPolyPoints);
-                    });
-                }
+                if (hasAoiActive()) feats = feats.filter(aoiContains);
                 result[key] = feats;
             });
             return result;
         }
 
         function hasAoiActive() {
-            return aoiCenter !== null || aoiPolyPoints !== null;
+            return aoiCenter !== null || aoiPolyPoints !== null || aoiMultiPolys !== null;
+        }
+
+        // True if a {lat,lng} point lies inside the active AOI (circle, drawn polygon or municipality)
+        function aoiContains(pt) {
+            if (aoiCenter) return haversineKm(aoiCenter.lat, aoiCenter.lng, pt.lat, pt.lng) <= aoiRadiusKm;
+            if (aoiMultiPolys) return pointInMultiPolys(pt, aoiMultiPolys);
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) return pointInPolygon(pt, aoiPolyPoints);
+            return true;
+        }
+
+        // polys = [[outerRing, hole, ...], ...]; inside an outer ring and outside its holes
+        function pointInMultiPolys(pt, polys) {
+            return polys.some(function(rings) {
+                if (!pointInPolygon(pt, rings[0])) return false;
+                for (var i = 1; i < rings.length; i++) {
+                    if (pointInPolygon(pt, rings[i])) return false;
+                }
+                return true;
+            });
+        }
+
+        function ringAreaKm2(pts) {
+            var latMid = pts.reduce(function(s, p) { return s + p.lat; }, 0) / pts.length;
+            var kmPerDegLng = 111.1 * Math.cos(latMid * Math.PI / 180);
+            var area = 0, n = pts.length;
+            for (var i = 0; i < n; i++) {
+                var j = (i + 1) % n;
+                area += (pts[i].lng * kmPerDegLng) * (pts[j].lat * 111.1)
+                      - (pts[j].lng * kmPerDegLng) * (pts[i].lat * 111.1);
+            }
+            return Math.abs(area) / 2;
+        }
+
+        function multiPolysAreaKm2(polys) {
+            return polys.reduce(function(total, rings) {
+                var a = ringAreaKm2(rings[0]);
+                for (var i = 1; i < rings.length; i++) a -= ringAreaKm2(rings[i]);
+                return total + a;
+            }, 0);
         }
 
         function saveAoiState() {
@@ -1800,6 +1899,8 @@
                 localStorage.setItem('ac2Aoi', JSON.stringify({
                     type: 'circle', lat: aoiCenter.lat, lng: aoiCenter.lng, radiusKm: aoiRadiusKm
                 }));
+            } else if (aoiMultiPolys) {
+                localStorage.setItem('ac2Aoi', JSON.stringify({ type: 'municipality', polys: aoiMultiPolys, info: aoiMuniInfo }));
             } else if (aoiPolyPoints) {
                 localStorage.setItem('ac2Aoi', JSON.stringify({ type: 'polygon', points: aoiPolyPoints }));
             } else {
@@ -1830,6 +1931,20 @@
                     }).addTo(microgridMap);
                     document.getElementById('aoi-clear-btn').style.display = 'block';
                     document.getElementById('aoi-radius-row').style.display = 'flex';
+                    updateAoiSidebar();
+                    updateCharts();
+                    setTimeout(function() {
+                        microgridMap.invalidateSize();
+                        microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    }, 0);
+                } else if (data.type === 'municipality' && data.polys && data.polys.length) {
+                    aoiMultiPolys = data.polys;
+                    aoiMuniInfo = data.info || null;
+                    aoiCenter = null;
+                    aoiPolyPoints = null;
+                    aoiLayer = makeMultiPolyLayer(aoiMultiPolys).addTo(microgridMap);
+                    document.getElementById('aoi-clear-btn').style.display = 'block';
+                    restoreMuniSelection();
                     updateAoiSidebar();
                     updateCharts();
                     setTimeout(function() {
@@ -2282,6 +2397,11 @@
             var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
             var isOpen = panel.classList.contains('open');
 
+            if (document.getElementById('aoi-muni-panel').classList.contains('open')) {
+                closeMuniPanel();
+                return;
+            }
+
             // If already in draw mode, cancel it
             if (aoiMode) {
                 var cancelType = aoiDrawType;
@@ -2313,6 +2433,7 @@
 
         function startAoiMode(type) {
             document.getElementById('aoi-mode-panel').classList.remove('open');
+            closeMuniPanel();
             aoiMode = true;
             aoiDrawType = type;
             var btn = document.querySelector('.ac2-toolbar-btn[onclick="handleSelectArea()"]');
@@ -2348,6 +2469,8 @@
             clearPolyPreview();
             if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
             aoiPolyPoints = pts;
+            aoiMultiPolys = null;
+            aoiMuniInfo = null;
             aoiBounds = null;
             aoiLayer = L.polygon(pts.map(function(p) { return [p.lat, p.lng]; }), {
                 color: '#1a6fc4', weight: 4, opacity: 1,
@@ -2413,6 +2536,8 @@
             if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
             aoiCenter = e.latlng;
             aoiPolyPoints = null;
+            aoiMultiPolys = null;
+            aoiMuniInfo = null;
             aoiBounds = null;
 
             var radiusInput = document.getElementById('aoi-radius-input');
@@ -2460,6 +2585,10 @@
             aoiBounds = null;
             aoiPolyPoints = null;
             aoiCenter = null;
+            aoiMultiPolys = null;
+            aoiMuniInfo = null;
+            muniSelected = [];
+            closeMuniPanel();
             document.getElementById('aoi-clear-btn').style.display = 'none';
             document.getElementById('aoi-radius-row').style.display = 'none';
             hideAoiSidebar();
@@ -2476,8 +2605,241 @@
             saveAoiState();
         }
 
+        // ===== MUNICIPALITY AOI (Iowa cities / counties) =====
+        // Boundaries: US Census Bureau 2023 cartographic boundary files, Iowa only
+        var MUNI_FILES = { county: 'geojson/aoi-counties.geojson', city: 'geojson/aoi-places.geojson' };
+        var muniData = {};            // kind -> Promise of features
+        var muniKind = null;          // 'city' | 'county' while the picker is open
+        var muniSelected = [];        // selected features (one county, or one or more cities)
+
+        function loadMuniData(kind) {
+            if (!muniData[kind]) {
+                muniData[kind] = fetch(MUNI_FILES[kind])
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) { return d.features; })
+                    .catch(function(err) { delete muniData[kind]; throw err; });
+            }
+            return muniData[kind];
+        }
+
+        function muniLabel(f) {
+            var p = f.properties;
+            if (!p.county) return p.name + ' County';
+            return p.name + ' — ' + p.county + ' County' + (p.type === 'community' ? ' (community)' : '');
+        }
+
+        function featureToPolys(f) {
+            var g = f.geometry;
+            var polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+            return polys.map(function(rings) {
+                return rings.map(function(ring) {
+                    return ring.map(function(c) { return { lat: c[1], lng: c[0] }; });
+                });
+            });
+        }
+
+        function makeMultiPolyLayer(polys) {
+            return L.polygon(polys.map(function(rings) {
+                return rings.map(function(ring) { return ring.map(function(p) { return [p.lat, p.lng]; }); });
+            }), {
+                color: '#1a6fc4', weight: 4, opacity: 1,
+                fillColor: '#4a90d9', fillOpacity: 0.08,
+                interactive: false, pane: 'aoiPane'
+            });
+        }
+
+        function translateMuniPanel() {
+            if (typeof applyTranslations === 'function') applyTranslations(localStorage.getItem('language') || 'en');
+        }
+
+        // Opened from the "Select method" menu
+        function startMunicipalityMode() {
+            var modePanel = document.getElementById('aoi-mode-panel');
+            var panel = document.getElementById('aoi-muni-panel');
+            panel.style.top = modePanel.style.top;
+            panel.style.left = modePanel.style.left;
+            modePanel.classList.remove('open');
+            if (aoiMode) { exitDrawMode(); clearPolyPreview(); }
+            // Re-open on the current municipality selection, if there is one
+            showMuniStep(aoiMuniInfo && muniSelected.length ? aoiMuniInfo.kind : null);
+            panel.classList.add('open');
+        }
+
+        function closeMuniPanel() {
+            var panel = document.getElementById('aoi-muni-panel');
+            if (panel) panel.classList.remove('open');
+        }
+
+        // step: null = choose City or County; 'city' / 'county' = search for one
+        function showMuniStep(step) {
+            muniKind = step;
+            document.getElementById('muni-step-kind').style.display = step ? 'none' : 'block';
+            document.getElementById('muni-step-search').style.display = step ? 'block' : 'none';
+            document.getElementById('muni-status').textContent = '';
+            if (!step) return;
+            if (!aoiMuniInfo || aoiMuniInfo.kind !== step) muniSelected = [];
+            document.getElementById('muni-search-title').setAttribute('data-i18n', step === 'county' ? 'ac2-muni-find-county' : 'ac2-muni-find-city');
+            renderMuniSelection();
+            document.getElementById('muni-search-rows').innerHTML = '';
+            document.getElementById('muni-add-city-btn').style.display = 'none';
+            // County: one search box. City: a search box until one is chosen, then "Add Another City"
+            if (step === 'county' || !muniSelected.length) addMuniSearchRow();
+            else document.getElementById('muni-add-city-btn').style.display = 'block';
+            loadMuniData(step).catch(function() {
+                document.getElementById('muni-status').textContent = 'Could not load boundary data.';
+            });
+            translateMuniPanel();
+        }
+
+        function addMuniSearchRow() {
+            var rows = document.getElementById('muni-search-rows');
+            rows.innerHTML = '';
+            document.getElementById('muni-add-city-btn').style.display = 'none';
+            var kind = muniKind;
+            var wrap = document.createElement('div');
+            wrap.className = 'muni-search-wrap';
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'muni-search-input';
+            input.autocomplete = 'off';
+            input.setAttribute('data-i18n-placeholder', kind === 'county' ? 'ac2-muni-county-ph' : 'ac2-muni-city-ph');
+            input.placeholder = kind === 'county' ? 'Type a county name…' : 'Type a city or town name…';
+            var list = document.createElement('ul');
+            list.className = 'muni-suggest';
+            wrap.appendChild(input);
+            wrap.appendChild(list);
+            rows.appendChild(wrap);
+            var matches = [];
+
+            function refresh() {
+                var q = input.value.trim().toLowerCase();
+                matches = [];
+                list.innerHTML = '';
+                if (!q) { list.style.display = 'none'; return; }
+                loadMuniData(kind).then(function(feats) {
+                    if (muniKind !== kind || input.value.trim().toLowerCase() !== q) return;
+                    var chosen = muniSelected.map(muniLabel);
+                    var starts = [], contains = [];
+                    feats.forEach(function(f) {
+                        var n = f.properties.name.toLowerCase();
+                        if (chosen.indexOf(muniLabel(f)) !== -1) return;
+                        if (n.indexOf(q) === 0) starts.push(f);
+                        else if (n.indexOf(q) !== -1) contains.push(f);
+                    });
+                    matches = starts.concat(contains).slice(0, 12);
+                    list.innerHTML = '';
+                    if (!matches.length) {
+                        var none = document.createElement('li');
+                        none.className = 'muni-suggest-none';
+                        none.textContent = kind === 'county' ? 'No Iowa county matches' : 'No Iowa city or town matches';
+                        list.appendChild(none);
+                    }
+                    matches.forEach(function(f) {
+                        var li = document.createElement('li');
+                        li.textContent = muniLabel(f);
+                        li.addEventListener('mousedown', function(e) { e.preventDefault(); chooseMuni(f); });
+                        list.appendChild(li);
+                    });
+                    list.style.display = 'block';
+                });
+            }
+            input.addEventListener('input', refresh);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && matches.length) { e.preventDefault(); chooseMuni(matches[0]); }
+                if (e.key === 'Escape') list.style.display = 'none';
+            });
+            input.addEventListener('blur', function() { setTimeout(function() { list.style.display = 'none'; }, 150); });
+            translateMuniPanel();
+            setTimeout(function() { input.focus(); }, 0);
+        }
+
+        function chooseMuni(f) {
+            if (muniKind === 'county') {
+                muniSelected = [f];
+                applyMuniAoi();
+                closeMuniPanel();
+                return;
+            }
+            muniSelected.push(f);
+            document.getElementById('muni-search-rows').innerHTML = '';
+            document.getElementById('muni-add-city-btn').style.display = 'block';
+            applyMuniAoi();
+        }
+
+        function removeMuni(i) {
+            muniSelected.splice(i, 1);
+            if (!muniSelected.length) {
+                clearAOI();
+                startMunicipalityMode();
+                showMuniStep('city');
+                return;
+            }
+            applyMuniAoi();
+        }
+
+        function renderMuniSelection() {
+            var box = document.getElementById('muni-selected');
+            box.innerHTML = '';
+            muniSelected.forEach(function(f, i) {
+                var chip = document.createElement('div');
+                chip.className = 'muni-chip';
+                var label = document.createElement('span');
+                label.textContent = muniLabel(f);
+                chip.appendChild(label);
+                if (muniKind === 'city') {
+                    var x = document.createElement('button');
+                    x.className = 'muni-chip-x';
+                    x.title = 'Remove';
+                    x.innerHTML = '&#10005;';
+                    x.addEventListener('click', function() { removeMuni(i); });
+                    chip.appendChild(x);
+                }
+                box.appendChild(chip);
+            });
+        }
+
+        function applyMuniAoi() {
+            var polys = [];
+            muniSelected.forEach(function(f) { polys = polys.concat(featureToPolys(f)); });
+            if (aoiLayer) { microgridMap.removeLayer(aoiLayer); }
+            aoiCenter = null;
+            aoiPolyPoints = null;
+            aoiBounds = null;
+            aoiMultiPolys = polys;
+            aoiMuniInfo = { kind: muniKind, names: muniSelected.map(muniLabel) };
+            aoiLayer = makeMultiPolyLayer(polys).addTo(microgridMap);
+            microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+            document.getElementById('aoi-clear-btn').style.display = 'block';
+            document.getElementById('aoi-radius-row').style.display = 'none';
+            usedFeedstocks = {};
+            try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
+            selectedDigesters = {};
+            Object.keys(digesterHighlightMarkers).forEach(function(id) {
+                microgridMap.removeLayer(digesterHighlightMarkers[id]);
+            });
+            digesterHighlightMarkers = {};
+            renderMuniSelection();
+            updateAoiSidebar();
+            updateCharts();
+            saveAoiState();
+        }
+
+        // After a page reload, rebuild the chosen-municipality list from the saved names
+        function restoreMuniSelection() {
+            if (!aoiMuniInfo || !aoiMuniInfo.names) return;
+            var info = aoiMuniInfo;
+            loadMuniData(info.kind).then(function(feats) {
+                if (aoiMuniInfo !== info) return;
+                muniSelected = info.names.map(function(n) {
+                    return feats.filter(function(f) { return muniLabel(f) === n; })[0];
+                }).filter(Boolean);
+            }).catch(function() {});
+        }
+
+
         // ===== AOI AREA SIDEBAR =====
         function calcAOIAreaKm2() {
+            if (aoiMultiPolys) return multiPolysAreaKm2(aoiMultiPolys);
             if (aoiCenter) {
                 return Math.PI * aoiRadiusKm * aoiRadiusKm;
             }
