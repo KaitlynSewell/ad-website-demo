@@ -379,10 +379,19 @@
         var layerGroups = {};
 
         // Build an inline SVG string for a given shape/color/size
+        // Digester tank: cylinder with a domed top
+        function digesterSvg(color, size, strokeWidth) {
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                   '<path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/>' +
+                   '<path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
+        }
+
         function makeIconSvg(shape, color, size) {
             if (shape === 'square') {
                 return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
                        '<rect x="1" y="1" width="14" height="14" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
+            } else if (shape === 'digester') {
+                return digesterSvg(color, size, 0.2);
             } else if (shape === 'droplet') {
                 var w = Math.round(size * 0.75);
                 return '<svg width="' + w + '" height="' + size + '" viewBox="-1 -1 14 18">' +
@@ -488,7 +497,7 @@
             powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square',  label: 'Power Plants' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
             landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
-            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'circle',  label: 'Anaerobic Digesters' },
+            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'digester',  label: 'Anaerobic Digesters' },
             lmop:        { file: 'geojson/lmop.geojson',        color: '#8e44ad', shape: 'circle',  label: 'LMOP Sites' }
         };
 
@@ -529,7 +538,7 @@
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
-                li('toggle-digesters',   circ('#2ecc71'), 'Anaerobic Digesters', 'legend-digesters') +
+                li('toggle-digesters',   digesterSvg('#2ecc71', 16, 1), 'Anaerobic Digesters', 'legend-digesters') +
                 li('toggle-lmop',        circ('#8e44ad'), 'LMOP Sites', 'legend-lmop') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
                 li('toggle-foodwaste',  peel('#ffd43b'), 'Food Waste', 'legend-foodwaste') +

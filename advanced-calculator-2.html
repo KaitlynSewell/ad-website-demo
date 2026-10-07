@@ -1581,7 +1581,7 @@
         var LAYER_SHAPES = {
             beef:'circle', dairy:'circle', swine:'circle', horses:'circle',
             turkeys:'circle', chickens:'circle', sheep:'circle',
-            digesters:'circle', lmop:'circle',
+            digesters:'digester', lmop:'circle',
             biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
             utilities:'square', powerplants:'square', landfill:'square'
         };
@@ -1599,6 +1599,9 @@
         function makeIconSvg(shape, color, size) {
             if (shape === 'square') {
                 return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
+            } else if (shape === 'digester') {
+                // Digester tank: cylinder with a domed top
+                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/><path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="0.2"/></svg>';
             } else if (shape === 'droplet') {
                 var w = Math.round(size * 0.75);
                 return '<svg width="'+w+'" height="'+size+'" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
