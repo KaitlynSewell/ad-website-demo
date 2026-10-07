@@ -219,6 +219,7 @@
                     <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')"><span data-i18n="farms-chip-powerplants">Power Plants</span> <strong>217</strong></span>
                     <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')"><span data-i18n="farms-chip-landfill">Landfill Sites</span> <strong>86</strong></span>
                     <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')"><span data-i18n="farms-chip-digesters">Anaerobic Digesters</span> <strong>58</strong></span>
+                    <span class="chip" id="chip-foodwaste"   onclick="selectCategory('foodwaste')"><span data-i18n="farms-chip-foodwaste">Food Waste</span> <strong>5,452</strong></span>
                 </div>
                 <div class="farms-toolbar">
                     <select id="category-select" onchange="onCategoryChange()">
@@ -239,6 +240,7 @@
                         <optgroup label="Display Layers">
                             <option value="landfill">Landfill Sites (86)</option>
                             <option value="digesters">Anaerobic Digesters (58)</option>
+                            <option value="foodwaste">Food Waste (5,452)</option>
                         </optgroup>
                     </select>
                     <input type="text" id="search-input" placeholder="Search..." data-i18n-placeholder="farms-search" oninput="onSearch()" />
@@ -268,7 +270,8 @@
             utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true}] },
             powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true}] },
             landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons (FY2013)',p:'TonsFY2013',num:true},{h:'LMOP',p:'LMOP'}] },
-            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Food Waste Accepted?',p:'FoodWaste'},{h:'Feedstock',p:'Feedstock',minW:260},{h:'Source',p:'Source'}] }
+            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Food Waste Accepted?',p:'FoodWaste'},{h:'Feedstock',p:'Feedstock',minW:260},{h:'Source',p:'Source'}] },
+            foodwaste:   { file: 'geojson/foodwaste.geojson',   cols: [{h:'Name',p:'Name'},{h:'Category',p:'Category'},{h:'Type',p:'Type'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Excess Food Low (tons/yr)',p:'ExcessLow',num:true},{h:'Excess Food High (tons/yr)',p:'ExcessHigh',num:true}] }
         };
 
         var cache = {};
