@@ -1441,9 +1441,9 @@
                 production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor * pf;
             }
 
-            // Loaded non-feedstock layers in AOI (lmop, powerplants, utilities, ethanol)
+            // Loaded non-feedstock layers in AOI (powerplants, utilities, ethanol)
             var filtered = getFeaturesInAOI();
-            ['lmop', 'powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+            ['powerplants', 'utilities', 'ethanol'].forEach(function(key) {
                 var count = filtered[key] ? filtered[key].length : 0;
                 if (!count) return;
                 var cat = PIE1_CAT[key];
@@ -1504,7 +1504,7 @@
             turkeys: 'geojson/turkeys.geojson', chickens: 'geojson/chickens.geojson',
             sheep: 'geojson/sheep.geojson', biodiesel: 'geojson/biodiesel.geojson',
             ethanol: 'geojson/ethanol.geojson', wastewater: 'geojson/wastewater.geojson',
-            digesters: 'geojson/digesters.geojson', lmop: 'geojson/lmop.geojson',
+            digesters: 'geojson/digesters.geojson',
             utilities: 'geojson/utilities.geojson', powerplants: 'geojson/powerplants.geojson',
             pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson'
         };
@@ -1996,7 +1996,7 @@
 
             // Local generation from existing energy facilities in AOI (bgCoordCache, always pre-loaded)
             var production = {};
-            ['digesters','lmop','wastewater','landfill','powerplants','utilities','ethanol','biodiesel'].forEach(function(key) {
+            ['digesters','wastewater','landfill','powerplants','utilities','ethanol','biodiesel'].forEach(function(key) {
                 var count = getAoiCount(key);
                 if (!count) return;
                 var cat = PIE1_CAT[key];
@@ -2067,7 +2067,7 @@
             }
 
             var filtered = getFeaturesInAOI();
-            ['lmop', 'powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+            ['powerplants', 'utilities', 'ethanol'].forEach(function(key) {
                 var count = filtered[key] ? filtered[key].length : 0;
                 if (!count) return;
                 var cat = PIE1_CAT[key];
