@@ -496,7 +496,7 @@
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
-            dairy:       { file: 'geojson/dairy.geojson',       color: '#d2817f', shape: 'circle',  label: 'Dairy Cattle' },
+            dairy:       { file: 'geojson/dairy.geojson',       color: '#d03939', shape: 'circle',  label: 'Dairy Cattle' },
             swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle',  label: 'Swine' },
             turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle',  label: 'Turkeys' },
             chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
@@ -504,7 +504,7 @@
             ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
             wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
             utilities:   { file: 'geojson/utilities.geojson',   color: '#e67e22', shape: 'square',  label: 'Electric / Gas Utilities' },
-            powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square',  label: 'Power Plants' },
+            powerplants: { file: 'geojson/powerplants.geojson', color: '#800000', shape: 'square',  label: 'Power Plants' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
             landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
             'digesters-ww':   { file: 'geojson/digesters.geojson', color: '#3498db', shape: 'digester', label: 'Wastewater Treatment Digesters' },
@@ -541,7 +541,7 @@
                 '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
                 grp('Manure', true, 'sec-feedlot', 'legend-feedlot') +
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
-                li('toggle-dairy',       circ('#d2817f'), 'Dairy Cattle', 'legend-dairy') +
+                li('toggle-dairy',       circ('#d03939'), 'Dairy Cattle', 'legend-dairy') +
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
@@ -557,7 +557,7 @@
                 li('toggle-digesters-sa',   digesterSvg('#2ecc71', 16, 1), 'Stand-Alone Digesters', 'legend-ad-sa') +
                 grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities', 'legend-utilities') +
-                li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
+                li('toggle-powerplants', rect('#800000'), 'Power Plants', 'legend-powerplants') +
                 li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines');
 
             function updateSectionCheckboxes() {
