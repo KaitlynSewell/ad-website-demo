@@ -464,7 +464,9 @@
                                         (onFarm ? '<br>On-Farm Digester' : '') +
                                         (city ? '<br>' + city + ', IA' : '') +
                                         (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
-                                         extra ? '<br>' + extra : ''));
+                                         extra ? '<br>' + extra : '') +
+                                        // p[6]: feedstocks (digester layers)
+                                        (p[6] ? '<br><strong>Feedstocks:</strong> ' + p[6] : ''));
                         }
                         return m;
                     });
