@@ -491,11 +491,12 @@
 
         var allKeys = ['beef','dairy','swine','turkeys','chickens',
                        'biodiesel','ethanol','wastewater',
-                       'utilities','powerplants','pipelines','landfill','digesters','foodwaste'];
+                       'utilities','powerplants','pipelines','landfill','foodwaste',
+                       'digesters-ww','digesters-farm','digesters-sa'];
 
         var layerConfig = {
             beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
-            dairy:       { file: 'geojson/dairy.geojson',       color: '#4a90d9', shape: 'circle',  label: 'Dairy Cattle' },
+            dairy:       { file: 'geojson/dairy.geojson',       color: '#d2817f', shape: 'circle',  label: 'Dairy Cattle' },
             swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle',  label: 'Swine' },
             turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle',  label: 'Turkeys' },
             chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
@@ -506,7 +507,9 @@
             powerplants: { file: 'geojson/powerplants.geojson', color: '#d94a4a', shape: 'square',  label: 'Power Plants' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
             landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
-            digesters:   { file: 'geojson/digesters.geojson',   color: '#2ecc71', shape: 'digester',  label: 'Anaerobic Digesters' },
+            'digesters-ww':   { file: 'geojson/digesters.geojson', color: '#3498db', shape: 'digester', label: 'Wastewater Treatment Digesters' },
+            'digesters-farm': { file: 'geojson/digesters.geojson', color: '#c87533', shape: 'digester', label: 'On-Farm Digesters' },
+            'digesters-sa':   { file: 'geojson/digesters.geojson', color: '#2ecc71', shape: 'digester', label: 'Stand-Alone Digesters' },
             foodwaste:   { file: 'geojson/foodwaste.geojson',   color: '#ffd43b', shape: 'peel',      label: 'Food Waste' }
         };
 
@@ -530,14 +533,15 @@
             }
             var sectionKeys = {
                 'sec-feedlot':   ['beef','dairy','swine','turkeys','chickens'],
-                'sec-human':     ['biodiesel','ethanol','wastewater','digesters','landfill','foodwaste'],
+                'sec-human':     ['biodiesel','ethanol','wastewater','landfill','foodwaste'],
+                'sec-ad':        ['digesters-ww','digesters-farm','digesters-sa'],
                 'sec-utilities': ['utilities','powerplants','pipelines']
             };
             div.innerHTML =
                 '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
                 grp('Manure', true, 'sec-feedlot', 'legend-feedlot') +
                 li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
-                li('toggle-dairy',       circ('#4a90d9'), 'Dairy Cattle', 'legend-dairy') +
+                li('toggle-dairy',       circ('#d2817f'), 'Dairy Cattle', 'legend-dairy') +
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
@@ -545,9 +549,12 @@
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
                 li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
-                li('toggle-digesters',   digesterSvg('#2ecc71', 16, 1), 'Anaerobic Digesters', 'legend-digesters') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
                 li('toggle-foodwaste',  peel('#ffd43b'), 'Food Waste', 'legend-foodwaste') +
+                grp('Anaerobic Digesters', false, 'sec-ad', 'legend-ad-group') +
+                li('toggle-digesters-ww',   digesterSvg('#3498db', 16, 1), 'Wastewater Treatment Digesters', 'legend-ad-ww') +
+                li('toggle-digesters-farm', digesterSvg('#c87533', 16, 1), 'On-Farm Digesters', 'legend-ad-farm') +
+                li('toggle-digesters-sa',   digesterSvg('#2ecc71', 16, 1), 'Stand-Alone Digesters', 'legend-ad-sa') +
                 grp('Utilities', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-utilities',   rect('#e67e22'), 'Electric / Gas Utilities', 'legend-utilities') +
                 li('toggle-powerplants', rect('#d94a4a'), 'Power Plants', 'legend-powerplants') +
