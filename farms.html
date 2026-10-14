@@ -110,41 +110,6 @@
             border: 1px solid #e9b8b5;
         }
 
-        .summary-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .chip {
-            font-size: 12px;
-            padding: 3px 10px;
-            border-radius: 12px;
-            background: #e8edf8;
-            color: #2c3e50;
-            border: 1px solid #c5d0ea;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-
-        .chip:hover {
-            background: #d0daef;
-            border-color: #a0b0d8;
-        }
-
-        .chip.active {
-            background: #4169e1;
-            color: white;
-            border-color: #2a52cc;
-        }
-
-        .chip strong {
-            color: #4169e1;
-        }
-
-        .chip.active strong {
-            color: white;
-        }
 
         html.dark-mode .farms-toolbar select,
         html.dark-mode .farms-toolbar input[type="text"] {
@@ -170,11 +135,6 @@
             color: #aaa;
         }
 
-        html.dark-mode .chip {
-            background: #2c2c3e;
-            border-color: #444;
-            color: #ccc;
-        }
     </style>
 </head>
 <body>
@@ -206,42 +166,21 @@
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; min-width: 0;">
             <h2 class="section-heading" data-i18n="farms-title">Farms &amp; Facilities</h2>
             <div class="farms-container">
-                <div class="summary-chips" id="summary-chips">
-                    <span class="chip" id="chip-beef"        onclick="selectCategory('beef')"><span data-i18n="farms-chip-beef">Beef Cattle</span> <strong>2,085</strong></span>
-                    <span class="chip" id="chip-dairy"       onclick="selectCategory('dairy')"><span data-i18n="farms-chip-dairy">Dairy Cattle</span> <strong>305</strong></span>
-                    <span class="chip" id="chip-swine"       onclick="selectCategory('swine')"><span data-i18n="farms-chip-swine">Swine</span> <strong>447</strong></span>
-                    <span class="chip" id="chip-turkeys"     onclick="selectCategory('turkeys')"><span data-i18n="farms-chip-turkeys">Turkeys</span> <strong>119</strong></span>
-                    <span class="chip" id="chip-chickens"    onclick="selectCategory('chickens')"><span data-i18n="farms-chip-chickens">Chickens</span> <strong>164</strong></span>
-                    <span class="chip" id="chip-biodiesel"   onclick="selectCategory('biodiesel')"><span data-i18n="farms-chip-biodiesel">Biodiesel Plants</span> <strong>15</strong></span>
-                    <span class="chip" id="chip-ethanol"     onclick="selectCategory('ethanol')"><span data-i18n="farms-chip-ethanol">Ethanol Plants</span> <strong>44</strong></span>
-                    <span class="chip" id="chip-wastewater"  onclick="selectCategory('wastewater')"><span data-i18n="farms-chip-wastewater">Wastewater Treatment</span> <strong>1,110</strong></span>
-                    <span class="chip" id="chip-utilities"   onclick="selectCategory('utilities')"><span data-i18n="farms-chip-utilities">Utilities</span> <strong>186</strong></span>
-                    <span class="chip" id="chip-powerplants" onclick="selectCategory('powerplants')"><span data-i18n="farms-chip-powerplants">Power Plants</span> <strong>217</strong></span>
-                    <span class="chip" id="chip-landfill"    onclick="selectCategory('landfill')"><span data-i18n="farms-chip-landfill">Landfill Sites</span> <strong>84</strong></span>
-                    <span class="chip" id="chip-digesters"   onclick="selectCategory('digesters')"><span data-i18n="farms-chip-digesters">Anaerobic Digesters</span> <strong>83</strong></span>
-                    <span class="chip" id="chip-foodwaste"   onclick="selectCategory('foodwaste')"><span data-i18n="farms-chip-foodwaste">Food Waste</span> <strong>275</strong></span>
-                </div>
                 <div class="farms-toolbar">
                     <select id="category-select" onchange="onCategoryChange()">
-                        <optgroup label="Manure">
-                            <option value="beef">Beef Cattle (2,085)</option>
-                            <option value="dairy">Dairy Cattle (305)</option>
-                            <option value="swine">Swine (447)</option>
-                            <option value="turkeys">Turkeys (119)</option>
-                            <option value="chickens">Chickens (164)</option>
-                        </optgroup>
-                        <optgroup label="Human Activity">
-                            <option value="biodiesel">Biodiesel Plants (15)</option>
-                            <option value="ethanol">Ethanol Plants (44)</option>
-                            <option value="wastewater">Wastewater Treatment (1,110)</option>
-                            <option value="utilities">Utilities (186)</option>
-                            <option value="powerplants">Power Plants (217)</option>
-                        </optgroup>
-                        <optgroup label="Display Layers">
-                            <option value="landfill">Landfill Sites (84)</option>
-                            <option value="digesters">Anaerobic Digesters (83)</option>
-                            <option value="foodwaste">Food Waste (275)</option>
-                        </optgroup>
+                        <option value="beef">Beef Cattle (2,085)</option>
+                        <option value="dairy">Dairy Cattle (305)</option>
+                        <option value="swine">Swine (447)</option>
+                        <option value="turkeys">Turkeys (119)</option>
+                        <option value="chickens">Chickens (164)</option>
+                        <option value="biodiesel">Biodiesel Plants (15)</option>
+                        <option value="ethanol">Ethanol Plants (44)</option>
+                        <option value="wastewater">Wastewater Treatment (1,110)</option>
+                        <option value="utilities">Utilities (186)</option>
+                        <option value="powerplants">Power Plants (217)</option>
+                        <option value="landfill">Landfill Sites (84)</option>
+                        <option value="digesters">Anaerobic Digesters (83)</option>
+                        <option value="foodwaste">Food Waste (275)</option>
                     </select>
                     <input type="text" id="search-input" placeholder="Search..." data-i18n-placeholder="farms-search" oninput="onSearch()" />
                     <span class="farms-count" id="record-count"></span>
@@ -259,19 +198,19 @@
 
     <script>
         var categories = {
-            beef:        { file: 'geojson/beef.geojson',        cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleBeef',num:true}] },
-            dairy:       { file: 'geojson/dairy.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleDair',num:true}] },
-            swine:       { file: 'geojson/swine.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'Swine',num:true}] },
-            turkeys:     { file: 'geojson/turkeys.geojson',     cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Turkeys',num:true}] },
-            chickens:    { file: 'geojson/chickens.geojson',    cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Chickens',num:true}] },
-            biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (MGb/yr)',p:'CapMGb',num:true}] },
-            ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (MGe/yr)',p:'CapMGe',num:true}] },
-            wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'Class',p:'Class'}] },
-            utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true}] },
-            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true}] },
-            landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons (FY2013)',p:'TonsFY2013',num:true},{h:'LMOP',p:'LMOP'}] },
-            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Evidence',p:'Source'},{h:'Food Waste Accepted?',p:'FoodWaste'},{h:'Feedstock',p:'Feedstock',minW:260}] },
-            foodwaste:   { file: 'geojson/foodwaste.geojson',   cols: [{h:'Name',p:'Name'},{h:'Category',p:'Category'},{h:'Type',p:'Type'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Excess Food Low (tons/yr)',p:'ExcessLow',num:true},{h:'Excess Food High (tons/yr)',p:'ExcessHigh',num:true}] }
+            beef:        { file: 'geojson/beef.geojson',        cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleBeef',num:true},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            dairy:       { file: 'geojson/dairy.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'CattleDair',num:true},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            swine:       { file: 'geojson/swine.geojson',       cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Head Count',p:'Swine',num:true},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            turkeys:     { file: 'geojson/turkeys.geojson',     cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Turkeys',num:true},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            chickens:    { file: 'geojson/chickens.geojson',    cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Count',p:'Chickens',num:true},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (MGb/yr)',p:'CapMGb',num:true},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (MGe/yr)',p:'CapMGe',num:true},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Tons',p:'Tons',num:true},{h:'Tons Period',p:'TonsPeriod'},{h:'LMOP',p:'LMOP'},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Feedstock',p:'Feedstock',minW:260},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] },
+            foodwaste:   { file: 'geojson/foodwaste.geojson',   cols: [{h:'Name',p:'Name'},{h:'Category',p:'Category'},{h:'Type',p:'Type'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Estimated Food Waste (tons/yr)',p:'ExcessAvg',num:true},{h:'Source',p:'Source'},{h:'Source Date',p:'SourceDate'}] }
         };
 
         var cache = {};
@@ -282,9 +221,6 @@
 
         function selectCategory(key) {
             document.getElementById('category-select').value = key;
-            document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
-            var chip = document.getElementById('chip-' + key);
-            if (chip) chip.classList.add('active');
             onCategoryChange();
         }
 
