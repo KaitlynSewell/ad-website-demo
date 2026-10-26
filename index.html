@@ -764,8 +764,8 @@
         }
         allKeys.forEach(function (key) {
             var cfg = layerConfig[key];
-            if (!cfg) return;
-            var url = cfg.line ? cfg.file : 'coords/' + key + '.json';
+            if (!cfg || cfg.line) return;   // no count for line layers (pipelines)
+            var url = 'coords/' + key + '.json';
             fetch(url)
                 .then(function (r) { return r.json(); })
                 .then(function (d) { setLegendCount(key, Array.isArray(d) ? d.length : (d.features || []).length); })
