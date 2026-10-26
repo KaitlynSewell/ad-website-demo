@@ -463,6 +463,7 @@
                         var m = L.marker([p[1], p[0]], { icon: makeMarkerIcon(cfg.shape, cfg.color) });
                         // p[4]: head count (livestock layers) or a detail line (e.g. digester facility type)
                         // p[5]: 1 = livestock farm that has an on-farm digester
+                        // p[7]: estimated manure, tons/year (beef, dairy and swine layers)
                         var name = p[2] || '', city = p[3] || '', extra = p[4];
                         // Farm digesters carry 'On-Farm Digester' as their detail line; show it above the location
                         var onFarm = p[5] || extra === 'On-Farm Digester';
@@ -473,6 +474,7 @@
                                         (city ? '<br>' + city + ', IA' : '') +
                                         (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
                                          extra ? '<br>' + extra : '') +
+                                        (typeof p[7] === 'number' ? '<br>Manure: ' + p[7].toLocaleString('en-US') + ' tons/year' : '') +
                                         // p[6]: feedstocks (digester layers)
                                         (p[6] ? '<br><strong>Feedstocks:</strong> ' + p[6] : ''));
                         }
