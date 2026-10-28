@@ -394,13 +394,11 @@
                    '<path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
         }
 
-        // Wind power: turbine with three blades on a tower
+        // Wind power: three turbine blades, scaled to fill the icon
         function windSvg(color, size, strokeWidth) {
-            var blade = '<path d="M8,6 C10.6,5 10.8,1.2 8.4,0 C7,1.4 6.8,4.6 8,6Z" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"';
-            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
-                   '<path d="M7.65,7 L7.2,15.7 L8.8,15.7 L8.35,7 Z" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/>' +
-                   blade + '/>' + blade + ' transform="rotate(120,8,6)"/>' + blade + ' transform="rotate(240,8,6)"/>' +
-                   '<circle cx="8" cy="6" r="1.0" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
+            var blade = '<path d="M0,0 C2.6,-1 2.8,-4.8 0.4,-6 C-1,-4.6 -1.2,-1.4 0,0Z" fill="' + color + '" stroke="#333" stroke-width="' + (strokeWidth / 1.443) + '" stroke-linejoin="round"';
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16"><g transform="translate(8.29,9.56) scale(1.443)">' +
+                   blade + '/>' + blade + ' transform="rotate(120)"/>' + blade + ' transform="rotate(240)"/></g></svg>';
         }
 
         // Solar power: sun with eight rays

@@ -1612,9 +1612,9 @@
                 // Digester tank: cylinder with a domed top
                 return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/><path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="0.2"/></svg>';
             } else if (shape === 'wind') {
-                // Wind power plant: turbine with three blades on a tower
-                var blade = '<path d="M8,6 C10.6,5 10.8,1.2 8.4,0 C7,1.4 6.8,4.6 8,6Z" fill="'+color+'" stroke="#333" stroke-width="0.4"';
-                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M7.65,7 L7.2,15.7 L8.8,15.7 L8.35,7 Z" fill="'+color+'" stroke="#333" stroke-width="0.4"/>'+blade+'/>'+blade+' transform="rotate(120,8,6)"/>'+blade+' transform="rotate(240,8,6)"/><circle cx="8" cy="6" r="1.0" fill="'+color+'" stroke="#333" stroke-width="0.4"/></svg>';
+                // Wind power plant: three turbine blades, scaled to fill the icon
+                var blade = '<path d="M0,0 C2.6,-1 2.8,-4.8 0.4,-6 C-1,-4.6 -1.2,-1.4 0,0Z" fill="'+color+'" stroke="#333" stroke-width="0.28" stroke-linejoin="round"';
+                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><g transform="translate(8.29,9.56) scale(1.443)">'+blade+'/>'+blade+' transform="rotate(120)"/>'+blade+' transform="rotate(240)"/></g></svg>';
             } else if (shape === 'sun') {
                 // Solar power plant: sun with eight rays
                 var rays = '';
