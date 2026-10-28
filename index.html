@@ -103,6 +103,17 @@
         }
         html.dark-mode .legend-count { color: #999; }
 
+        .legend-subfilter {
+            padding-left: 34px;
+            margin-top: 3px;
+        }
+        .legend-subfilter select {
+            font-size: 0.92em;
+            padding: 1px 2px;
+            max-width: 100%;
+        }
+        html.dark-mode .legend-subfilter select { background: #333; color: #eee; border-color: #555; }
+
         .legend-item svg {
             flex-shrink: 0;
         }
@@ -510,12 +521,41 @@
                                         // p[6]: feedstocks (digester layers)
                                         (p[6] ? '<br><strong>Feedstocks:</strong> ' + p[6] : ''));
                         }
+                        m.plantType = p[8];   // p[8]: plant type (power plants layer)
                         return m;
                     });
-                    cluster.addLayers(markers);
+                    cluster.allMarkers = markers;
+                    cluster.addLayers(key === 'powerplants' ? filterPlantType(markers) : markers);
+                    if (key === 'powerplants') applyPlantTypeFilter();
                 })
                 .catch(function (err) { console.error('Failed to load coords for', key, err); });
             return cluster;
+        }
+
+        var PLANT_TYPES = ['Coal', 'Natural Gas', 'Oil / Petroleum', 'Hydroelectric', 'Biogas', 'Other'];
+
+        function selectedPlantType() {
+            var sel = document.getElementById('powerplant-type');
+            return sel ? sel.value : '';
+        }
+
+        function filterPlantType(markers) {
+            var t = selectedPlantType();
+            return t ? markers.filter(function (m) { return m.plantType === t; }) : markers;
+        }
+
+        // Show only the chosen plant type and update the legend count to match
+        var powerplantTotal = null;
+        function applyPlantTypeFilter() {
+            var cluster = layerGroups.powerplants;
+            if (cluster && cluster.allMarkers) {
+                var shown = filterPlantType(cluster.allMarkers);
+                cluster.clearLayers();
+                cluster.addLayers(shown);
+                setLegendCount('powerplants', shown.length);
+            } else if (!selectedPlantType() && powerplantTotal !== null) {
+                setLegendCount('powerplants', powerplantTotal);
+            }
         }
 
         // Pipeline layer stays as pre-built vector tiles (too large for client-side)
@@ -601,6 +641,10 @@
                 li('toggle-foodwaste',  apple('#d62839'), 'Food Waste', 'legend-foodwaste') +
                 grp('Power and Gas', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-powerplants', rect('#9a0f0f'), 'Power Plants', 'legend-powerplants') +
+                '<div class="legend-subfilter"><select id="powerplant-type" aria-label="Power plant type">' +
+                    '<option value="">All plant types</option>' +
+                    PLANT_TYPES.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+                '</select></div>' +
                 li('toggle-windplants',  windSvg('#00bcd4', 16, 0.8), 'Wind Power', 'legend-windplants') +
                 li('toggle-solarplants', sunSvg('#f5d000', 16, 0.8), 'Solar Power', 'legend-solarplants') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
@@ -687,6 +731,22 @@
                     updateSectionCheckboxes();
                     saveLegendState();
                 });
+            });
+
+            // Power Plants type filter: choosing a type also turns the layer on
+            var typeSel = div.querySelector('#powerplant-type');
+            try { typeSel.value = localStorage.getItem('powerplantType') || ''; } catch (e) {}
+            typeSel.addEventListener('change', function () {
+                try { localStorage.setItem('powerplantType', this.value); } catch (e) {}
+                var cb = div.querySelector('#toggle-powerplants');
+                if (this.value && !cb.checked) {
+                    cb.checked = true;
+                    toggleLayer('powerplants', true);
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                    saveLegendState();
+                }
+                applyPlantTypeFilter();
             });
 
             function saveLegendState() {
@@ -804,7 +864,15 @@
             var url = 'coords/' + key + '.json';
             fetch(url)
                 .then(function (r) { return r.json(); })
-                .then(function (d) { setLegendCount(key, Array.isArray(d) ? d.length : (d.features || []).length); })
+                .then(function (d) {
+                    var n = Array.isArray(d) ? d.length : (d.features || []).length;
+                    if (key === 'powerplants') {
+                        powerplantTotal = n;
+                        var t = selectedPlantType();
+                        if (t) n = d.filter(function (p) { return p[8] === t; }).length;
+                    }
+                    setLegendCount(key, n);
+                })
                 .catch(function () {});
         });
 
