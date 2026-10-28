@@ -176,8 +176,9 @@
                         <option value="biodiesel">Biodiesel Plants (8)</option>
                         <option value="ethanol">Ethanol Plants (42)</option>
                         <option value="wastewater">Wastewater Treatment (1,029)</option>
-                        <option value="utilities">Utilities (186)</option>
-                        <option value="powerplants">Power Plants (217)</option>
+                        <option value="powerplants">Power Plants (104)</option>
+                        <option value="windplants">Wind Power (123)</option>
+                        <option value="solarplants">Solar Power (37)</option>
                         <option value="landfill">Landfill Sites (83)</option>
                         <option value="digesters">Anaerobic Digesters (87)</option>
                         <option value="foodwaste">Food Waste (275)</option>
@@ -206,8 +207,9 @@
             biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (million gallons of biodiesel per year)',p:'CapMGb',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (million gallons of ethanol per year)',p:'CapMGe',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
-            utilities:   { file: 'geojson/utilities.geojson',   cols: [{h:'Company',p:'COMPANY_NA'},{h:'City',p:'CITY'},{h:'Type',p:'type'},{h:'Total Consumption',p:'TOTAL_CONS',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
-            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'PLANT_NAME'},{h:'Utility',p:'UTILITY_NA'},{h:'Primary Fuel',p:'primary_fu'},{h:'Capacity (MW)',p:'total_cap',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
+            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Technology',p:'Technology',minW:220},{h:'Primary Fuel',p:'PrimaryFuel'},{h:'Other Fuels',p:'OtherFuels'},{h:'Capacity (MW)',p:'CapacityMW',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
+            windplants:  { file: 'geojson/windplants.geojson',  cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Capacity (MW)',p:'CapacityMW',num:true},{h:'Turbines',p:'Turbines',num:true},{h:'Turbine Manufacturer',p:'Manufacturer'},{h:'Year Operating',p:'OperatingYear'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
+            solarplants: { file: 'geojson/solarplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Capacity (MW)',p:'CapacityMW',num:true},{h:'Mounting',p:'Mounting'},{h:'Year Operating',p:'OperatingYear'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Waste Received (tons/year)',p:'TonsYr',num:true},{h:'LMOP Site',p:'LMOP'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             digesters:   { file: 'geojson/digesters.geojson',   cols: [{h:'Facility Name',p:'facName'},{h:'City',p:'CityName'},{h:'County',p:'countyName'},{h:'Facility Type',p:'FacilityType'},{h:'Feedstock',p:'Feedstock',minW:260},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             foodwaste:   { file: 'geojson/foodwaste.geojson',   cols: [{h:'Name',p:'Name'},{h:'Category',p:'Category'},{h:'Type',p:'Type'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Estimated Food Waste (tons/yr)',p:'ExcessAvg',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] }

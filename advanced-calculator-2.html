@@ -1445,9 +1445,9 @@
                 production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor * pf;
             }
 
-            // Loaded non-feedstock layers in AOI (powerplants, utilities, ethanol)
+            // Loaded non-feedstock layers in AOI (powerplants, ethanol)
             var filtered = getFeaturesInAOI();
-            ['powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+            ['powerplants', 'ethanol'].forEach(function(key) {
                 var count = filtered[key] ? filtered[key].length : 0;
                 if (!count) return;
                 var cat = PIE1_CAT[key];
@@ -1509,7 +1509,8 @@
             biodiesel: 'geojson/biodiesel.geojson',
             ethanol: 'geojson/ethanol.geojson', wastewater: 'geojson/wastewater.geojson',
             digesters: 'geojson/digesters.geojson',
-            utilities: 'geojson/utilities.geojson', powerplants: 'geojson/powerplants.geojson',
+            powerplants: 'geojson/powerplants.geojson',
+            windplants: 'geojson/windplants.geojson', solarplants: 'geojson/solarplants.geojson',
             pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson',
             foodwaste: 'geojson/foodwaste.geojson'
         };
@@ -1521,7 +1522,6 @@
             biodiesel: 'Biogas', ethanol: 'Electric',
             beef: 'Biogas', dairy: 'Biogas', swine: 'Biogas', horses: 'Biogas',
             turkeys: 'Biogas', chickens: 'Biogas', sheep: 'Biogas', foodwaste: 'Biogas',
-            utilities: 'Wind',
             powerplants: 'Electric'
         };
         var PIE1_COLORS = {
@@ -1557,7 +1557,7 @@
             beef: 520, dairy: 840, swine: 310, horses: 90,
             turkeys: 160, chickens: 210, sheep: 70,
             biodiesel: 2800, ethanol: 3200, wastewater: 1300,
-            digesters: 2100, lmop: 1600, utilities: 900,
+            digesters: 2100, lmop: 1600,
             powerplants: 4800, pipelines: 400, landfill: 1050,
             wind: 5956, solar: 1192,
             'elec-connection': 0, 'gas-connection': 0
@@ -1567,7 +1567,7 @@
             beef: 180, dairy: 290, swine: 110, horses: 40,
             turkeys: 60, chickens: 80, sheep: 30,
             biodiesel: 650, ethanol: 740, wastewater: 380,
-            digesters: 520, lmop: 310, utilities: 270,
+            digesters: 520, lmop: 310,
             powerplants: 1100, pipelines: 150, landfill: 240,
             wind: 4200, solar: 950
         };
@@ -1582,7 +1582,7 @@
             horses:'#a0a0a0', turkeys:'#f4a460', chickens:'#ffd700',
             sheep:'#d2b48c', biodiesel:'#1abc9c', ethanol:'#e6c229',
             wastewater:'#3498db', digesters:'#2ecc71', lmop:'#8e44ad',
-            utilities:'#e67e22', powerplants:'#9a0f0f',
+            powerplants:'#9a0f0f', windplants:'#00bcd4', solarplants:'#f39c12',
             pipelines:'#4a5568', landfill:'#8b4513', foodwaste:'#ffd43b',
             wind:'#00BCD4', solar:'#f39c12',
             'elec-connection':'#f1c40f', 'gas-connection':'#e67e22'
@@ -1592,7 +1592,7 @@
             turkeys:'circle', chickens:'circle', sheep:'circle',
             digesters:'digester', lmop:'circle',
             biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
-            utilities:'square', powerplants:'square', landfill:'square', foodwaste:'circle'
+            powerplants:'square', windplants:'square', solarplants:'square', landfill:'square', foodwaste:'circle'
         };
         var LAYER_LABELS = {
             wind:'Wind Turbine', solar:'Solar Panel Array',
@@ -1601,7 +1601,7 @@
             beef:'Beef Cattle', dairy:'Dairy Cattle', swine:'Swine', horses:'Horses',
             turkeys:'Turkeys', chickens:'Chickens', sheep:'Sheep',
             biodiesel:'Biodiesel Plant', ethanol:'Ethanol Plant',
-            wastewater:'Wastewater Treatment', utilities:'Utility',
+            wastewater:'Wastewater Treatment', windplants:'Wind Power Plant', solarplants:'Solar Power Plant',
             powerplants:'Power Plant', pipelines:'Pipeline', landfill:'Landfill', foodwaste:'Food Waste Location'
         };
 
@@ -2033,7 +2033,7 @@
 
             // Local generation from existing energy facilities in AOI (bgCoordCache, always pre-loaded)
             var production = {};
-            ['digesters','wastewater','landfill','powerplants','utilities','ethanol','biodiesel'].forEach(function(key) {
+            ['digesters','wastewater','landfill','powerplants','ethanol','biodiesel'].forEach(function(key) {
                 var count = getAoiCount(key);
                 if (!count) return;
                 var cat = PIE1_CAT[key];
@@ -2104,7 +2104,7 @@
             }
 
             var filtered = getFeaturesInAOI();
-            ['powerplants', 'utilities', 'ethanol'].forEach(function(key) {
+            ['powerplants', 'ethanol'].forEach(function(key) {
                 var count = filtered[key] ? filtered[key].length : 0;
                 if (!count) return;
                 var cat = PIE1_CAT[key];
