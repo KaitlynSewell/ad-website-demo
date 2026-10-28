@@ -401,14 +401,18 @@
                    blade + '/>' + blade + ' transform="rotate(120)"/>' + blade + ' transform="rotate(240)"/></g></svg>';
         }
 
-        // Solar power: sun with eight rays
+        // Solar power: sun with eight rays. Drawn twice — a thick dark pass, then the fill on top —
+        // so the border only shows around the outside of the whole shape.
         function sunSvg(color, size, strokeWidth) {
-            var rays = '';
-            for (var a = 0; a < 360; a += 45) {
-                rays += '<path d="M8,0.4 L9.3,3.6 L6.7,3.6 Z" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '" stroke-linejoin="round" transform="rotate(' + a + ',8,8)"/>';
+            function shape(attrs) {
+                var out = '';
+                for (var a = 0; a < 360; a += 45) {
+                    out += '<path d="M8,0.4 L9.3,3.6 L6.7,3.6 Z"' + attrs + ' stroke-linejoin="round" transform="rotate(' + a + ',8,8)"/>';
+                }
+                return out + '<circle cx="8" cy="8" r="3.7"' + attrs + '/>';
             }
-            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' + rays +
-                   '<circle cx="8" cy="8" r="3.7" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                   shape(' fill="#333" stroke="#333" stroke-width="' + (strokeWidth * 2) + '"') + shape(' fill="' + color + '"') + '</svg>';
         }
 
         // Food waste: apple core (skin caps in the layer color, stem, leaf and seeds)
