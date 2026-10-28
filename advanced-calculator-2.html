@@ -1582,7 +1582,7 @@
             horses:'#a0a0a0', turkeys:'#f4a460', chickens:'#ffd700',
             sheep:'#d2b48c', biodiesel:'#1abc9c', ethanol:'#e6c229',
             wastewater:'#3498db', digesters:'#2ecc71', lmop:'#8e44ad',
-            powerplants:'#9a0f0f', windplants:'#00bcd4', solarplants:'#f39c12',
+            powerplants:'#9a0f0f', windplants:'#00bcd4', solarplants:'#f5d000',
             pipelines:'#4a5568', landfill:'#8b4513', foodwaste:'#ffd43b',
             wind:'#00BCD4', solar:'#f39c12',
             'elec-connection':'#f1c40f', 'gas-connection':'#e67e22'
@@ -1592,7 +1592,7 @@
             turkeys:'circle', chickens:'circle', sheep:'circle',
             digesters:'digester', lmop:'circle',
             biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
-            powerplants:'square', windplants:'square', solarplants:'square', landfill:'square', foodwaste:'circle'
+            powerplants:'square', windplants:'wind', solarplants:'sun', landfill:'square', foodwaste:'circle'
         };
         var LAYER_LABELS = {
             wind:'Wind Turbine', solar:'Solar Panel Array',
@@ -1611,6 +1611,15 @@
             } else if (shape === 'digester') {
                 // Digester tank: cylinder with a domed top
                 return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/><path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="0.2"/></svg>';
+            } else if (shape === 'wind') {
+                // Wind power plant: turbine with three blades on a tower
+                var blade = '<path d="M8,6 C10.6,5 10.8,1.2 8.4,0 C7,1.4 6.8,4.6 8,6Z" fill="'+color+'" stroke="#333" stroke-width="0.4"';
+                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M7.65,7 L7.2,15.7 L8.8,15.7 L8.35,7 Z" fill="'+color+'" stroke="#333" stroke-width="0.4"/>'+blade+'/>'+blade+' transform="rotate(120,8,6)"/>'+blade+' transform="rotate(240,8,6)"/><circle cx="8" cy="6" r="1.0" fill="'+color+'" stroke="#333" stroke-width="0.4"/></svg>';
+            } else if (shape === 'sun') {
+                // Solar power plant: sun with eight rays
+                var rays = '';
+                for (var a = 0; a < 360; a += 45) rays += '<path d="M8,0.4 L9.3,3.6 L6.7,3.6 Z" fill="'+color+'" stroke="#333" stroke-width="0.4" stroke-linejoin="round" transform="rotate('+a+',8,8)"/>';
+                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16">'+rays+'<circle cx="8" cy="8" r="3.7" fill="'+color+'" stroke="#333" stroke-width="0.4"/></svg>';
             } else if (shape === 'droplet') {
                 var w = Math.round(size * 0.75);
                 return '<svg width="'+w+'" height="'+size+'" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
