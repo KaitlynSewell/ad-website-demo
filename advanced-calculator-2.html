@@ -1619,8 +1619,8 @@
                 // Solar power plant: sun with eight rays; dark pass then fill so only the outer edge shows a border
                 var sunShape = function(attrs) {
                     var out = '';
-                    for (var a = 0; a < 360; a += 45) out += '<path d="M8,0.4 L9.3,3.6 L6.7,3.6 Z"'+attrs+' stroke-linejoin="round" transform="rotate('+a+',8,8)"/>';
-                    return out + '<circle cx="8" cy="8" r="3.7"'+attrs+'/>';
+                    for (var a = 0; a < 360; a += 45) out += '<path d="M8,0.3 L8.9,4.4 L7.1,4.4 Z"'+attrs+' stroke-linejoin="round" transform="rotate('+a+',8,8)"/>';
+                    return out + '<circle cx="8" cy="8" r="4.3"'+attrs+'/>';
                 };
                 return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16">'+sunShape(' fill="#333" stroke="#333" stroke-width="0.8"')+sunShape(' fill="'+color+'"')+'</svg>';
             } else if (shape === 'droplet') {

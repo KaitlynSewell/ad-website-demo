@@ -407,9 +407,9 @@
             function shape(attrs) {
                 var out = '';
                 for (var a = 0; a < 360; a += 45) {
-                    out += '<path d="M8,0.4 L9.3,3.6 L6.7,3.6 Z"' + attrs + ' stroke-linejoin="round" transform="rotate(' + a + ',8,8)"/>';
+                    out += '<path d="M8,0.3 L8.9,4.4 L7.1,4.4 Z"' + attrs + ' stroke-linejoin="round" transform="rotate(' + a + ',8,8)"/>';
                 }
-                return out + '<circle cx="8" cy="8" r="3.7"' + attrs + '/>';
+                return out + '<circle cx="8" cy="8" r="4.3"' + attrs + '/>';
             }
             return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
                    shape(' fill="#333" stroke="#333" stroke-width="' + (strokeWidth * 2) + '"') + shape(' fill="' + color + '"') + '</svg>';
