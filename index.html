@@ -413,9 +413,16 @@
                    '<circle cx="8" cy="8" r="3.7" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
         }
 
-        // Food waste: banana peel lying on the ground
-        function peelSvg(c, size) {
-            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 32 32"><ellipse cx="16" cy="27.3" rx="14" ry="2" fill="rgba(0,0,0,0.15)"/><path d="M17,18 C19.5,14.5 23.5,13 27.5,13.4 C28.8,13.6 28.6,15.2 27.4,15.4 C24,16 21.2,17.6 19.2,20 Z" fill="#e8b923" stroke="#333" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><path d="M13.5,20 C9.5,20.6 5.5,22.4 2.4,25 C1.6,25.8 2.4,26.8 3.6,26.5 C7,25.7 10.6,25.5 14.2,25.4 Z" fill="' + c + '" stroke="#333" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><path d="M18.5,20 C22.5,20.6 26.5,22.4 29.6,25 C30.4,25.8 29.6,26.8 28.4,26.5 C25,25.7 21.4,25.5 17.8,25.4 Z" fill="' + c + '" stroke="#333" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><path d="M13,25.4 C12.6,21 13.2,16.5 14.6,13.2 C15.3,11.8 17.3,11.8 17.9,13.2 C19.2,16.5 19.6,21 19.2,25.4 Z" fill="' + c + '" stroke="#333" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><path d="M14.8,13 C15,11 15.6,9.3 16.8,8.1 L18.3,9.1 C17.4,10.3 17.4,11.8 17.6,13 Z" fill="#6b4f1d" stroke="#4a3515" stroke-width="0.8" stroke-linejoin="round"/><path d="M13.4,23.5 C12.2,25.3 10.6,27 9,28.2 C8.2,28.9 8.9,29.8 10,29.6 C13,29.1 16.2,28.3 19,26.8 C18.6,25 16.4,23.8 13.4,23.5 Z" fill="#fff4cc" stroke="#333" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="3.2" cy="25.8" r="1.1" fill="#6b4f1d"/><circle cx="28.8" cy="25.8" r="1.1" fill="#6b4f1d"/><circle cx="27.8" cy="14.4" r="1" fill="#6b4f1d"/><circle cx="9.4" cy="28.9" r="1" fill="#6b4f1d"/></svg>';
+        // Food waste: apple core (skin caps in the layer color, stem, leaf and seeds)
+        function appleCoreSvg(c, size) {
+            var o = ' stroke="#333" stroke-width="1.3" stroke-linejoin="round"';
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 32 32">' +
+                   '<path d="M16,6.5 C16.2,4.5 16.8,2.8 18,1.6" fill="none" stroke="#6b4f1d" stroke-width="1.8" stroke-linecap="round"/>' +
+                   '<path d="M17.2,3.6 C19.5,1.4 22.8,1.6 24,2.6 C22.6,4.8 19.6,5.4 17.2,3.6Z" fill="#5aa832"' + o + '/>' +
+                   '<path d="M8.6,9.6 C10.6,10.8 11.6,11.6 11,13 C10.2,14.2 12,15.4 11.4,16.6 C10.8,17.8 12.2,19 11.2,20.4 C10.6,21.4 9.8,22.2 8.6,23.4 L23.4,23.4 C22.2,22.2 21.4,21.4 20.8,20.4 C19.8,19 21.2,17.8 20.6,16.6 C20,15.4 21.8,14.2 21,13 C20.4,11.6 21.4,10.8 23.4,9.6 Z" fill="#fff4cc"' + o + '/>' +
+                   '<path d="M6.6,9.4 C6.6,6 10.6,4.8 16,6.4 C21.4,4.8 25.4,6 25.4,9.4 C21.6,11 10.4,11 6.6,9.4Z" fill="' + c + '"' + o + '/>' +
+                   '<path d="M6.8,23.6 C10.6,22.2 21.4,22.2 25.2,23.6 C25.2,27.6 21,29.8 16,29.8 C11,29.8 6.8,27.6 6.8,23.6Z" fill="' + c + '"' + o + '/>' +
+                   '<ellipse cx="14.6" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/><ellipse cx="17.4" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/></svg>';
         }
 
         function makeIconSvg(shape, color, size) {
@@ -424,8 +431,8 @@
                        '<rect x="1" y="1" width="14" height="14" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
             } else if (shape === 'digester') {
                 return digesterSvg(color, size, 0.2);
-            } else if (shape === 'peel') {
-                return peelSvg(color, size);
+            } else if (shape === 'apple') {
+                return appleCoreSvg(color, size);
             } else if (shape === 'wind') {
                 return windSvg(color, size, 0.4);
             } else if (shape === 'sun') {
@@ -546,7 +553,7 @@
             'digesters-ww':   { file: 'geojson/digesters.geojson', color: '#3498db', shape: 'digester', label: 'Wastewater Treatment Digesters' },
             'digesters-farm': { file: 'geojson/digesters.geojson', color: '#c87533', shape: 'digester', label: 'On-Farm Digesters' },
             'digesters-sa':   { file: 'geojson/digesters.geojson', color: '#2ecc71', shape: 'digester', label: 'Stand-Alone Digesters' },
-            foodwaste:   { file: 'geojson/foodwaste.geojson',   color: '#ffd43b', shape: 'peel',      label: 'Food Waste' }
+            foodwaste:   { file: 'geojson/foodwaste.geojson',   color: '#ffd43b', shape: 'apple',      label: 'Food Waste' }
         };
 
         function buildLegend() {
@@ -561,7 +568,7 @@
             function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
             function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
             function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
-            function peel(c) { return peelSvg(c, 16); }
+            function apple(c) { return appleCoreSvg(c, 16); }
             function grp(t, f, secId, i18nKey) {
                 if (secId) {
                     return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></label></div>';
@@ -589,7 +596,7 @@
                 grp('Human Waste', false, 'sec-human', 'legend-human') +
                 li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
-                li('toggle-foodwaste',  peel('#ffd43b'), 'Food Waste', 'legend-foodwaste') +
+                li('toggle-foodwaste',  apple('#ffd43b'), 'Food Waste', 'legend-foodwaste') +
                 grp('Power and Gas', false, 'sec-utilities', 'legend-utilities-group') +
                 li('toggle-powerplants', rect('#9a0f0f'), 'Power Plants', 'legend-powerplants') +
                 li('toggle-windplants',  windSvg('#00bcd4', 16, 0.8), 'Wind Power', 'legend-windplants') +
