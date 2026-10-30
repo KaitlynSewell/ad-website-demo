@@ -177,7 +177,8 @@
                         <option value="ethanol">Ethanol Plants (42)</option>
                         <option value="wastewater">Wastewater Treatment (1,029)</option>
                         <option value="powerplants">Power Plants (101)</option>
-                        <option value="windplants">Wind Power (123)</option>
+                        <option value="standbyplants">Standby Power Plants (40)</option>
+                        <option value="windplants">Wind Power (122)</option>
                         <option value="solarplants">Solar Power (37)</option>
                         <option value="landfill">Landfill Sites (83)</option>
                         <option value="digesters">Anaerobic Digesters (87)</option>
@@ -207,7 +208,8 @@
             biodiesel:   { file: 'geojson/biodiesel.geojson',   cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Feedstock',p:'Feedstock'},{h:'Capacity (million gallons of biodiesel per year)',p:'CapMGb',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             ethanol:     { file: 'geojson/ethanol.geojson',     cols: [{h:'Plant Name',p:'Plant'},{h:'City',p:'City'},{h:'Type',p:'Type'},{h:'Capacity (million gallons of ethanol per year)',p:'CapMGe',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             wastewater:  { file: 'geojson/wastewater.geojson',  cols: [{h:'Facility Name',p:'Name'},{h:'City',p:'City'},{h:'Treatment Type',p:'TreatType'},{h:'On-Site Digester',p:'OnSiteAD'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
-            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Plant Type',p:'PlantType'},{h:'Technology',p:'Technology',minW:220},{h:'Primary Fuel',p:'PrimaryFuel'},{h:'Other Fuels',p:'OtherFuels'},{h:'MWh/year',p:'MWhYear',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
+            powerplants: { file: 'geojson/powerplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Status',p:'Status',minW:180},{h:'Plant Type',p:'PlantType'},{h:'Technology',p:'Technology',minW:220},{h:'Primary Fuel',p:'PrimaryFuel'},{h:'Other Fuels',p:'OtherFuels'},{h:'MWh/year',p:'MWhYear',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
+            standbyplants: { file: 'geojson/standbyplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'Status',p:'Status',minW:180},{h:'Plant Type',p:'PlantType'},{h:'Technology',p:'Technology',minW:220},{h:'Primary Fuel',p:'PrimaryFuel'},{h:'Other Fuels',p:'OtherFuels'},{h:'MWh/year',p:'MWhYear',num:true},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             windplants:  { file: 'geojson/windplants.geojson',  cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'MWh/year',p:'MWhYear',num:true},{h:'Turbines',p:'Turbines',num:true},{h:'Turbine Manufacturer',p:'Manufacturer'},{h:'Year Operating',p:'OperatingYear'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             solarplants: { file: 'geojson/solarplants.geojson', cols: [{h:'Plant Name',p:'Plant'},{h:'Utility / Owner',p:'Utility'},{h:'City',p:'City'},{h:'County',p:'County'},{h:'MWh/year',p:'MWhYear',num:true},{h:'Mounting',p:'Mounting'},{h:'Year Operating',p:'OperatingYear'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },
             landfill:    { file: 'geojson/landfill.geojson',    cols: [{h:'Site Name',p:'Name'},{h:'County',p:'County'},{h:'Type',p:'Type'},{h:'Waste Received (tons/year)',p:'TonsYr',num:true},{h:'LMOP Site',p:'LMOP'},{h:'Source',p:'Source'},{h:'Last Updated',p:'SourceDate'}] },

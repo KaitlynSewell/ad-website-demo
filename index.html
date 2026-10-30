@@ -575,7 +575,7 @@
 
         var allKeys = ['beef','dairy','swine','turkeys','chickens',
                        'biodiesel','ethanol','wastewater',
-                       'powerplants','windplants','solarplants','pipelines','landfill','foodwaste',
+                       'powerplants','standbyplants','windplants','solarplants','pipelines','landfill','foodwaste',
                        'digesters-ww','digesters-farm','digesters-sa'];
 
         var layerConfig = {
@@ -588,6 +588,7 @@
             ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
             wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
             powerplants: { file: 'geojson/powerplants.geojson', color: '#9a0f0f', shape: 'square',  label: 'Power Plants' },
+            standbyplants: { file: 'geojson/standbyplants.geojson', color: '#c98585', shape: 'square', label: 'Standby Power Plants' },
             windplants:  { file: 'geojson/windplants.geojson',  color: '#00bcd4', shape: 'wind',    label: 'Wind Power' },
             solarplants: { file: 'geojson/solarplants.geojson', color: '#f5d000', shape: 'sun',     label: 'Solar Power' },
             pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
@@ -621,7 +622,7 @@
                 'sec-feedlot':   ['beef','dairy','swine','turkeys','chickens'],
                 'sec-human':     ['wastewater','landfill','foodwaste'],
                 'sec-ad':        ['digesters-ww','digesters-farm','digesters-sa'],
-                'sec-utilities': ['powerplants','windplants','solarplants','biodiesel','ethanol','pipelines']
+                'sec-utilities': ['powerplants','standbyplants','windplants','solarplants','biodiesel','ethanol','pipelines']
             };
             div.innerHTML =
                 '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
@@ -645,6 +646,7 @@
                     '<option value="">All plant types</option>' +
                     PLANT_TYPES.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
                 '</select></div>' +
+                li('toggle-standbyplants', rect('#c98585'), 'Standby Power Plants', 'legend-standbyplants') +
                 li('toggle-windplants',  windSvg('#00bcd4', 16, 0.8), 'Wind Power', 'legend-windplants') +
                 li('toggle-solarplants', sunSvg('#f5d000', 16, 0.8), 'Solar Power', 'legend-solarplants') +
                 li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +

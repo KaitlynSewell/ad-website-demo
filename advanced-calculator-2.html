@@ -1509,7 +1509,7 @@
             biodiesel: 'geojson/biodiesel.geojson',
             ethanol: 'geojson/ethanol.geojson', wastewater: 'geojson/wastewater.geojson',
             digesters: 'geojson/digesters.geojson',
-            powerplants: 'geojson/powerplants.geojson',
+            powerplants: 'geojson/powerplants.geojson', standbyplants: 'geojson/standbyplants.geojson',
             windplants: 'geojson/windplants.geojson', solarplants: 'geojson/solarplants.geojson',
             pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson',
             foodwaste: 'geojson/foodwaste.geojson'
@@ -1582,7 +1582,7 @@
             horses:'#a0a0a0', turkeys:'#f4a460', chickens:'#ffd700',
             sheep:'#d2b48c', biodiesel:'#1abc9c', ethanol:'#e6c229',
             wastewater:'#3498db', digesters:'#2ecc71', lmop:'#8e44ad',
-            powerplants:'#9a0f0f', windplants:'#00bcd4', solarplants:'#f5d000',
+            powerplants:'#9a0f0f', standbyplants:'#c98585', windplants:'#00bcd4', solarplants:'#f5d000',
             pipelines:'#4a5568', landfill:'#8b4513', foodwaste:'#d62839',
             wind:'#00BCD4', solar:'#f39c12',
             'elec-connection':'#f1c40f', 'gas-connection':'#e67e22'
@@ -1592,7 +1592,7 @@
             turkeys:'circle', chickens:'circle', sheep:'circle',
             digesters:'digester', lmop:'circle',
             biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet',
-            powerplants:'square', windplants:'wind', solarplants:'sun', landfill:'square', foodwaste:'circle'
+            powerplants:'square', standbyplants:'square', windplants:'wind', solarplants:'sun', landfill:'square', foodwaste:'circle'
         };
         var LAYER_LABELS = {
             wind:'Wind Turbine', solar:'Solar Panel Array',
@@ -1601,7 +1601,7 @@
             beef:'Beef Cattle', dairy:'Dairy Cattle', swine:'Swine', horses:'Horses',
             turkeys:'Turkeys', chickens:'Chickens', sheep:'Sheep',
             biodiesel:'Biodiesel Plant', ethanol:'Ethanol Plant',
-            wastewater:'Wastewater Treatment', windplants:'Wind Power Plant', solarplants:'Solar Power Plant',
+            wastewater:'Wastewater Treatment', standbyplants:'Standby Power Plant', windplants:'Wind Power Plant', solarplants:'Solar Power Plant',
             powerplants:'Power Plant', pipelines:'Pipeline', landfill:'Landfill', foodwaste:'Food Waste Location'
         };
 
