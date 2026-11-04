@@ -91,7 +91,7 @@ html.dark-mode .section-heading {
    Tabs sit on the bottom edge of the header; the current page's tab joins the page below it. */
 .header-actions {
     position: absolute;
-    right: 12px;
+    right: 17px;                       /* same as the space above and below the gear */
     top: 0;
     bottom: 0;
     display: flex;
@@ -99,7 +99,7 @@ html.dark-mode .section-heading {
     gap: 0;
 }
 
-/* Tabs: white bold text on the header, with thick white vertical lines between and around them.
+/* Tabs: white bold text on the header, with thick light grey vertical lines between and around them.
    The current page's tab gets a white underline. */
 .header-nav-btn {
     display: flex;
@@ -120,8 +120,8 @@ html.dark-mode .section-heading {
 
 /* White dividers on both outer edges and between tabs (one shared line between neighbours) */
 .header-nav-btn {
-    border-left: 3px solid white;
-    border-right: 3px solid white;
+    border-left: 3px solid #d3d9e3;
+    border-right: 3px solid #d3d9e3;
 }
 
 .header-nav-btn + .header-nav-btn {
@@ -140,9 +140,10 @@ html.dark-mode .header-nav-btn {
     color: white;
 }
 
+/* Gear: 30px tall in the 64px header leaves 17px above and below; match that on the left and right */
 .header-actions .header-gear-btn {
     align-self: center;
-    margin-left: 6px;
+    margin-left: 17px;
 }
 
 /* Logo and site title link back to the home (microgrid) page */
