@@ -1123,12 +1123,13 @@
             var radiusInput = document.getElementById('aoi-radius-input');
             var radiusUnitEl = document.getElementById('aoi-radius-unit');
             if (radiusInput && radiusUnitEl) {
-                if (sys === 'imperial') {
+                radiusUnitEl.textContent = sys === 'imperial' ? 'mi' : 'km';
+                if (!aoiCenter) {
+                    radiusInput.value = 10;   // default radius is 10 in either unit
+                } else if (sys === 'imperial') {
                     radiusInput.value = Math.round(aoiRadiusKm * 0.621371 * 10) / 10;
-                    radiusUnitEl.textContent = 'mi';
                 } else {
                     radiusInput.value = Math.round(aoiRadiusKm * 10) / 10;
-                    radiusUnitEl.textContent = 'km';
                 }
             }
             localStorage.setItem('ac2UnitSystem', sys);
@@ -3332,6 +3333,7 @@
             mapEl.classList.add('aoi-draw-mode');
             microgridMap.dragging.disable();
             if (type === 'circle') {
+                document.getElementById('aoi-radius-input').value = 10;   // 10 km or 10 mi, whichever unit is chosen
                 document.getElementById('aoi-radius-row').style.display = 'flex';
                 showAoiToast('Click on the map to place circle center');
             } else {
@@ -3481,6 +3483,7 @@
             closeMuniPanel();
             document.getElementById('aoi-clear-btn').style.display = 'none';
             document.getElementById('aoi-radius-row').style.display = 'none';
+            document.getElementById('aoi-radius-input').value = 10;   // next circle starts at 10 (km or mi)
             hideAoiSidebar();
             usedFeedstocks = {};
             try { localStorage.removeItem('ac2UsedFeedstocks'); } catch(e) {}
