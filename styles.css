@@ -47,11 +47,15 @@ body {
 .logo {
     position: absolute;
     left: 24px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 16px;
+}
+
+.logo .header-home-btn {
+    align-self: flex-end;
 }
 
 .logo img {
@@ -83,36 +87,56 @@ html.dark-mode .section-heading {
     color: #e0e0e0;
 }
 
-/* Header buttons (Help, Farms and Facilities, About) and the settings gear */
+/* Header tabs (Farms and Facilities, About, Help) and the settings gear.
+   Tabs sit on the bottom edge of the header; the current page's tab joins the page below it. */
 .header-actions {
     position: absolute;
     right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
     display: flex;
-    align-items: center;
-    gap: 6px;
+    align-items: flex-end;
+    gap: 4px;
 }
 
 .header-nav-btn {
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    height: 52px;
+    margin-bottom: -1px;               /* cover the header's bottom border */
+    padding: 0 20px;
+    font-size: 15px;
     font-weight: normal;
     color: white;
     text-decoration: none;
-    padding: 6px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
     white-space: nowrap;
     transition: background-color 0.2s;
 }
 
 .header-nav-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.28);
 }
 
 .header-nav-btn.active {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-color: white;
+    background-color: #f0f0f0;         /* same as the page background */
+    border-color: #f0f0f0;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+html.dark-mode .header-nav-btn.active {
+    background-color: #1a1a2e;
+    border-color: #1a1a2e;
+    color: #e0e0e0;
+}
+
+.header-actions .header-gear-btn {
+    align-self: center;
+    margin-left: 6px;
 }
 
 /* Logo and site title link back to the home (microgrid) page */

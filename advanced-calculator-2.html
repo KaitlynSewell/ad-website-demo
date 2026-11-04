@@ -109,9 +109,10 @@
         /* Chart boxes */
         .ac2-charts {
             display: flex;
+            flex-direction: column;
             gap: 24px;
             padding: 24px;
-            align-items: flex-start;
+            align-items: stretch;
             width: 100%;
             box-sizing: border-box;
         }
@@ -128,6 +129,16 @@
             align-items: center;
             gap: 16px;
         }
+
+        /* Charts below the map: two per row (one per row on narrow screens) */
+        .ac2-chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+        .ac2-chart-grid .ac2-chart-box { width: auto; }
+        @media (max-width: 900px) { .ac2-chart-grid { grid-template-columns: 1fr; } }
 
         .ac2-chart-title {
             font-size: 15px;
@@ -231,7 +242,7 @@
 
         #microgrid-map {
             width: 100%;
-            height: 560px;
+            height: 620px;
             border-radius: 4px;
         }
 
@@ -812,9 +823,9 @@
         </div>
         <a href="advanced-calculator-2.html" class="site-title-link"><span data-i18n="site-title">Anaerobic Digestion Pathways</span></a>
         <div class="header-actions">
-            <a href="help.html" class="header-nav-btn" data-i18n="nav-help">Help</a>
             <a href="farms.html" class="header-nav-btn" data-i18n="nav-farms">Farms and Facilities</a>
             <a href="about.html" class="header-nav-btn" data-i18n="nav-about">About</a>
+            <a href="help.html" class="header-nav-btn" data-i18n="nav-help">Help</a>
             <a href="settings.html" class="header-gear-btn" title="Settings" onclick="localStorage.setItem('prevPage', location.href)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.61.07-.93s-.03-.64-.07-.93l2-1.57c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2 1.57c-.04.3-.07.61-.07.93s.03.64.07.93l-2 1.57c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2-1.57z"/></svg></a>
         </div>
     </h1>
@@ -876,25 +887,6 @@
     <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto; height: 100%;">
             <div class="ac2-charts">
-                <div style="display:flex; flex-direction:column; gap:24px;">
-                    <div class="ac2-chart-box">
-                        <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Available vs Used Anaerobic Digestion Feedstocks</div>
-                        <canvas id="feedstock-bar" width="260" height="190"></canvas>
-                        <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:11px;color:#555;">
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#FF7043;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>In Your Microgrid</span>
-                        </div>
-                    </div>
-                    <div class="ac2-chart-box">
-                        <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Energy Used vs Stored by Type</div>
-                        <canvas id="bar-chart-1" width="260" height="180"></canvas>
-                        <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-used">Used</span></span>
-                            <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-stored">Stored</span></span>
-                        </div>
-                    </div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:24px; flex:1; min-width:320px;">
                     <div class="ac2-map-box" style="flex:none;">
                         <div class="ac2-chart-title" data-i18n="ac2-map-title">My Microgrid</div>
                         <div id="aoi-top-row" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1100;display:flex;align-items:center;gap:6px;">
@@ -913,13 +905,29 @@
                             </div>
                         </div>
                     </div>
-                    <div style="display:flex;gap:16px;flex-wrap:wrap;">
-                        <div class="ac2-chart-box" style="flex:1;min-width:240px;">
+                    <div class="ac2-chart-grid">
+                        <div class="ac2-chart-box">
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Available vs Used Anaerobic Digestion Feedstocks</div>
+                            <canvas id="feedstock-bar" width="260" height="190"></canvas>
+                            <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:11px;color:#555;">
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#FF7043;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>In Your Microgrid</span>
+                            </div>
+                        </div>
+                        <div class="ac2-chart-box">
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Energy Used vs Stored by Type</div>
+                            <canvas id="bar-chart-1" width="260" height="180"></canvas>
+                            <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-used">Used</span></span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#aaa;border-radius:2px;vertical-align:middle;margin-right:3px;"></span><span data-i18n="ac2-chart-stored">Stored</span></span>
+                            </div>
+                        </div>
+                        <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Microgrid Energy Generation By Source Type</div>
                             <canvas id="pie-chart-1" width="220" height="220"></canvas>
                             <div class="ac2-chart-legend" id="pie-legend-1"></div>
                         </div>
-                        <div class="ac2-chart-box" style="flex:1;min-width:240px;">
+                        <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-proposed-energy-gen">Proposed Microgrid Energy Generation By Source Type</div>
                             <canvas id="pie-chart-3" width="220" height="220"></canvas>
                             <div class="ac2-chart-legend" id="pie-legend-3"></div>
@@ -938,7 +946,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
             <div class="calc-container"></div>
         </div>
