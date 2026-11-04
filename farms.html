@@ -135,6 +135,31 @@
             color: #aaa;
         }
 
+        /* Below the table: Show More button, or "Showing All Facilities" once every row is shown */
+        .farms-more {
+            display: none;
+            padding: 14px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        .farms-more-btn {
+            padding: 8px 22px;
+            font-size: 14px;
+            color: white;
+            background: #4169e1;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .farms-more-btn:hover { background: #2a52cc; }
+        .farms-all-shown {
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+        }
+        html.dark-mode .farms-more { border-top-color: #3a3a50; }
+        html.dark-mode .farms-all-shown { color: #aaa; }
+
     </style>
 </head>
 <body>
@@ -182,6 +207,7 @@
                         <thead id="farms-thead"></thead>
                         <tbody id="farms-tbody"></tbody>
                     </table>
+                    <div class="farms-more" id="farms-more"></div>
                 </div>
             </div>
         </div>
@@ -211,6 +237,9 @@
         var currentFeatures = [];
         var sortColIdx = -1;
         var sortDir = 1;
+        var PAGE_SIZE = 200;      // rows added per "Show More"
+        var currentRows = [];     // filtered + sorted rows for the current view
+        var shownCount = 0;       // how many of currentRows are in the table
 
         function selectCategory(key) {
             document.getElementById('category-select').value = key;
@@ -296,9 +325,20 @@
                 return '<th' + cls + ' onclick="sortBy(' + i + ')">' + c.h + '</th>';
             }).join('') + '</tr>';
 
-            // Build rows (cap at 2000 visible rows for performance)
-            var visible = rows.slice(0, 2000);
-            var tbody = visible.map(function(f) {
+            // Rows: first 200, then 200 more per "Show More"
+            currentRows = rows;
+            shownCount = Math.min(PAGE_SIZE, rows.length);
+
+            document.getElementById('farms-thead').innerHTML = thead;
+            document.getElementById('farms-tbody').innerHTML = rowsHtml(rows.slice(0, shownCount));
+            document.getElementById('farms-loading').style.display = 'none';
+            document.getElementById('farms-table').style.display = 'table';
+            updateShowMore();
+        }
+
+        function rowsHtml(list) {
+            var cat = categories[currentKey];
+            return list.map(function(f) {
                 return '<tr>' + cat.cols.map(function(c) {
                     var val = f.properties[c.p];
                     if (val === null || val === undefined) val = '';
@@ -306,15 +346,23 @@
                     return '<td' + (c.minW ? ' style="min-width:' + c.minW + 'px"' : '') + '>' + val + '</td>';
                 }).join('') + '</tr>';
             }).join('');
+        }
 
-            if (rows.length > 2000) {
-                tbody += '<tr><td colspan="' + cat.cols.length + '" style="text-align:center;color:#888;font-style:italic;">Showing first 2,000 of ' + rows.length.toLocaleString() + ' records. Use search to filter.</td></tr>';
-            }
+        // Add the next 200 rows (or the rest, if fewer remain)
+        function showMore() {
+            var next = currentRows.slice(shownCount, shownCount + PAGE_SIZE);
+            document.getElementById('farms-tbody').insertAdjacentHTML('beforeend', rowsHtml(next));
+            shownCount += next.length;
+            updateShowMore();
+        }
 
-            document.getElementById('farms-thead').innerHTML = thead;
-            document.getElementById('farms-tbody').innerHTML = tbody;
-            document.getElementById('farms-loading').style.display = 'none';
-            document.getElementById('farms-table').style.display = 'table';
+        function updateShowMore() {
+            var box = document.getElementById('farms-more');
+            if (!currentRows.length) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            box.innerHTML = shownCount < currentRows.length
+                ? '<button type="button" class="farms-more-btn" onclick="showMore()">Show More</button>'
+                : '<span class="farms-all-shown">Showing All Facilities</span>';
         }
 
 
