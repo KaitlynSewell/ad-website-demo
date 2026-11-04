@@ -99,52 +99,43 @@ html.dark-mode .section-heading {
     gap: 0;
 }
 
-/* Flat light-grey tabs separated by dark grey vertical lines */
+/* Tabs: white bold text on the header, separated by thick dark grey vertical lines.
+   The current page's tab gets a white underline. */
 .header-nav-btn {
     display: flex;
     align-items: center;
     height: 52px;
-    margin-bottom: -1px;               /* cover the header's bottom border */
     padding: 0 22px;
     font-size: 15px;
-    font-weight: normal;
-    color: #2c3e50;
+    font-weight: bold;
+    color: white;
     text-decoration: none;
-    background-color: #dfe2e7;
+    background-color: transparent;
     border: none;
+    border-bottom: 4px solid transparent;
     border-radius: 0;
     white-space: nowrap;
-    transition: background-color 0.2s;
+    transition: border-color 0.2s;
 }
 
 .header-nav-btn + .header-nav-btn {
-    border-left: 2px solid #5a5f66;
+    border-left: 3px solid #4a4f57;
 }
 
 .header-nav-btn:hover {
-    background-color: #ccd0d6;
+    border-bottom-color: rgba(255, 255, 255, 0.5);
 }
 
 .header-nav-btn.active {
-    background-color: #f0f0f0;         /* same as the page background */
-    font-weight: bold;
+    border-bottom-color: white;
 }
 
 html.dark-mode .header-nav-btn {
-    background-color: #3a3f4b;
-    color: #e0e0e0;
+    color: white;
 }
 
 html.dark-mode .header-nav-btn + .header-nav-btn {
     border-left-color: #1f2229;
-}
-
-html.dark-mode .header-nav-btn:hover {
-    background-color: #474d5b;
-}
-
-html.dark-mode .header-nav-btn.active {
-    background-color: #1a1a2e;
 }
 
 .header-actions .header-gear-btn {
