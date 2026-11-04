@@ -99,7 +99,7 @@ html.dark-mode .section-heading {
     gap: 0;
 }
 
-/* Tabs: white bold text on the header, separated by thick dark grey vertical lines.
+/* Tabs: white bold text on the header, with thick white vertical lines between and around them.
    The current page's tab gets a white underline. */
 .header-nav-btn {
     display: flex;
@@ -118,8 +118,14 @@ html.dark-mode .section-heading {
     transition: border-color 0.2s;
 }
 
+/* White dividers on both outer edges and between tabs (one shared line between neighbours) */
+.header-nav-btn {
+    border-left: 3px solid white;
+    border-right: 3px solid white;
+}
+
 .header-nav-btn + .header-nav-btn {
-    border-left: 3px solid #4a4f57;
+    border-left: none;
 }
 
 .header-nav-btn:hover {
@@ -132,10 +138,6 @@ html.dark-mode .section-heading {
 
 html.dark-mode .header-nav-btn {
     color: white;
-}
-
-html.dark-mode .header-nav-btn + .header-nav-btn {
-    border-left-color: #1f2229;
 }
 
 .header-actions .header-gear-btn {
