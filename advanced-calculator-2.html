@@ -893,21 +893,21 @@
                 <div class="ac2-units-panel" id="ac2-units-panel">
                     <div class="units-row">
                         <span data-i18n="ac2-system">System</span>
-                        <label><input type="radio" name="unitSystem" value="metric"   checked onchange="setUnitSystem('metric')"> <span data-i18n="ac2-metric">Metric</span></label>
-                        <label><input type="radio" name="unitSystem" value="imperial"         onchange="setUnitSystem('imperial')"> <span data-i18n="ac2-imperial">Imperial</span></label>
+                        <label><input type="radio" name="unitSystem" value="metric"           onchange="setUnitSystem('metric')"> <span data-i18n="ac2-metric">Metric</span></label>
+                        <label><input type="radio" name="unitSystem" value="imperial" checked onchange="setUnitSystem('imperial')"> <span data-i18n="ac2-imperial">Imperial</span></label>
                     </div>
                     <div class="units-row">
                         <span data-i18n="ac2-energy">Energy</span>
-                        <span id="energy-metric">
+                        <span id="energy-metric" style="display:none;">
                             <label><input type="radio" name="energyUnit" value="kWh"  onchange="setEnergyUnit('kWh')">  kWh</label>
-                            <label><input type="radio" name="energyUnit" value="MWh"  checked onchange="setEnergyUnit('MWh')">  MWh</label>
+                            <label><input type="radio" name="energyUnit" value="MWh"  onchange="setEnergyUnit('MWh')">  MWh</label>
                             <label><input type="radio" name="energyUnit" value="GWh"  onchange="setEnergyUnit('GWh')">  GWh</label>
                             <label><input type="radio" name="energyUnit" value="GJ"   onchange="setEnergyUnit('GJ')">   GJ</label>
                         </span>
-                        <span id="energy-imperial" style="display:none;">
+                        <span id="energy-imperial">
                             <label><input type="radio" name="energyUnit" value="BTU"   onchange="setEnergyUnit('BTU')">   BTU</label>
                             <label><input type="radio" name="energyUnit" value="kBTU"  onchange="setEnergyUnit('kBTU')">  kBTU</label>
-                            <label><input type="radio" name="energyUnit" value="MMBTU" onchange="setEnergyUnit('MMBTU')"> MMBTU</label>
+                            <label><input type="radio" name="energyUnit" value="MMBTU" checked onchange="setEnergyUnit('MMBTU')"> MMBTU</label>
                         </span>
                     </div>
                     <div class="units-row">
@@ -941,7 +941,7 @@
                                 <div id="aoi-radius-row" style="display:none;align-items:center;gap:6px;background:white;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;">
                                     <span>Radius:</span>
                                     <input type="number" id="aoi-radius-input" value="10" min="1" max="500" step="1" style="width:55px;padding:2px 5px;border:1px solid #ccc;border-radius:3px;font-size:12px;" />
-                                    <span id="aoi-radius-unit">km</span>
+                                    <span id="aoi-radius-unit">mi</span>
                                 </div>
                             </div>
                             <div id="microgrid-map" style="position:relative;">
@@ -1084,8 +1084,8 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
         // ===== UNITS =====
-        var unitSystem = 'metric';
-        var energyUnit = 'MWh';
+        var unitSystem = 'imperial';   // the site always opens in imperial units
+        var energyUnit = 'MMBTU';
         var ENERGY_UNITS = {
             // Metric
             'kWh':   { label: 'kWh',    factor: 1000,        system: 'metric'   },
@@ -3855,13 +3855,11 @@
 
         // Restore unit system, energy unit, and time period
         (function() {
-            var savedSys = localStorage.getItem('ac2UnitSystem');
-            if (savedSys === 'metric' || savedSys === 'imperial') {
-                var r = document.querySelector('input[name="unitSystem"][value="' + savedSys + '"]');
-                if (r) { r.checked = true; setUnitSystem(savedSys); }
-            }
+            // Always open in imperial units (users can still switch to metric for the visit)
+            var r = document.querySelector('input[name="unitSystem"][value="imperial"]');
+            if (r) { r.checked = true; setUnitSystem('imperial'); }
             var savedEU = localStorage.getItem('ac2EnergyUnit');
-            if (savedEU && ENERGY_UNITS[savedEU]) {
+            if (savedEU && ENERGY_UNITS[savedEU] && ENERGY_UNITS[savedEU].system === 'imperial') {
                 var r2 = document.querySelector('input[name="energyUnit"][value="' + savedEU + '"]');
                 if (r2) { r2.checked = true; energyUnit = savedEU; }
             }
