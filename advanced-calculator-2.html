@@ -110,8 +110,8 @@
         .ac2-charts {
             display: flex;
             flex-direction: column;
-            gap: 24px;
-            padding: 24px;
+            gap: 12px;
+            padding: 8px;
             align-items: stretch;
             width: 100%;
             box-sizing: border-box;
@@ -133,7 +133,7 @@
         /* Legend panel to the left of the map, same height as the map box */
         .ac2-map-row {
             display: flex;
-            gap: 24px;
+            gap: 12px;
             align-items: stretch;
         }
         .ac2-map-row .ac2-map-box { flex: 1; min-width: 0; }
@@ -162,7 +162,7 @@
         .ac2-chart-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 24px;
+            gap: 12px;
             align-items: start;
         }
         .ac2-chart-grid .ac2-chart-box { width: auto; }
@@ -628,9 +628,25 @@
             stroke: white;
         }
 
-        /* Map search sits top-left (the legend takes the top-right); map buttons go below it */
-        #microgrid-map .map-search { left: 10px; transform: none; }
-        #microgrid-map .leaflet-top.leaflet-left { top: 44px; }
+        /* Satellite and Recenter buttons share one style; the map search sits under them */
+        .map-ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            height: 28px;
+            padding: 0 10px;
+            font-size: 12px;
+            line-height: 1;
+            color: #333;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .map-ctrl-btn:hover { background: #f4f4f4; }
+        #microgrid-map .map-search { left: 10px; top: 48px; transform: none; }
 
         /* Clicks go to the map, not to markers, while drawing an area or placing an item */
         #microgrid-map.aoi-draw-mode .leaflet-marker-icon,
@@ -2590,11 +2606,10 @@
         var MapToggleControl = L.Control.extend({
             options: { position: 'topleft' },
             onAdd: function () {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                var btn = L.DomUtil.create('a', '', container);
-                btn.href = '#';
+                var container = L.DomUtil.create('div', 'leaflet-control');
+                var btn = L.DomUtil.create('button', 'map-ctrl-btn', container);
+                btn.type = 'button';
                 btn.title = 'Toggle map view';
-                btn.style.cssText = 'width:auto;padding:0 8px;font-size:11px;line-height:26px;white-space:nowrap;';
                 btn.textContent = mapText('ac2-map-satellite', 'Switch to Satellite');
                 L.DomEvent.disableClickPropagation(container);
                 L.DomEvent.on(btn, 'click', function (e) {
@@ -2622,15 +2637,16 @@
                 return container;
             }
         });
-        L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
         new MapToggleControl().addTo(map);
 
         // Recenter: back to the selected area if there is one, otherwise all of Iowa
         var _mapRecenterBtn = L.control({ position: 'topleft' });
         _mapRecenterBtn.onAdd = function() {
-            var btn = L.DomUtil.create('button', '');
+            var btn = L.DomUtil.create('button', 'map-ctrl-btn');
+            btn.type = 'button';
             btn.textContent = '⌖ Recenter';
-            btn.style.cssText = 'display:none;padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);margin-top:4px;';
+            btn.style.display = 'none';
             L.DomEvent.on(btn, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 _mapRecentering = true;
@@ -2648,7 +2664,7 @@
         var _mapRecentering = false;
         map.on('moveend zoomend', function() {
             if (_mapRecentering) return;
-            _mapRecenterBtn.getContainer().style.display = 'block';
+            _mapRecenterBtn.getContainer().style.display = '';
         });
 
         var layerGroups = {};
@@ -3144,8 +3160,9 @@
 
             function showSearchResults(farmResults, locResults) {
                 searchDropdown.innerHTML = '';
-                var items = farmResults.map(function(f) { return { farm: f }; })
-                    .concat(locResults.map(function(l) { return { loc: l }; }));
+                // Location suggestions first, then matching farms and facilities
+                var items = locResults.map(function(l) { return { loc: l }; })
+                    .concat(farmResults.map(function(f) { return { farm: f }; }));
                 if (!items.length) { searchDropdown.style.display = 'none'; return; }
                 items.forEach(function(item) {
                     var el = document.createElement('li');
