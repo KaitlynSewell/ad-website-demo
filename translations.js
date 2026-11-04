@@ -3,6 +3,7 @@ var translations = {
         // Site & nav
         'site-title': 'Anaerobic Digestion Pathways',
         'nav-home': 'Home',
+        'nav-home-tab': 'Home',
         'nav-about': 'About',
         'nav-funding': 'Funding Information',
         'nav-how': 'How does this website work?',
@@ -169,6 +170,7 @@ var translations = {
     es: {
         'site-title': 'Vías de Digestión Anaeróbica',
         'nav-home': 'Inicio',
+        'nav-home-tab': 'Inicio',
         'nav-about': 'Acerca de',
         'nav-funding': 'Información de Financiamiento',
         'nav-how': '¿Cómo funciona este sitio web?',
@@ -321,6 +323,7 @@ var translations = {
     fr: {
         'site-title': 'Voies de Digestion Anaérobie',
         'nav-home': 'Accueil',
+        'nav-home-tab': 'Accueil',
         'nav-about': 'À propos',
         'nav-funding': 'Informations de Financement',
         'nav-how': 'Comment fonctionne ce site web ?',
@@ -473,6 +476,7 @@ var translations = {
     de: {
         'site-title': 'Anaerobe Vergärungswege',
         'nav-home': 'Startseite',
+        'nav-home-tab': 'Startseite',
         'nav-about': 'Über',
         'nav-funding': 'Finanzierungsinformationen',
         'nav-how': 'Wie funktioniert diese Website?',
