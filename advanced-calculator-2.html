@@ -3177,6 +3177,7 @@
                             e.preventDefault();
                             searchInput.value = f.name || f.city;
                             searchDropdown.style.display = 'none';
+                            clearSearchOutline();
                             zoomToFarm(f);
                         });
                     } else {
@@ -3187,7 +3188,7 @@
                             e.preventDefault();
                             searchInput.value = l.display;
                             searchDropdown.style.display = 'none';
-                            map.flyTo([l.lat, l.lng], l.zoom);
+                            showSearchedLocation(l);
                         });
                     }
                     searchDropdown.appendChild(el);
@@ -3195,8 +3196,29 @@
                 searchDropdown.style.display = 'block';
             }
 
+            // Outline a searched Iowa town or county (Census boundaries, same files as the Municipality area tool)
+            var searchOutline = null;
+            function clearSearchOutline() {
+                if (searchOutline) { map.removeLayer(searchOutline); searchOutline = null; }
+            }
+            function showSearchedLocation(l) {
+                clearSearchOutline();
+                var isCounty = / County$/i.test(l.display);
+                var name = l.display.replace(/ County$/i, '').toLowerCase();
+                loadMuniData(isCounty ? 'county' : 'city').then(function(feats) {
+                    var match = feats.filter(function(f) { return f.properties.name.toLowerCase() === name; })[0];
+                    if (!match || searchInput.value !== l.display) { if (!match) map.flyTo([l.lat, l.lng], l.zoom); return; }
+                    searchOutline = L.geoJSON(match, {
+                        interactive: false,
+                        style: { color: '#e8590c', weight: 3, opacity: 0.95, dashArray: '8 5', fill: false }
+                    }).addTo(map);
+                    map.flyToBounds(searchOutline.getBounds(), { padding: [30, 30], maxZoom: 13 });
+                }).catch(function() { map.flyTo([l.lat, l.lng], l.zoom); });
+            }
+
             searchInput.addEventListener('input', function() {
                 var q = this.value.trim();
+                if (!q) clearSearchOutline();
                 clearTimeout(searchTimer);
                 if (q.length < 2) { searchDropdown.style.display = 'none'; searchDropdown.innerHTML = ''; return; }
                 var ql = q.toLowerCase();
