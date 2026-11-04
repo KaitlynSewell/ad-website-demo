@@ -20,101 +20,6 @@ body {
     flex: 1;
 }
 
-.sidebar {
-    width: 280px;
-    background-color: #d0d4db;
-    color: #2c3e50;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-/* Featured nav row (highlighted item) */
-.featured-nav-item {
-    display: flex;
-    align-items: stretch;
-    background-color: #c5ddf7;
-}
-
-.featured-nav-item a {
-    flex: 1;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 14px 16px;
-    background-color: transparent;
-    color: white;
-    white-space: nowrap;
-}
-
-.featured-nav-item a:hover {
-    background-color: rgba(255, 255, 255, 0.35);
-}
-
-.featured-nav-item a.active {
-    background-color: transparent;
-    color: white;
-}
-
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar ul li {
-    border-bottom: 1px solid #9ba0a6;
-}
-
-.sidebar ul li a {
-    display: block;
-    padding: 12px 16px;
-    color: #2c3e50;
-    text-decoration: none;
-    font-size: 14px;
-    white-space: nowrap;
-    transition: background-color 0.2s;
-}
-
-.sidebar ul li a:hover {
-    background-color: #bdc3c7;
-}
-
-.sidebar ul li a.active {
-    background-color: #4169e1;
-    color: white;
-}
-
-.sidebar .submenu {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: none;
-    background-color: #d0d4db;
-}
-
-.sidebar .submenu.open {
-    display: block;
-}
-
-.sidebar .submenu li {
-    border-bottom: 1px solid #9ba0a6;
-}
-
-.sidebar .submenu li a {
-    padding: 10px 16px 10px 36px;
-    font-size: 13px;
-}
-
-.sidebar ul li:has(.submenu.open) {
-    border-bottom: 2px solid white;
-}
-
-.sidebar ul li:has(.submenu.open) > a {
-    border-bottom: 2px solid white;
-    background-color: #4169e1;
-    color: white;
-}
-
 .main-content {
     position: relative;
     flex: 1;
@@ -163,43 +68,6 @@ body {
     width: 100%;
 }
 
-/* Sidebar toggle — right side of featured nav button */
-.sidebar-toggle {
-    background: transparent;
-    border: none;
-    width: 34px;
-    flex-shrink: 0;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    color: white;
-}
-
-.sidebar-toggle:hover {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-/* When sidebar is hidden: collapse to toggle-width strip */
-.page-layout.sidebar-hidden .sidebar {
-    width: 34px;
-    overflow: hidden;
-}
-
-.page-layout.sidebar-hidden .sidebar .featured-nav-item {
-    min-height: 48px;
-}
-
-.page-layout.sidebar-hidden .sidebar .featured-nav-item a {
-    display: none;
-}
-
-.page-layout.sidebar-hidden .sidebar ul > li:not(.featured-nav-item) {
-    display: none;
-}
-
 /* Dark mode overrides */
 html.dark-mode body {
     background-color: #1a1a2e;
@@ -211,67 +79,52 @@ html.dark-mode .page-heading {
     border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-html.dark-mode .sidebar {
-    background-color: #2c2c3e;
-    color: #e0e0e0;
-}
-
-html.dark-mode .sidebar h2 {
-    border-bottom-color: #444;
-}
-
-html.dark-mode .sidebar ul li {
-    border-bottom-color: #444;
-}
-
-html.dark-mode .sidebar ul li a {
-    color: #e0e0e0;
-}
-
-html.dark-mode .sidebar ul li a:hover {
-    background-color: #3a3a4e;
-}
-
-html.dark-mode .sidebar ul li a.active {
-    background-color: #1e3a6e;
-}
-
-html.dark-mode .sidebar .submenu {
-    background-color: #1e1e30;
-}
-
-html.dark-mode .sidebar ul li:has(.submenu.open) {
-    border-bottom-color: rgba(255,255,255,0.3);
-}
-
-html.dark-mode .sidebar ul li:has(.submenu.open) > a {
-    border-bottom-color: rgba(255,255,255,0.3);
-    background-color: #1e3a6e;
-    color: #e8f0fe;
-}
-
-html.dark-mode .sidebar .submenu li {
-    border-bottom-color: #3a3a4e;
-}
-
 html.dark-mode .section-heading {
     color: #e0e0e0;
 }
 
-html.dark-mode .sidebar-toggle {
-    background: transparent;
-    color: white;
+/* Header buttons (Help, Farms and Facilities, About) and the settings gear */
+.header-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-html.dark-mode .sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.15);
+.header-nav-btn {
+    font-size: 14px;
+    font-weight: normal;
+    color: white;
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.header-nav-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.header-nav-btn.active {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: white;
+}
+
+/* Logo and site title link back to the home (microgrid) page */
+.logo a { display: flex; }
+
+.site-title-link {
+    color: inherit;
+    text-decoration: none;
 }
 
 /* Gear button — settings link in header bar */
 .header-gear-btn {
-    position: absolute;
-    right: 0;
-    top: 4px;
     display: flex;
     align-items: center;
     justify-content: center;

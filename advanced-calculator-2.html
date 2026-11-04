@@ -10,6 +10,7 @@
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark-mode');</script>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <script src="translations.js"></script>
     <style>
         .calc-container {
@@ -80,7 +81,7 @@
         .ac2-units-panel {
             position: absolute;
             top: calc(100% + 6px);
-            left: 0;
+            right: 0;
             background: white;
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -209,7 +210,7 @@
             position: fixed;
             bottom: 12px;
             right: 0;
-            width: 200px;
+            width: 340px;
             text-align: center;
             font-size: 11px;
             color: #2c3e50;
@@ -242,15 +243,6 @@
         /* ===== Deep Navy dark mode overrides ===== */
         html.dark-mode body { background-color: #0d1b2a; color: #e8f0fe; }
         html.dark-mode .page-heading { background-color: #1b2a4a; }
-        html.dark-mode .sidebar { background-color: #1b2a4a; color: #e8f0fe; }
-        html.dark-mode .sidebar ul li { border-bottom-color: #2a4a7a; }
-        html.dark-mode .sidebar ul li a { color: #e8f0fe; }
-        html.dark-mode .sidebar ul li a:hover { background-color: #243d5e; }
-        html.dark-mode .sidebar ul li a.active { background-color: #2ec4b6; color: #0d1b2a; }
-        html.dark-mode .sidebar ul li:has(.submenu.open) > a { background-color: #2ec4b6; color: #0d1b2a; }
-        html.dark-mode .sidebar .submenu { background-color: #162238; }
-        html.dark-mode .sidebar .submenu li { border-bottom-color: #2a4a7a; }
-        html.dark-mode .sidebar ul li:has(.submenu) { border-bottom-color: rgba(46,196,182,0.4); }
         html.dark-mode .ac2-chart-box { background: #1e3050; border-color: #2a4a7a; color: #e8f0fe; }
         html.dark-mode .ac2-chart-title { color: #e8f0fe; }
         html.dark-mode .ac2-legend-item { color: #c8d8f0; }
@@ -261,7 +253,6 @@
         html.dark-mode .ac2-units-panel { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
         html.dark-mode .ac2-units-panel .units-row + .units-row { border-top-color: #2a4a7a; }
         html.dark-mode .main-content { background-color: #0d1b2a; }
-        .custom-marker-icon { background: none; border: none; }
 
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
@@ -363,6 +354,248 @@
         html.dark-mode .ac2-add-radio { border-color: #7090b8; }
         html.dark-mode .ac2-add-item.placing .ac2-add-radio { background: #4a90d9; border-color: #4a90d9; }
         html.dark-mode .ac2-add-group { color: #a0b8d8; border-top-color: #2a4a7a; }
+
+        /* ===== Map legend, markers and map search (from the former Discover page) ===== */
+        .leaflet-top.leaflet-left {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .legend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .legend h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .legend-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .legend-clear-btn {
+            font-size: 11px;
+            padding: 2px 7px;
+            background: #e0e0e0;
+            border: 1px solid #bbb;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #444;
+            line-height: 1.4;
+        }
+
+        .legend-clear-btn:hover {
+            background: #c8c8c8;
+        }
+
+        html.dark-mode .legend-clear-btn {
+            background: #444;
+            border-color: #666;
+            color: #ddd;
+        }
+
+        html.dark-mode .legend-clear-btn:hover {
+            background: #555;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            gap: 6px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .legend-item input[type="checkbox"] {
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .legend-count {
+            color: #888;
+            font-size: 0.92em;
+            margin-left: 4px;
+            white-space: nowrap;
+        }
+        html.dark-mode .legend-count { color: #999; }
+
+        .legend-subfilter {
+            padding-left: 34px;
+            margin-top: 3px;
+        }
+        .legend-subfilter select {
+            font-size: 0.92em;
+            padding: 1px 2px;
+            max-width: 100%;
+        }
+        html.dark-mode .legend-subfilter select { background: #333; color: #eee; border-color: #555; }
+
+        .legend-item svg {
+            flex-shrink: 0;
+        }
+
+        .legend-group {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .legend-group input[type="checkbox"] {
+            margin: 0;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .legend-group.first {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        html.dark-mode .legend {
+            background: #2c2c3e;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .legend-group {
+            color: #aaa;
+            border-top-color: #555;
+        }
+
+        .legend-search-wrap {
+            position: relative;
+            margin: 8px 0 4px;
+        }
+        .legend-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 7px 8px 7px 22px;
+            background: #f4f4f4;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #aaa;
+            outline: none;
+        }
+        .legend-search::placeholder { color: #bbb; }
+        .legend-search:focus { border-color: #ccc; color: #666; }
+        .legend-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #bbb;
+        }
+        .map-search {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(280px, calc(100% - 20px));
+            margin: 0;
+            z-index: 1000;
+        }
+        .map-search .legend-search {
+            padding: 8px 10px 8px 28px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            color: #333;
+        }
+        .map-search .legend-search:focus { color: #333; }
+        .map-search .legend-search-icon { color: #888; }
+        .map-search .legend-search-dropdown { border-radius: 0 0 8px 8px; }
+        html.dark-mode .map-search .legend-search { background: #2c2c3e; color: #ddd; }
+        .legend-search-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 9999;
+            list-style: none;
+            margin: 0; padding: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .search-result-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .search-result-item:hover { background: #f0f4ff; }
+        .search-result-name { font-size: 12px; color: #333; }
+        .search-result-sub  { font-size: 10px; color: #999; }
+        html.dark-mode .legend-search { background: #3a3a4e; border-color: #555; color: #888; }
+        html.dark-mode .legend-search::placeholder { color: #666; }
+        html.dark-mode .legend-search:focus { color: #ccc; }
+        html.dark-mode .legend-search-dropdown { background: #2c2c3e; border-color: #555; }
+        html.dark-mode .search-result-item:hover { background: #3a3a55; }
+        html.dark-mode .search-result-name { color: #ddd; }
+        html.dark-mode .search-result-sub  { color: #888; }
+
+        .custom-marker-icon {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Pale legend icon borders in satellite mode */
+        body[data-basemap="satellite"] .legend svg circle,
+        body[data-basemap="satellite"] .legend svg rect,
+        body[data-basemap="satellite"] .legend svg polygon,
+        body[data-basemap="satellite"] .legend svg path:not([fill="none"]) {
+            stroke: #ccc;
+        }
+
+        /* White map marker borders in satellite mode */
+        body[data-basemap="satellite"] .custom-marker-icon svg circle,
+        body[data-basemap="satellite"] .custom-marker-icon svg rect,
+        body[data-basemap="satellite"] .custom-marker-icon svg path {
+            stroke: white;
+        }
+
+        /* Map search sits top-left (the legend takes the top-right); map buttons go below it */
+        #microgrid-map .map-search { left: 10px; transform: none; }
+        #microgrid-map .leaflet-top.leaflet-left { top: 44px; }
+
+        /* Clicks go to the map, not to markers, while drawing an area or placing an item */
+        #microgrid-map.aoi-draw-mode .leaflet-marker-icon,
+        #microgrid-map.placing-mode .leaflet-marker-icon { pointer-events: none !important; }
 
         /* AOI drawing mode */
         #microgrid-map.aoi-draw-mode,
@@ -506,7 +739,7 @@
 
         /* AOI right sidebar */
         .aoi-right-sidebar {
-            width: 240px;
+            width: 340px;
             background: white;
             border-left: 1px solid #ddd;
             display: flex;
@@ -575,14 +808,28 @@
 <body>
     <h1 class="page-heading">
         <div class="logo">
-            <img src="logo.png" alt="KS logo" height="44" />
+            <a href="advanced-calculator-2.html" title="Home"><img src="logo.png" alt="KS logo" height="44" /></a>
         </div>
-        <span data-i18n="site-title">Anaerobic Digestion Pathways</span>
-        <a href="settings.html" class="header-gear-btn" title="Settings" onclick="localStorage.setItem('prevPage', location.href)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.61.07-.93s-.03-.64-.07-.93l2-1.57c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2 1.57c-.04.3-.07.61-.07.93s.03.64.07.93l-2 1.57c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2-1.57z"/></svg></a>
+        <a href="advanced-calculator-2.html" class="site-title-link"><span data-i18n="site-title">Anaerobic Digestion Pathways</span></a>
+        <div class="header-actions">
+            <a href="help.html" class="header-nav-btn" data-i18n="nav-help">Help</a>
+            <a href="farms.html" class="header-nav-btn" data-i18n="nav-farms">Farms and Facilities</a>
+            <a href="about.html" class="header-nav-btn" data-i18n="nav-about">About</a>
+            <a href="settings.html" class="header-gear-btn" title="Settings" onclick="localStorage.setItem('prevPage', location.href)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.61.07-.93s-.03-.64-.07-.93l2-1.57c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2 1.57c-.04.3-.07.61-.07.93s.03.64.07.93l-2 1.57c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2-1.57z"/></svg></a>
+        </div>
     </h1>
     <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
-        <span style="font-weight:bold; position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;">Create A Microgrid</span>
         <div class="ac2-toolbar">
+            <!-- Add button -->
+            <div class="ac2-add-wrap">
+                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)" data-i18n="ac2-add-btn">
+                    + Add
+                </button>
+            </div>
+
+            <!-- Select Area of Interest -->
+            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;" data-i18n="ac2-select-aoi">Select Area of Interest</button>
+
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
                 <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()" data-i18n="ac2-units-btn">Units &#9662;</button>
@@ -618,18 +865,6 @@
                 </div>
             </div>
 
-            <!-- Search Area -->
-            <input type="text" id="ac2-search" placeholder="Search Locations" data-i18n-placeholder="ac2-search-placeholder" style="width:180px;" />
-
-            <!-- Add button -->
-            <div class="ac2-add-wrap">
-                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)" data-i18n="ac2-add-btn">
-                    + Add
-                </button>
-            </div>
-
-            <!-- Select Area of Interest -->
-            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;" data-i18n="ac2-select-aoi">Select Area of Interest</button>
 
             <!-- Download -->
             <button class="ac2-toolbar-btn" onclick="handleDownload()" style="margin-left:0;">
@@ -639,23 +874,6 @@
         </div>
     </div>
     <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
-        <nav class="sidebar">
-            <ul>
-                <li class="featured-nav-item"><a href="advanced-calculator-2.html" class="active" data-i18n="nav-create-microgrid">Create A Microgrid</a><button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Hide sidebar">&#8592;</button></li>
-                <li><a href="index.html" data-i18n="nav-home">Discover</a></li>
-                <li>
-                    <a href="about.html" onclick="document.getElementById('about-submenu').classList.toggle('open');" data-i18n="nav-about">About</a>
-                    <ul id="about-submenu" class="submenu">
-                        <li><a href="about.html#digestion" data-i18n="nav-what">What is anaerobic digestion?</a></li>
-                        <li><a href="about.html#funding" data-i18n="nav-funding">Funding Information</a></li>
-                        <li><a href="about.html#our-data" data-i18n="nav-our-data">Our Data</a></li>
-                        <li><a href="about.html#references" data-i18n="nav-sources">References</a></li>
-                    </ul>
-                </li>
-                <li><a href="farms.html" data-i18n="nav-farms">Farms and Facilities</a></li>
-                <li><a href="help.html" data-i18n="nav-help">Help</a></li>
-            </ul>
-        </nav>
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto; height: 100%;">
             <div class="ac2-charts">
                 <div style="display:flex; flex-direction:column; gap:24px;">
@@ -687,7 +905,13 @@
                                 <span id="aoi-radius-unit">km</span>
                             </div>
                         </div>
-                        <div id="microgrid-map"></div>
+                        <div id="microgrid-map" style="position:relative;">
+                            <div class="legend-search-wrap map-search" id="map-search">
+                                <svg class="legend-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+                                <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search the map" autocomplete="off" />
+                                <ul class="legend-search-dropdown" id="sidebar-search-dropdown"></ul>
+                            </div>
+                        </div>
                     </div>
                     <div style="display:flex;gap:16px;flex-wrap:wrap;">
                         <div class="ac2-chart-box" style="flex:1;min-width:240px;">
@@ -801,6 +1025,8 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
         // ===== UNITS =====
         var unitSystem = 'metric';
@@ -1605,37 +1831,6 @@
             powerplants:'Power Plant', pipelines:'Pipeline', landfill:'Landfill', foodwaste:'Food Waste Location'
         };
 
-        function makeIconSvg(shape, color, size) {
-            if (shape === 'square') {
-                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
-            } else if (shape === 'digester') {
-                // Digester tank: cylinder with a domed top
-                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/><path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="0.2"/></svg>';
-            } else if (shape === 'wind') {
-                // Wind power plant: three turbine blades, scaled to fill the icon
-                var blade = '<path d="M0,0 C2.6,-1 2.8,-4.8 0.4,-6 C-1,-4.6 -1.2,-1.4 0,0Z" fill="'+color+'" stroke="#333" stroke-width="0.28" stroke-linejoin="round"';
-                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><g transform="translate(8.29,9.56) scale(1.443)">'+blade+'/>'+blade+' transform="rotate(120)"/>'+blade+' transform="rotate(240)"/></g></svg>';
-            } else if (shape === 'sun') {
-                // Solar power plant: sun with eight rays; dark pass then fill so only the outer edge shows a border
-                var sunShape = function(attrs) {
-                    var out = '';
-                    for (var a = 0; a < 360; a += 45) out += '<path d="M8,0.3 L8.9,4.4 L7.1,4.4 Z"'+attrs+' stroke-linejoin="round" transform="rotate('+a+',8,8)"/>';
-                    return out + '<circle cx="8" cy="8" r="4.3"'+attrs+'/>';
-                };
-                return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16">'+sunShape(' fill="#333" stroke="#333" stroke-width="0.8"')+sunShape(' fill="'+color+'"')+'</svg>';
-            } else if (shape === 'droplet') {
-                var w = Math.round(size * 0.75);
-                return '<svg width="'+w+'" height="'+size+'" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
-            }
-            return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="'+color+'" stroke="#333" stroke-width="0.2"/></svg>';
-        }
-
-        function makeMarkerIcon(shape, color) {
-            var h = 14, w = shape === 'droplet' ? 11 : 14;
-            return L.divIcon({ html: makeIconSvg(shape, color, h), className: 'custom-marker-icon',
-                               iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
-        }
-
         // Returns SVG HTML for any panel key, including wind/solar/elec/gas specials
         function makeKeyIconHtml(key, size) {
             var s = size || 16;
@@ -2184,6 +2379,7 @@
             placementMode = key;
             var container = microgridMap.getContainer();
             container.style.cursor = 'crosshair';
+            container.classList.add('placing-mode');
 
             _cursorTip = document.createElement('div');
             _cursorTip.className = 'ac2-placement-tip';
@@ -2231,6 +2427,7 @@
             if (_cursorTip)    { _cursorTip.remove(); _cursorTip = null; }
             document.removeEventListener('keydown', _escHandler);
             microgridMap.getContainer().style.cursor = '';
+            microgridMap.getContainer().classList.remove('placing-mode');
             placementMode = null;
             updatePlacementUI();
         }
@@ -2329,87 +2526,653 @@
         }
 
         // ===== MAP SETUP =====
-        var microgridMap = L.map('microgrid-map', { zoomControl: true }).setView([41.88, -93.10], 7);
+        // Map, layers, legend and search carried over from the former Discover page.
+        var microgridMap = L.map('microgrid-map', { zoomControl: false }).setView([41.88, -93.10], 7);
+        var map = microgridMap;   // the Discover map code below refers to the map as `map`
         microgridMap.createPane('aoiPane');
         microgridMap.getPane('aoiPane').style.zIndex = 650;
 
-        var mgStreetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        function mapText(key, fallback) {
+            var t = translations[localStorage.getItem('language') || 'en'] || translations['en'];
+            return (t && t[key]) || fallback;
+        }
+
+        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
         });
-        var mgSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri',
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             maxZoom: 19
         });
 
-        mgStreetLayer.addTo(microgridMap);
-        var mgBaseLayer = 'street';
+        streetLayer.addTo(map);
+        var currentBaseLayer = 'street';
 
-        var mgToggleBtn = L.control({ position: 'topright' });
-        mgToggleBtn.onAdd = function() {
-            var btn = L.DomUtil.create('button', '');
-            var lang = localStorage.getItem('language') || 'en';
-            btn.textContent = (translations[lang] || translations['en'])['ac2-map-satellite'] || 'Switch to Satellite';
-            btn.style.cssText = 'padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
-            L.DomEvent.on(btn, 'click', function(e) {
-                L.DomEvent.stopPropagation(e);
-                var t = translations[localStorage.getItem('language') || 'en'] || translations['en'];
-                if (mgBaseLayer === 'satellite') {
-                    microgridMap.removeLayer(mgSatelliteLayer);
-                    microgridMap.addLayer(mgStreetLayer);
-                    mgBaseLayer = 'street';
-                    btn.textContent = t['ac2-map-satellite'] || 'Switch to Satellite';
-                } else {
-                    microgridMap.removeLayer(mgStreetLayer);
-                    microgridMap.addLayer(mgSatelliteLayer);
-                    mgBaseLayer = 'satellite';
-                    btn.textContent = t['ac2-map-street'] || 'Switch to Street Map';
-                }
-                updateMgIowaBorder();
-            });
-            return btn;
-        };
+        var MapToggleControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function () {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var btn = L.DomUtil.create('a', '', container);
+                btn.href = '#';
+                btn.title = 'Toggle map view';
+                btn.style.cssText = 'width:auto;padding:0 8px;font-size:11px;line-height:26px;white-space:nowrap;';
+                btn.textContent = mapText('ac2-map-satellite', 'Switch to Satellite');
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(btn, 'click', function (e) {
+                    L.DomEvent.preventDefault(e);
+                    if (currentBaseLayer === 'street') {
+                        map.removeLayer(streetLayer);
+                        map.addLayer(satelliteLayer);
+                        currentBaseLayer = 'satellite';
+                        btn.textContent = mapText('ac2-map-street', 'Switch to Street Map');
+                    } else {
+                        map.removeLayer(satelliteLayer);
+                        map.addLayer(streetLayer);
+                        currentBaseLayer = 'street';
+                        btn.textContent = mapText('ac2-map-satellite', 'Switch to Satellite');
+                    }
+                    document.body.setAttribute('data-basemap', currentBaseLayer);
+                    updateIowaBorder();
+                    // Recreate pipeline layer with updated border color, re-add on top
+                    if (layerGroups['pipelines'] && map.hasLayer(layerGroups['pipelines'])) {
+                        map.removeLayer(layerGroups['pipelines']);
+                        layerGroups['pipelines'] = createPipelineLayer();
+                        map.addLayer(layerGroups['pipelines']);
+                    }
+                });
+                return container;
+            }
+        });
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        new MapToggleControl().addTo(map);
 
-        var mgIowaLayer = null;
-        function updateMgIowaBorder() {
-            if (!mgIowaLayer) return;
-            mgIowaLayer.setStyle({ color: mgBaseLayer === 'satellite' ? '#ffffff' : '#888', weight: 4, opacity: 0.4 });
-        }
-        fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var iowa = data.features.find(function(f) { return f.properties.name === 'Iowa'; });
-                if (iowa) {
-                    mgIowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 4, opacity: 0.4 } }).addTo(microgridMap);
-                    updateMgIowaBorder();
-                }
-            });
-        mgToggleBtn.addTo(microgridMap);
-
-        var _mgRecenterBtn = L.control({ position: 'topleft' });
-        _mgRecenterBtn.onAdd = function() {
+        // Recenter: back to the selected area if there is one, otherwise all of Iowa
+        var _mapRecenterBtn = L.control({ position: 'topleft' });
+        _mapRecenterBtn.onAdd = function() {
             var btn = L.DomUtil.create('button', '');
             btn.textContent = '⌖ Recenter';
-            btn.style.cssText = 'display:none;padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);';
+            btn.style.cssText = 'display:none;padding:5px 10px;font-size:12px;background:white;border:1px solid #ccc;border-radius:4px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);margin-top:4px;';
             L.DomEvent.on(btn, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
-                _mgRecentering = true;
+                _mapRecentering = true;
                 if (aoiLayer) {
-                    microgridMap.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
+                    map.fitBounds(aoiLayer.getBounds(), { padding: [24, 24] });
                 } else {
-                    microgridMap.setView([41.88, -93.10], 7);
+                    map.setView([41.88, -93.10], 7);
                 }
                 btn.style.display = 'none';
-                microgridMap.once('moveend', function() { _mgRecentering = false; });
+                map.once('moveend', function() { _mapRecentering = false; });
             });
             return btn;
         };
-        _mgRecenterBtn.addTo(microgridMap);
-        var _mgRecentering = false;
-        microgridMap.on('moveend zoomend', function() {
-            if (_mgRecentering) return;
-            _mgRecenterBtn.getContainer().style.display = 'block';
+        _mapRecenterBtn.addTo(map);
+        var _mapRecentering = false;
+        map.on('moveend zoomend', function() {
+            if (_mapRecentering) return;
+            _mapRecenterBtn.getContainer().style.display = 'block';
         });
+
+        var layerGroups = {};
+
+        // Build an inline SVG string for a given shape/color/size
+        // Digester tank: cylinder with a domed top
+        function digesterSvg(color, size, strokeWidth) {
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                   '<path d="M2,7 A6,5 0 0,1 14,7 L14,13.5 A6,1.8 0 0,1 2,13.5 Z" fill="' + color + '" stroke="#333" stroke-width="' + strokeWidth + '"/>' +
+                   '<path d="M2,7 A6,1.8 0 0,0 14,7" fill="none" stroke="#333" stroke-width="' + strokeWidth + '"/></svg>';
+        }
+
+        // Wind power: three turbine blades, scaled to fill the icon
+        function windSvg(color, size, strokeWidth) {
+            var blade = '<path d="M0,0 C2.6,-1 2.8,-4.8 0.4,-6 C-1,-4.6 -1.2,-1.4 0,0Z" fill="' + color + '" stroke="#333" stroke-width="' + (strokeWidth / 1.443) + '" stroke-linejoin="round"';
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16"><g transform="translate(8.29,9.56) scale(1.443)">' +
+                   blade + '/>' + blade + ' transform="rotate(120)"/>' + blade + ' transform="rotate(240)"/></g></svg>';
+        }
+
+        // Solar power: sun with eight rays. Drawn twice — a thick dark pass, then the fill on top —
+        // so the border only shows around the outside of the whole shape.
+        function sunSvg(color, size, strokeWidth) {
+            function shape(attrs) {
+                var out = '';
+                for (var a = 0; a < 360; a += 45) {
+                    out += '<path d="M8,0.3 L8.9,4.4 L7.1,4.4 Z"' + attrs + ' stroke-linejoin="round" transform="rotate(' + a + ',8,8)"/>';
+                }
+                return out + '<circle cx="8" cy="8" r="4.3"' + attrs + '/>';
+            }
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                   shape(' fill="#333" stroke="#333" stroke-width="' + (strokeWidth * 2) + '"') + shape(' fill="' + color + '"') + '</svg>';
+        }
+
+        // Food waste: apple core (skin caps in the layer color, stem, leaf and seeds)
+        function appleCoreSvg(c, size) {
+            var o = ' stroke="#333" stroke-width="1.3" stroke-linejoin="round"';
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 32 32">' +
+                   '<path d="M16,6.5 C16.2,4.5 16.8,2.8 18,1.6" fill="none" stroke="#6b4f1d" stroke-width="1.8" stroke-linecap="round"/>' +
+                   '<path d="M17.2,3.6 C19.5,1.4 22.8,1.6 24,2.6 C22.6,4.8 19.6,5.4 17.2,3.6Z" fill="#5aa832"' + o + '/>' +
+                   '<path d="M8.6,9.6 C10.6,10.8 11.6,11.6 11,13 C10.2,14.2 12,15.4 11.4,16.6 C10.8,17.8 12.2,19 11.2,20.4 C10.6,21.4 9.8,22.2 8.6,23.4 L23.4,23.4 C22.2,22.2 21.4,21.4 20.8,20.4 C19.8,19 21.2,17.8 20.6,16.6 C20,15.4 21.8,14.2 21,13 C20.4,11.6 21.4,10.8 23.4,9.6 Z" fill="#fff4cc"' + o + '/>' +
+                   '<path d="M6.6,9.4 C6.6,6 10.6,4.8 16,6.4 C21.4,4.8 25.4,6 25.4,9.4 C21.6,11 10.4,11 6.6,9.4Z" fill="' + c + '"' + o + '/>' +
+                   '<path d="M6.8,23.6 C10.6,22.2 21.4,22.2 25.2,23.6 C25.2,27.6 21,29.8 16,29.8 C11,29.8 6.8,27.6 6.8,23.6Z" fill="' + c + '"' + o + '/>' +
+                   '<ellipse cx="14.6" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/><ellipse cx="17.4" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/></svg>';
+        }
+
+        function makeIconSvg(shape, color, size) {
+            if (shape === 'square') {
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                       '<rect x="1" y="1" width="14" height="14" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
+            } else if (shape === 'digester') {
+                return digesterSvg(color, size, 0.2);
+            } else if (shape === 'apple') {
+                return appleCoreSvg(color, size);
+            } else if (shape === 'wind') {
+                return windSvg(color, size, 0.4);
+            } else if (shape === 'sun') {
+                return sunSvg(color, size, 0.4);
+            } else if (shape === 'droplet') {
+                var w = Math.round(size * 0.75);
+                return '<svg width="' + w + '" height="' + size + '" viewBox="-1 -1 14 18">' +
+                       '<path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
+            } else {
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
+                       '<circle cx="8" cy="8" r="7" fill="' + color + '" stroke="#333" stroke-width="0.2"/></svg>';
+            }
+        }
+
+        function makeMarkerIcon(shape, color) {
+            var h = 14, w = shape === 'droplet' ? 11 : 14;
+            return L.divIcon({ html: makeIconSvg(shape, color, h), className: 'custom-marker-icon',
+                               iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
+        }
+
+        function makeClusterIcon(shape, color, count) {
+            var base = count < 10 ? 20 : count < 50 ? 26 : 32;
+            var w = shape === 'droplet' ? Math.round(base * 0.75) : base;
+            return L.divIcon({ html: makeIconSvg(shape, color, base), className: 'custom-marker-icon',
+                               iconSize: [w, base], iconAnchor: [w / 2, base / 2] });
+        }
+
+        // Point layers: client-side clustering from lightweight coord files
+        function createPointLayer(key) {
+            var cfg = layerConfig[key];
+            var cluster = L.markerClusterGroup({
+                maxClusterRadius: function (zoom) {
+                    if (zoom <= 6)  return 160;
+                    if (zoom <= 7)  return 120;
+                    if (zoom <= 8)  return 90;
+                    if (zoom <= 9)  return 65;
+                    if (zoom <= 10) return 45;
+                    if (zoom <= 11) return 30;
+                    return 20;
+                },
+                showCoverageOnHover: false,
+                iconCreateFunction: function (c) {
+                    return makeClusterIcon(cfg.shape, cfg.color, c.getChildCount());
+                }
+            });
+            cluster.on('clustermouseover', function (e) {
+                e.layer.bindTooltip(cfg.label + ': ' + e.layer.getChildCount(), {
+                    permanent: false, direction: 'top', offset: [0, -6]
+                }).openTooltip();
+            });
+            cluster.on('clustermouseout', function (e) {
+                e.layer.closeTooltip();
+            });
+            fetch('coords/' + key + '.json')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var markers = data.map(function (p) {
+                        var m = L.marker([p[1], p[0]], { icon: makeMarkerIcon(cfg.shape, cfg.color) });
+                        // p[4]: head count (livestock layers) or a detail line (e.g. digester facility type)
+                        // p[5]: 1 = livestock farm that has an on-farm digester
+                        // p[7]: estimated manure, tons/year (livestock layers)
+                        // p[9]: extra info line (fuel plant capacity, landfill waste received)
+                        var name = p[2] || '', city = p[3] || '', extra = p[4];
+                        // Farm digesters carry 'On-Farm Digester' as their detail line; show it above the location
+                        var onFarm = p[5] || extra === 'On-Farm Digester';
+                        if (extra === 'On-Farm Digester') extra = null;
+                        if (name || city || extra != null || onFarm) {
+                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label +
+                                        (onFarm ? '<br>On-Farm Digester' : '') +
+                                        (city ? '<br>' + city + ', IA' : '') +
+                                        (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
+                                         extra ? '<br>' + extra : '') +
+                                        (typeof p[7] === 'number' ? '<br>Manure: ' + p[7].toLocaleString('en-US') + ' tons/year' : '') +
+                                        (p[9] ? '<br>' + p[9] : '') +
+                                        // p[6]: feedstocks (digester layers)
+                                        (p[6] ? '<br><strong>Feedstocks:</strong> ' + p[6] : ''));
+                        }
+                        m.plantType = p[8];   // p[8]: plant type (power plants layer)
+                        return m;
+                    });
+                    cluster.allMarkers = markers;
+                    cluster.addLayers(key === 'powerplants' ? filterPlantType(markers) : markers);
+                    if (key === 'powerplants') applyPlantTypeFilter();
+                })
+                .catch(function (err) { console.error('Failed to load coords for', key, err); });
+            return cluster;
+        }
+
+        var PLANT_TYPES = ['Coal', 'Natural Gas', 'Oil / Petroleum', 'Hydroelectric', 'Biogas', 'Other'];
+
+        function selectedPlantType() {
+            var sel = document.getElementById('powerplant-type');
+            return sel ? sel.value : '';
+        }
+
+        function filterPlantType(markers) {
+            var t = selectedPlantType();
+            return t ? markers.filter(function (m) { return m.plantType === t; }) : markers;
+        }
+
+        // Show only the chosen plant type and update the legend count to match
+        var powerplantTotal = null;
+        function applyPlantTypeFilter() {
+            var cluster = layerGroups.powerplants;
+            if (cluster && cluster.allMarkers) {
+                var shown = filterPlantType(cluster.allMarkers);
+                cluster.clearLayers();
+                cluster.addLayers(shown);
+                setLegendCount('powerplants', shown.length);
+            } else if (!selectedPlantType() && powerplantTotal !== null) {
+                setLegendCount('powerplants', powerplantTotal);
+            }
+        }
+
+        // Pipeline layer stays as pre-built vector tiles (too large for client-side)
+        function createPipelineLayer() {
+            var borderColor = currentBaseLayer === 'satellite' ? 'white' : '#333';
+            return L.vectorGrid.protobuf('tiles/pipelines/{z}/{x}/{y}.pbf', {
+                vectorTileLayerStyles: {
+                    pipelines: [
+                        { weight: 2.85, color: borderColor, opacity: 0.9, fill: false },
+                        { weight: 4, color: '#4a5568', opacity: 0.9, fill: false }
+                    ]
+                },
+                interactive: false,
+                maxNativeZoom: 14
+            });
+        }
+
+        var allKeys = ['beef','dairy','swine','turkeys','chickens',
+                       'biodiesel','ethanol','wastewater',
+                       'powerplants','standbyplants','windplants','solarplants','pipelines','landfill','foodwaste',
+                       'digesters-ww','digesters-farm','digesters-sa'];
+
+        var layerConfig = {
+            beef:        { file: 'geojson/beef.geojson',        color: '#c87533', shape: 'circle',  label: 'Beef Cattle' },
+            dairy:       { file: 'geojson/dairy.geojson',       color: '#d03939', shape: 'circle',  label: 'Dairy Cattle' },
+            swine:       { file: 'geojson/swine.geojson',       color: '#ff9eb5', shape: 'circle',  label: 'Swine' },
+            turkeys:     { file: 'geojson/turkeys.geojson',     color: '#f4a460', shape: 'circle',  label: 'Turkeys' },
+            chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
+            biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'droplet', label: 'Biodiesel Plants' },
+            ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
+            wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
+            powerplants: { file: 'geojson/powerplants.geojson', color: '#9a0f0f', shape: 'square',  label: 'Power Plants' },
+            standbyplants: { file: 'geojson/standbyplants.geojson', color: '#c98585', shape: 'square', label: 'Standby Power Plants' },
+            windplants:  { file: 'geojson/windplants.geojson',  color: '#00bcd4', shape: 'wind',    label: 'Wind Power' },
+            solarplants: { file: 'geojson/solarplants.geojson', color: '#f5d000', shape: 'sun',     label: 'Solar Power' },
+            pipelines:   { file: 'geojson/pipelines.geojson',   line: '#4a5568',                    label: 'Gas Pipelines' },
+            landfill:    { file: 'geojson/landfill.geojson',    color: '#8b4513', shape: 'square',  label: 'Landfill Sites' },
+            'digesters-ww':   { file: 'geojson/digesters.geojson', color: '#3498db', shape: 'digester', label: 'Wastewater Treatment Digesters' },
+            'digesters-farm': { file: 'geojson/digesters.geojson', color: '#c87533', shape: 'digester', label: 'On-Farm Digesters' },
+            'digesters-sa':   { file: 'geojson/digesters.geojson', color: '#2ecc71', shape: 'digester', label: 'Stand-Alone Digesters' },
+            foodwaste:   { file: 'geojson/foodwaste.geojson',   color: '#d62839', shape: 'apple',      label: 'Food Waste' }
+        };
+
+        function buildLegend() {
+            var div = document.createElement('div');
+            div.className = 'legend';
+            function li(id, svgHtml, label, i18nKey) {
+                return '<label class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + label + '</span>' +
+                       '<span class="legend-count" id="count-' + id.replace('toggle-', '') + '"></span></label>';
+            }
+            function tri(c) { return '<svg width="16" height="12" viewBox="0 0 16 12"><polygon points="8,0 16,12 0,12" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function circ(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function rect(c) { return '<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function dash(c) { return '<svg width="16" height="8" viewBox="0 0 16 8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + c + '" stroke-width="3"/></svg>'; }
+            function drop(c) { return '<svg width="12" height="16" viewBox="-1 -1 14 18"><path d="M6,0 C6,0 0,6 0,10 A6,6 0 0,0 12,10 C12,6 6,0 6,0Z" fill="' + c + '" stroke="#333" stroke-width="1"/></svg>'; }
+            function apple(c) { return appleCoreSvg(c, 16); }
+            function grp(t, f, secId, i18nKey) {
+                if (secId) {
+                    return '<div class="legend-group' + (f ? ' first' : '') + '"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;width:100%;margin:0;"><input type="checkbox" id="' + secId + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></label></div>';
+                }
+                return '<div class="legend-group' + (f ? ' first' : '') + '"><span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + t + '</span></div>';
+            }
+            var sectionKeys = {
+                'sec-feedlot':   ['beef','dairy','swine','turkeys','chickens'],
+                'sec-human':     ['wastewater','landfill','foodwaste'],
+                'sec-ad':        ['digesters-ww','digesters-farm','digesters-sa'],
+                'sec-utilities': ['powerplants','standbyplants','windplants','solarplants','biodiesel','ethanol','pipelines']
+            };
+            div.innerHTML =
+                '<div class="legend-header"><h4 data-i18n="legend-title">Legend</h4><div class="legend-btn-group"><button class="legend-clear-btn" id="legend-select-all-btn" data-i18n="legend-select-all">Select All</button><button class="legend-clear-btn" id="legend-clear-all-btn" style="display:none" data-i18n="legend-clear-all">Clear All</button></div></div>' +
+                grp('Manure', true, 'sec-feedlot', 'legend-feedlot') +
+                li('toggle-beef',        circ('#c87533'), 'Beef Cattle', 'legend-beef') +
+                li('toggle-dairy',       circ('#d03939'), 'Dairy Cattle', 'legend-dairy') +
+                li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
+                li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
+                li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
+                grp('Anaerobic Digesters', false, 'sec-ad', 'legend-ad-group') +
+                li('toggle-digesters-ww',   digesterSvg('#3498db', 16, 1), 'Wastewater Treatment Digesters', 'legend-ad-ww') +
+                li('toggle-digesters-farm', digesterSvg('#c87533', 16, 1), 'On-Farm Digesters', 'legend-ad-farm') +
+                li('toggle-digesters-sa',   digesterSvg('#2ecc71', 16, 1), 'Stand-Alone Digesters', 'legend-ad-sa') +
+                grp('Human Waste', false, 'sec-human', 'legend-human') +
+                li('toggle-wastewater',  drop('#3498db'), 'Wastewater Treatment', 'legend-wastewater') +
+                li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
+                li('toggle-foodwaste',  apple('#d62839'), 'Food Waste', 'legend-foodwaste') +
+                grp('Power and Gas', false, 'sec-utilities', 'legend-utilities-group') +
+                li('toggle-powerplants', rect('#9a0f0f'), 'Power Plants', 'legend-powerplants') +
+                '<div class="legend-subfilter"><select id="powerplant-type" aria-label="Power plant type">' +
+                    '<option value="">All plant types</option>' +
+                    PLANT_TYPES.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+                '</select></div>' +
+                li('toggle-standbyplants', rect('#c98585'), 'Standby Power Plants', 'legend-standbyplants') +
+                li('toggle-windplants',  windSvg('#00bcd4', 16, 0.8), 'Wind Power', 'legend-windplants') +
+                li('toggle-solarplants', sunSvg('#f5d000', 16, 0.8), 'Solar Power', 'legend-solarplants') +
+                li('toggle-biodiesel',   drop('#1abc9c'), 'Biodiesel Plants', 'legend-biodiesel') +
+                li('toggle-ethanol',     drop('#e6c229'), 'Ethanol Plants', 'legend-ethanol') +
+                li('toggle-pipelines',   dash('#4a5568'), 'Gas Pipelines', 'legend-pipelines');
+
+            function updateSectionCheckboxes() {
+                Object.keys(sectionKeys).forEach(function (secId) {
+                    var secCb = div.querySelector('#' + secId);
+                    if (!secCb) return;
+                    var keys = sectionKeys[secId];
+                    var checkedCount = keys.filter(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        return cb && cb.checked;
+                    }).length;
+                    secCb.checked = checkedCount === keys.length;
+                    secCb.indeterminate = checkedCount > 0 && checkedCount < keys.length;
+                });
+            }
+
+            function updateLegendButtons() {
+                var checkedCount = allKeys.filter(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    return cb && cb.checked;
+                }).length;
+                var selectBtn = div.querySelector('#legend-select-all-btn');
+                var clearBtn  = div.querySelector('#legend-clear-all-btn');
+                if (checkedCount === 0) {
+                    selectBtn.style.display = '';
+                    clearBtn.style.display  = 'none';
+                } else if (checkedCount === allKeys.length) {
+                    selectBtn.style.display = 'none';
+                    clearBtn.style.display  = '';
+                } else {
+                    selectBtn.style.display = '';
+                    clearBtn.style.display  = '';
+                }
+            }
+
+            div.querySelector('#legend-select-all-btn').addEventListener('click', function () {
+                allKeys.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
+                });
+                updateLegendButtons();
+                updateSectionCheckboxes();
+                saveLegendState();
+            });
+
+            div.querySelector('#legend-clear-all-btn').addEventListener('click', function () {
+                allKeys.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb && cb.checked) { cb.checked = false; toggleLayer(key, false); }
+                });
+                updateLegendButtons();
+                updateSectionCheckboxes();
+                saveLegendState();
+            });
+
+            // Section header checkboxes — toggle all items in that section
+            Object.keys(sectionKeys).forEach(function (secId) {
+                var secCb = div.querySelector('#' + secId);
+                if (!secCb) return;
+                secCb.addEventListener('change', function () {
+                    var checked = this.checked;
+                    sectionKeys[secId].forEach(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        if (cb && cb.checked !== checked) {
+                            cb.checked = checked;
+                            toggleLayer(key, checked);
+                        }
+                    });
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                    saveLegendState();
+                });
+            });
+
+            allKeys.forEach(function (key) {
+                var cb = div.querySelector('#toggle-' + key);
+                if (cb) cb.addEventListener('change', function () {
+                    toggleLayer(key, this.checked);
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                    saveLegendState();
+                });
+            });
+
+            // Power Plants type filter: choosing a type also turns the layer on
+            var typeSel = div.querySelector('#powerplant-type');
+            try { typeSel.value = localStorage.getItem('powerplantType') || ''; } catch (e) {}
+            typeSel.addEventListener('change', function () {
+                try { localStorage.setItem('powerplantType', this.value); } catch (e) {}
+                var cb = div.querySelector('#toggle-powerplants');
+                if (this.value && !cb.checked) {
+                    cb.checked = true;
+                    toggleLayer('powerplants', true);
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                    saveLegendState();
+                }
+                applyPlantTypeFilter();
+            });
+
+            function saveLegendState() {
+                var state = {};
+                allKeys.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb) state[key] = cb.checked;
+                });
+                localStorage.setItem('legendState', JSON.stringify(state));
+            }
+
+            function restoreLegendState() {
+                var saved = localStorage.getItem('legendState');
+                if (!saved) return;
+                try {
+                    var state = JSON.parse(saved);
+                    allKeys.forEach(function (key) {
+                        if (state[key] === true) {
+                            var cb = div.querySelector('#toggle-' + key);
+                            if (cb && !cb.checked) {
+                                cb.checked = true;
+                                toggleLayer(key, true);
+                            }
+                        }
+                    });
+                    updateLegendButtons();
+                    updateSectionCheckboxes();
+                } catch (e) {}
+            }
+            restoreLegendState();
+
+            L.DomEvent.disableScrollPropagation(div);
+            L.DomEvent.disableClickPropagation(div);
+            return div;
+        }
+
+
+        function toggleLayer(key, visible) {
+            if (!layerConfig[key]) return;
+            if (visible) {
+                if (!layerGroups[key]) {
+                    layerGroups[key] = layerConfig[key].line ? createPipelineLayer() : createPointLayer(key);
+                }
+                map.addLayer(layerGroups[key]);
+            } else {
+                if (layerGroups[key]) map.removeLayer(layerGroups[key]);
+            }
+        }
+
+        // Iowa state border — color adapts to active base layer
+        var iowaLayer = null;
+        function updateIowaBorder() {
+            if (!iowaLayer) return;
+            if (currentBaseLayer === 'satellite') {
+                iowaLayer.setStyle({ color: '#ffffff', weight: 4, opacity: 0.4 });
+            } else {
+                iowaLayer.setStyle({ color: '#888', weight: 4, opacity: 0.4 });
+            }
+        }
+        fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var iowa = data.features.find(function (f) { return f.properties.name === 'Iowa'; });
+                if (iowa) {
+                    iowaLayer = L.geoJSON(iowa, { style: { fillOpacity: 0, color: '#888', weight: 4, opacity: 0.4 } }).addTo(map);
+                }
+            });
+
+        // Search index — pre-load all coords for farm/location search
+        var searchIndex = [];
+        allKeys.filter(function(k) { return layerConfig[k] && !layerConfig[k].line; }).forEach(function(key) {
+            fetch('coords/' + key + '.json')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    data.forEach(function(p) {
+                        searchIndex.push({ key: key, label: layerConfig[key].label, name: p[2] || '', city: p[3] || '', lat: p[1], lng: p[0] });
+                    });
+                }).catch(function() {});
+        });
+
+        function zoomToFarm(item) {
+            map.flyTo([item.lat, item.lng], 14);
+            if (!layerGroups[item.key]) {
+                toggleLayer(item.key, true);
+                var cb = document.querySelector('#toggle-' + item.key);
+                if (cb) cb.checked = true;
+            }
+            map.once('moveend', function() {
+                if (!layerGroups[item.key]) return;
+                layerGroups[item.key].eachLayer(function(marker) {
+                    if (marker.getLatLng &&
+                        Math.abs(marker.getLatLng().lat - item.lat) < 0.00005 &&
+                        Math.abs(marker.getLatLng().lng - item.lng) < 0.00005) {
+                        marker.openPopup();
+                    }
+                });
+            });
+        }
+
+        // Legend as a Leaflet control
+        var LegendControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function () { return buildLegend(); }
+        });
+        new LegendControl().addTo(map);
+
+        // Show each layer's site count next to its legend label (small coordinate files; the browser caches them for when the layer is turned on)
+        function setLegendCount(key, n) {
+            var el = document.getElementById('count-' + key);
+            if (el) el.textContent = '(' + n.toLocaleString('en-US') + ')';
+        }
+        allKeys.forEach(function (key) {
+            var cfg = layerConfig[key];
+            if (!cfg || cfg.line) return;   // no count for line layers (pipelines)
+            var url = 'coords/' + key + '.json';
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    var n = Array.isArray(d) ? d.length : (d.features || []).length;
+                    if (key === 'powerplants') {
+                        powerplantTotal = n;
+                        var t = selectedPlantType();
+                        if (t) n = d.filter(function (p) { return p[8] === t; }).length;
+                    }
+                    setLegendCount(key, n);
+                })
+                .catch(function () {});
+        });
+
+        // Map search bar wiring
+        (function() {
+            var searchInput = document.getElementById('sidebar-search-input');
+            var searchDropdown = document.getElementById('sidebar-search-dropdown');
+            var mapSearch = document.getElementById('map-search');
+            L.DomEvent.disableClickPropagation(mapSearch);
+            L.DomEvent.disableScrollPropagation(mapSearch);
+            var searchTimer = null;
+
+            function showSearchResults(farmResults, locResults) {
+                searchDropdown.innerHTML = '';
+                var items = farmResults.map(function(f) { return { farm: f }; })
+                    .concat(locResults.map(function(l) { return { loc: l }; }));
+                if (!items.length) { searchDropdown.style.display = 'none'; return; }
+                items.forEach(function(item) {
+                    var el = document.createElement('li');
+                    el.className = 'search-result-item';
+                    if (item.farm) {
+                        var f = item.farm;
+                        el.innerHTML = '<span class="search-result-name">' + (f.name || f.city) + '</span>' +
+                            '<span class="search-result-sub">' + f.label + (f.city ? ' \xb7 ' + f.city + ', IA' : '') + '</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = f.name || f.city;
+                            searchDropdown.style.display = 'none';
+                            zoomToFarm(f);
+                        });
+                    } else {
+                        var l = item.loc;
+                        el.innerHTML = '<span class="search-result-name">' + l.display + '</span>' +
+                            '<span class="search-result-sub">Location \xb7 Iowa</span>';
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            searchInput.value = l.display;
+                            searchDropdown.style.display = 'none';
+                            map.flyTo([l.lat, l.lng], l.zoom);
+                        });
+                    }
+                    searchDropdown.appendChild(el);
+                });
+                searchDropdown.style.display = 'block';
+            }
+
+            searchInput.addEventListener('input', function() {
+                var q = this.value.trim();
+                clearTimeout(searchTimer);
+                if (q.length < 2) { searchDropdown.style.display = 'none'; searchDropdown.innerHTML = ''; return; }
+                var ql = q.toLowerCase();
+                var farmResults = searchIndex.filter(function(item) {
+                    return (item.name && item.name.toLowerCase().indexOf(ql) !== -1) ||
+                           (item.city && item.city.toLowerCase().indexOf(ql) !== -1);
+                }).slice(0, 5);
+                showSearchResults(farmResults, []);
+                searchTimer = setTimeout(function() {
+                    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q + ', Iowa, USA') +
+                          '&format=json&limit=5&countrycodes=us')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var locResults = data.map(function(r) {
+                                var zoom = r.type === 'postcode' ? 13 : r.class === 'boundary' ? 10 : 12;
+                                return { display: r.display_name.split(',')[0], lat: parseFloat(r.lat), lng: parseFloat(r.lon), zoom: zoom };
+                            });
+                            showSearchResults(farmResults, locResults);
+                        }).catch(function() {});
+                }, 350);
+            });
+            searchInput.addEventListener('blur', function() {
+                setTimeout(function() { searchDropdown.style.display = 'none'; }, 200);
+            });
+            searchInput.addEventListener('focus', function() {
+                if (searchDropdown.children.length) searchDropdown.style.display = 'block';
+            });
+        })();
+
 
         // ===== AOI DRAWING =====
         function showAoiToast(msg) {
@@ -3031,35 +3794,28 @@
             }
         })();
 
-        document.getElementById('ac2-search').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                var query = this.value.trim();
-                if (query) console.log('Search Area:', query);
-            }
-        });
-
         function handleDownload() {
             console.log('Download triggered');
         }
 
-        if (localStorage.getItem('sidebar') === 'hidden') {
-            document.querySelector('.page-layout').classList.add('sidebar-hidden');
-            var t = document.getElementById('sidebar-toggle-btn');
-            if (t) t.innerHTML = '&#8594;';
-        }
-        function toggleSidebar() {
-            var layout = document.querySelector('.page-layout');
-            layout.classList.toggle('sidebar-hidden');
-            var hidden = layout.classList.contains('sidebar-hidden');
-            localStorage.setItem('sidebar', hidden ? 'hidden' : 'visible');
-            var t = document.getElementById('sidebar-toggle-btn');
-            if (t) t.innerHTML = hidden ? '&#8594;' : '&#8592;';
-        }
 
         // Initial chart render
         updateCharts();
 
     </script>
-    <div class="ac2-page-date">Data Updated: April 7, 2026</div>
+    <div class="ac2-page-date">Site Last Updated: <span id="site-last-updated">November 4, 2026</span></div>
+    <script>
+        // Show the date of the latest change to the site (newest commit on GitHub); keeps the date above if this fails
+        fetch('https://api.github.com/repos/KaitlynSewell/ad-website-demo/commits?sha=main&per_page=1')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d[0]) return;
+                var dt = new Date(d[0].commit.committer.date);
+                if (isNaN(dt)) return;
+                document.getElementById('site-last-updated').textContent =
+                    dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            })
+            .catch(function () {});
+    </script>
 </body>
 </html>
