@@ -96,42 +96,55 @@ html.dark-mode .section-heading {
     bottom: 0;
     display: flex;
     align-items: flex-end;
-    gap: 4px;
+    gap: 0;
 }
 
+/* Flat light-grey tabs separated by dark grey vertical lines */
 .header-nav-btn {
     display: flex;
     align-items: center;
     height: 52px;
     margin-bottom: -1px;               /* cover the header's bottom border */
-    padding: 0 20px;
+    padding: 0 22px;
     font-size: 15px;
     font-weight: normal;
-    color: white;
+    color: #2c3e50;
     text-decoration: none;
-    background-color: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
+    background-color: #dfe2e7;
+    border: none;
+    border-radius: 0;
     white-space: nowrap;
     transition: background-color 0.2s;
 }
 
+.header-nav-btn + .header-nav-btn {
+    border-left: 2px solid #5a5f66;
+}
+
 .header-nav-btn:hover {
-    background-color: rgba(255, 255, 255, 0.28);
+    background-color: #ccd0d6;
 }
 
 .header-nav-btn.active {
     background-color: #f0f0f0;         /* same as the page background */
-    border-color: #f0f0f0;
-    color: #2c3e50;
     font-weight: bold;
+}
+
+html.dark-mode .header-nav-btn {
+    background-color: #3a3f4b;
+    color: #e0e0e0;
+}
+
+html.dark-mode .header-nav-btn + .header-nav-btn {
+    border-left-color: #1f2229;
+}
+
+html.dark-mode .header-nav-btn:hover {
+    background-color: #474d5b;
 }
 
 html.dark-mode .header-nav-btn.active {
     background-color: #1a1a2e;
-    border-color: #1a1a2e;
-    color: #e0e0e0;
 }
 
 .header-actions .header-gear-btn {
@@ -152,7 +165,7 @@ html.dark-mode .header-nav-btn.active {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c0c4cc;
+    color: #eef0f4;
     text-decoration: none;
     padding: 4px;
     border-radius: 50%;
@@ -166,19 +179,19 @@ html.dark-mode .header-nav-btn.active {
 
 .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.15);
-    color: #e0e3e8;
+    color: #ffffff;
 }
 
 .header-gear-btn.active {
-    color: #e0e3e8;
+    color: #ffffff;
     background-color: rgba(255, 255, 255, 0.15);
 }
 
 html.dark-mode .header-gear-btn {
-    color: #9ca3af;
+    color: #d1d5db;
 }
 
 html.dark-mode .header-gear-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    color: #c0c4cc;
+    color: #f3f4f6;
 }
