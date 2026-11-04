@@ -130,6 +130,34 @@
             gap: 16px;
         }
 
+        /* Legend panel to the left of the map, same height as the map box */
+        .ac2-map-row {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+        }
+        .ac2-map-row .ac2-map-box { flex: 1; min-width: 0; }
+        .ac2-legend-box {
+            width: 300px;
+            flex-shrink: 0;
+            height: 660px;              /* map 620px + 2 x 20px padding */
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 16px 18px;
+        }
+        .ac2-legend-box .legend {
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+            max-height: none;
+            overflow: visible;
+        }
+        html.dark-mode .ac2-legend-box { background: #1e3050; border-color: #2a4a7a; }
+        html.dark-mode .ac2-legend-box .legend { background: transparent; }
+
         /* Charts below the map: two per row (one per row on narrow screens) */
         .ac2-chart-grid {
             display: grid;
@@ -887,20 +915,23 @@
     <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
         <div class="main-content" style="flex-direction: column; align-items: flex-start; justify-content: flex-start; overflow-y: auto; height: 100%;">
             <div class="ac2-charts">
-                    <div class="ac2-map-box" style="flex:none;">
-                        <div id="aoi-top-row" style="position:absolute;top:30px;left:50%;transform:translateX(-50%);z-index:1100;display:flex;align-items:center;gap:6px;">
-                            <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
-                            <div id="aoi-radius-row" style="display:none;align-items:center;gap:6px;background:white;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;">
-                                <span>Radius:</span>
-                                <input type="number" id="aoi-radius-input" value="10" min="1" max="500" step="1" style="width:55px;padding:2px 5px;border:1px solid #ccc;border-radius:3px;font-size:12px;" />
-                                <span id="aoi-radius-unit">km</span>
+                    <div class="ac2-map-row">
+                        <div class="ac2-legend-box" id="legend-panel"></div>
+                        <div class="ac2-map-box">
+                            <div id="aoi-top-row" style="position:absolute;top:30px;right:30px;z-index:1100;display:flex;align-items:center;gap:6px;">
+                                <button class="aoi-clear-btn" id="aoi-clear-btn" onclick="clearAOI()" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
+                                <div id="aoi-radius-row" style="display:none;align-items:center;gap:6px;background:white;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;">
+                                    <span>Radius:</span>
+                                    <input type="number" id="aoi-radius-input" value="10" min="1" max="500" step="1" style="width:55px;padding:2px 5px;border:1px solid #ccc;border-radius:3px;font-size:12px;" />
+                                    <span id="aoi-radius-unit">km</span>
+                                </div>
                             </div>
-                        </div>
-                        <div id="microgrid-map" style="position:relative;">
-                            <div class="legend-search-wrap map-search" id="map-search">
-                                <svg class="legend-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
-                                <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search the map" autocomplete="off" />
-                                <ul class="legend-search-dropdown" id="sidebar-search-dropdown"></ul>
+                            <div id="microgrid-map" style="position:relative;">
+                                <div class="legend-search-wrap map-search" id="map-search">
+                                    <svg class="legend-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+                                    <input type="text" id="sidebar-search-input" class="legend-search" placeholder="Search the map" autocomplete="off" />
+                                    <ul class="legend-search-dropdown" id="sidebar-search-dropdown"></ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3076,11 +3107,8 @@
         }
 
         // Legend as a Leaflet control
-        var LegendControl = L.Control.extend({
-            options: { position: 'topright' },
-            onAdd: function () { return buildLegend(); }
-        });
-        new LegendControl().addTo(map);
+        // Legend sits in its own panel to the left of the map
+        document.getElementById('legend-panel').appendChild(buildLegend());
 
         // Show each layer's site count next to its legend label (small coordinate files; the browser caches them for when the layer is turned on)
         function setLegendCount(key, n) {
