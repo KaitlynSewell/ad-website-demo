@@ -201,7 +201,7 @@
         .fds-label { font-size: 11px; font-weight: 600; color: #2c3e50; flex: 1; }
         .fds-count { font-weight: normal; color: #888; }
         .fds-used-badge {
-            font-size: 9px; background: #FF7043; color: white;
+            font-size: 9px; background: #2E9E4F; color: white;
             border-radius: 8px; padding: 1px 5px; flex-shrink: 0;
         }
         .fds-all-btn {
@@ -959,7 +959,7 @@
                             <canvas id="feedstock-bar" width="520" height="250" style="max-width:100%;"></canvas>
                             <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:11px;color:#555;">
                                 <span><span style="display:inline-block;width:10px;height:10px;background:#ccc;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background-color:#FF7043;background-image:radial-gradient(white 1px, transparent 1.2px);background-size:4px 4px;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Selected for Microgrid</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background-color:#2E9E4F;background-image:radial-gradient(white 1px, transparent 1.2px);background-size:4px 4px;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Selected for Microgrid</span>
                             </div>
                             <div style="font-size:10px;color:#888;text-align:center;">Wastewater is not shown because no waste amounts are available.</div>
                         </div>
@@ -1561,7 +1561,7 @@
                 var c = document.createElement('canvas');
                 c.width = c.height = 6;
                 var p = c.getContext('2d');
-                p.fillStyle = '#FF7043';
+                p.fillStyle = '#2E9E4F';
                 p.fillRect(0, 0, 6, 6);
                 p.fillStyle = 'white';
                 p.beginPath(); p.arc(1.5, 1.5, 1.1, 0, 2 * Math.PI); p.fill();
@@ -1640,7 +1640,7 @@
                         var usedH = Math.max(2, b.used / maxVal * chartH);
                         ctx.fillStyle = selectedPattern(ctx);
                         ctx.fillRect(barX, base - usedH, barW, usedH);
-                        ctx.strokeStyle = '#FF7043';
+                        ctx.strokeStyle = '#2E9E4F';
                         ctx.strokeRect(barX + 0.5, base - usedH + 0.5, barW - 1, usedH - 1);
                     }
 
@@ -1651,7 +1651,7 @@
                     // Selected amount sits under the available amount
                     ctx.fillText(formatWaste(b.available), cx, base - availH - (b.used > 0 ? 14 : 2));
                     if (b.used > 0) {
-                        ctx.fillStyle = '#FF7043';
+                        ctx.fillStyle = '#2E9E4F';
                         ctx.fillText(formatWaste(b.used), cx, base - availH - 2);
                     }
                 }
