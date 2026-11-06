@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106e"></script>
+    <script src="translations.js?v=20261106f"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -247,15 +247,17 @@
 
         .ac2-page-date {
             position: fixed;
-            bottom: 12px;
+            bottom: 0;
             right: 0;
             width: 340px;
+            padding: 8px 0 12px;
+            background: white;
             text-align: center;
             font-size: 11px;
             color: #2c3e50;
             pointer-events: none;
         }
-        html.dark-mode .ac2-page-date { color: white; }
+        html.dark-mode .ac2-page-date { color: white; background: #1e3050; }
 
         .ac2-map-box {
             background: white;
@@ -795,7 +797,7 @@
             flex-direction: column;
             flex-shrink: 0;
             overflow-y: auto;
-            padding: 16px 14px;
+            padding: 16px 14px 44px;    /* room for the date at the bottom */
             gap: 16px;
         }
         .aoi-rs-header {
@@ -1023,7 +1025,7 @@
                                 <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
                                 <div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>
                                 <div class="aoi-rs-value" id="aoi-digesters-total" style="display:none;margin-left:12px;"></div>
-                                <div class="aoi-rs-unit" id="aoi-digesters-total-label" style="display:none;" data-i18n="ac2-sidebar-total-digesters">Total (Real + Proposed)</div>
+                                <div class="aoi-rs-unit" id="aoi-digesters-total-label" style="display:none;" data-i18n="ac2-sidebar-total-digesters">Total</div>
                             </div>
                         </div>
                         <span class="aoi-digester-arrow" id="aoi-digester-arrow">▸</span>
@@ -1034,6 +1036,7 @@
                     </div>
                     <div id="aoi-digester-panel" style="display:none;margin-top:6px;"></div>
                 </div>
+                <div id="aoi-facility-sections" style="display:flex;flex-direction:column;gap:16px;"></div>
                 <div class="aoi-rs-section">
                     <div class="aoi-rs-label">Est. Population</div>
                     <div class="aoi-rs-value" id="aoi-population-display">—</div>
@@ -1449,6 +1452,127 @@
                 item.appendChild(btn);
                 panel.appendChild(item);
             });
+        }
+
+        // ===== WIND, SOLAR, POWER PLANT AND BIODIESEL SECTIONS (same rules as Digesters) =====
+        // key: map layer; placed: the + Add item that counts as a proposed facility of this type
+        var AOI_FACILITY_SECTIONS = [
+            { key: 'windplants',  placed: 'wind',        label: 'Wind Power',       i18n: 'legend-windplants' },
+            { key: 'solarplants', placed: 'solar',       label: 'Solar Power',      i18n: 'legend-solarplants' },
+            { key: 'powerplants', placed: 'powerplants', label: 'Power Plants',     i18n: 'legend-powerplants' },
+            { key: 'biodiesel',   placed: 'biodiesel',   label: 'Biodiesel Plants', i18n: 'legend-biodiesel' }
+        ];
+        var facilityHighlights = {};   // key -> { facId: L.circleMarker }
+
+        function facilityDetail(key, p) {
+            if (key === 'windplants') return p.CapacityMW + ' MW' + (p.Turbines ? ' · ' + p.Turbines + ' turbines' : '');
+            if (key === 'solarplants') return p.CapacityMW + ' MW';
+            if (key === 'powerplants') return [p.PlantType, p.CapacityMW + ' MW'].filter(Boolean).join(' · ');
+            return [p.Feedstock, p.CapMGb + ' million gal/year'].filter(Boolean).join(' · ');
+        }
+
+        function buildFacilitySections() {
+            document.getElementById('aoi-facility-sections').innerHTML = AOI_FACILITY_SECTIONS.map(function(sec) {
+                var k = sec.key;
+                return '<div class="aoi-rs-section">' +
+                    '<div class="aoi-digester-hdr" onclick="toggleFacilitySection(\'' + k + '\')"><div>' +
+                        '<div class="aoi-rs-label" data-i18n="' + sec.i18n + '">' + sec.label + '</div>' +
+                        '<div style="display:flex;align-items:baseline;gap:5px;">' +
+                            '<div class="aoi-rs-value" id="fac-count-' + k + '">—</div>' +
+                            '<div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>' +
+                            '<div class="aoi-rs-value" id="fac-total-' + k + '" style="display:none;margin-left:12px;"></div>' +
+                            '<div class="aoi-rs-unit" id="fac-total-label-' + k + '" style="display:none;" data-i18n="ac2-sidebar-total-digesters">Total</div>' +
+                        '</div></div>' +
+                        '<span class="aoi-digester-arrow" id="fac-arrow-' + k + '">▸</span>' +
+                    '</div>' +
+                    '<div id="fac-added-' + k + '" style="display:none;align-items:baseline;gap:5px;margin-top:4px;">' +
+                        '<div class="aoi-rs-value" id="fac-added-count-' + k + '"></div>' +
+                        '<div class="aoi-rs-unit" data-i18n="ac2-sidebar-added-area">Added To Selected Area</div>' +
+                    '</div>' +
+                    '<div id="fac-panel-' + k + '" style="display:none;margin-top:6px;"></div>' +
+                '</div>';
+            }).join('');
+            if (typeof applyTranslations === 'function') applyTranslations(localStorage.getItem('language') || 'en');
+        }
+
+        // Count, added and total lines for every section
+        function updateFacilitySections() {
+            AOI_FACILITY_SECTIONS.forEach(function(sec) {
+                var k = sec.key, real = getAoiCount(k);
+                var added = Object.keys(placedItems).filter(function(id) {
+                    return placedItems[id].key === sec.placed && aoiContains(placedItems[id]);
+                }).length;
+                document.getElementById('fac-count-' + k).textContent = real !== null ? real : '…';
+                document.getElementById('fac-added-' + k).style.display = added ? 'flex' : 'none';
+                document.getElementById('fac-added-count-' + k).textContent = added;
+                document.getElementById('fac-total-' + k).textContent = real !== null ? real + added : '…';
+                document.getElementById('fac-total-' + k).style.display = added ? '' : 'none';
+                document.getElementById('fac-total-label-' + k).style.display = added ? '' : 'none';
+                renderFacilityPanel(k);
+            });
+        }
+
+        function toggleFacilitySection(key) {
+            var panel = document.getElementById('fac-panel-' + key);
+            var isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            document.getElementById('fac-arrow-' + key).textContent = isOpen ? '▸' : '▾';
+            if (!isOpen) { bgLoadFeatures(key); renderFacilityPanel(key); }
+        }
+
+        function renderFacilityPanel(key) {
+            var panel = document.getElementById('fac-panel-' + key);
+            if (!panel || panel.style.display === 'none') return;
+            var sec = AOI_FACILITY_SECTIONS.filter(function(x) { return x.key === key; })[0];
+            var feats = getAoiFeaturesWithNames(key);
+            panel.innerHTML = '';
+            if (!feats) { panel.innerHTML = '<div class="fds-loading">Loading…</div>'; return; }
+            if (!feats.length) {
+                panel.innerHTML = '<div style="font-size:11px;color:#888;font-style:italic;">No ' + sec.label.toLowerCase() + ' in selected area.</div>';
+                return;
+            }
+            var shown = facilityHighlights[key] || {};
+            feats.forEach(function(f) {
+                var facId = facIdOf(f), on = !!shown[facId], place = [f.city, f.county].filter(Boolean).join(', ');
+                var item = document.createElement('div');
+                item.className = 'aoi-digester-item';
+                item.innerHTML = '<div class="aoi-digester-name">' + f.name + '</div>' +
+                    (place ? '<div class="aoi-digester-meta">' + place + '</div>' : '') +
+                    '<div class="aoi-digester-stats">' + f.detail + '</div>';
+                var btn = document.createElement('button');
+                btn.className = 'aoi-map-btn' + (on ? ' active' : '');
+                btn.textContent = on ? 'Remove from Map' : 'Show on Map';
+                btn.onclick = function() { toggleFacilityOnMap(key, f); };
+                item.appendChild(btn);
+                panel.appendChild(item);
+            });
+        }
+
+        function toggleFacilityOnMap(key, f) {
+            var shown = facilityHighlights[key] = facilityHighlights[key] || {}, facId = facIdOf(f);
+            if (shown[facId]) {
+                microgridMap.removeLayer(shown[facId]);
+                delete shown[facId];
+            } else {
+                var place = [f.city, f.county].filter(Boolean).join(', ');
+                var marker = L.circleMarker([f.lat, f.lng], {
+                    radius: 12, color: '#FF5722', fillColor: '#FF5722', fillOpacity: 0.75, weight: 3
+                }).bindPopup('<strong>' + f.name + '</strong>' + (place ? '<br>' + place : '') +
+                             '<br><span style="color:#666;font-size:11px;">' + f.detail + '</span>').addTo(microgridMap);
+                marker.openPopup();
+                microgridMap.panTo([f.lat, f.lng]);
+                shown[facId] = marker;
+            }
+            renderFacilityPanel(key);
+        }
+
+        function clearFacilityHighlights() {
+            Object.keys(facilityHighlights).forEach(function(key) {
+                Object.keys(facilityHighlights[key]).forEach(function(id) {
+                    microgridMap.removeLayer(facilityHighlights[key][id]);
+                });
+            });
+            facilityHighlights = {};
         }
 
         function renderAoiFeedstockPanel() {
@@ -1911,12 +2035,14 @@
         var FEEDSTOCK_NAME_FIELD = {
             beef:'facName', dairy:'facName', swine:'facName', chickens:'facName',
             turkeys:'facName', sheep:'facName', horses:'facName',
-            wastewater:'Name', landfill:'Name', foodwaste:'Name'
+            wastewater:'Name', landfill:'Name', foodwaste:'Name',
+            windplants:'Plant', solarplants:'Plant', powerplants:'Plant', biodiesel:'Plant'
         };
         var FEEDSTOCK_CITY_FIELD = {
             beef:'CityName', dairy:'CityName', swine:'CityName', chickens:'CityName',
             turkeys:'CityName', sheep:'CityName', horses:'CityName',
-            wastewater:'City', landfill:'County', foodwaste:'City'
+            wastewater:'City', landfill:'County', foodwaste:'City',
+            windplants:'City', solarplants:'City', powerplants:'City', biodiesel:'City'
         };
 
         function bgLoadFeatures(key) {
@@ -1943,9 +2069,13 @@
                             item.tons = Number(props[WASTE_TONS_FIELD[key]]) || 0;
                         }
                         if (props.MWhYear != null) item.mwh = Number(props.MWhYear) || 0;
+                        if (AOI_FACILITY_SECTIONS.some(function(sec) { return sec.key === key; })) {
+                            item.county = props.County || '';
+                            item.detail = facilityDetail(key, props);
+                        }
                         bgFeatureCache[key].push(item);
                     });
-                    if (hasAoiActive()) { renderAoiFeedstockPanel(); drawFeedstockBar(); drawEnergyBalance(); }
+                    if (hasAoiActive()) { renderAoiFeedstockPanel(); drawFeedstockBar(); drawEnergyBalance(); renderFacilityPanel(key); }
                     if (key === 'foodwaste') updateCharts();
                 })
                 .catch(function() { bgFeatureCache[key] = []; });
@@ -3497,6 +3627,7 @@
                 microgridMap.removeLayer(digesterHighlightMarkers[id]);
             });
             digesterHighlightMarkers = {};
+            clearFacilityHighlights();
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
@@ -3573,6 +3704,7 @@
                 microgridMap.removeLayer(digesterHighlightMarkers[id]);
             });
             digesterHighlightMarkers = {};
+            clearFacilityHighlights();
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
@@ -3614,6 +3746,7 @@
                 microgridMap.removeLayer(digesterHighlightMarkers[id]);
             });
             digesterHighlightMarkers = {};
+            clearFacilityHighlights();
             exitPlacementMode();
             clearAllPlacedItems();
             updateCharts();
@@ -3840,6 +3973,7 @@
                 microgridMap.removeLayer(digesterHighlightMarkers[id]);
             });
             digesterHighlightMarkers = {};
+            clearFacilityHighlights();
             renderMuniSelection();
             updateAoiSidebar();
             updateCharts();
@@ -4018,6 +4152,7 @@
             totalEl.textContent = realCount !== null ? realCount + added : '\u2026';
             totalEl.style.display = added ? '' : 'none';
             document.getElementById('aoi-digesters-total-label').style.display = added ? '' : 'none';
+            updateFacilitySections();
 
             updateAoiPopulation();
 
@@ -4091,6 +4226,7 @@
         }
 
         buildAddPanel();
+        buildFacilitySections();
         restoreAoiState();
         setNearbyFacilities(false);
         restorePlacedItems();
