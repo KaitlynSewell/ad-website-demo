@@ -3055,7 +3055,26 @@
                     updateSectionCheckboxes();
                 } catch (e) {}
             }
-            restoreLegendState();
+
+            // Opening the site turns on the Manure and Anaerobic Digesters sections
+            function applyDefaultLegend() {
+                var defaults = sectionKeys['sec-feedlot'].concat(sectionKeys['sec-ad']);
+                defaults.forEach(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
+                });
+                updateLegendButtons();
+                updateSectionCheckboxes();
+                saveLegendState();
+            }
+
+            // Once per browser session; coming back from another page keeps the visitor's choices
+            var firstOpen = true;
+            try {
+                firstOpen = !sessionStorage.getItem('legendOpened');
+                sessionStorage.setItem('legendOpened', '1');
+            } catch (e) {}
+            if (firstOpen) applyDefaultLegend(); else restoreLegendState();
 
             L.DomEvent.disableScrollPropagation(div);
             L.DomEvent.disableClickPropagation(div);
@@ -3879,7 +3898,7 @@
         updateCharts();
 
     </script>
-    <div class="ac2-page-date">Site Last Updated: <span id="site-last-updated">November 4, 2026</span></div>
+    <div class="ac2-page-date">Site Last Updated: <span id="site-last-updated">November 6, 2026</span></div>
     <script>
         // Show the date of the latest change to the site (newest commit on GitHub); keeps the date above if this fails
         fetch('https://api.github.com/repos/KaitlynSewell/ad-website-demo/commits?sha=main&per_page=1')
