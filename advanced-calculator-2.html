@@ -81,7 +81,7 @@
         .ac2-units-panel {
             position: absolute;
             top: calc(100% + 6px);
-            right: 0;
+            left: 0;
             background: white;
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -869,25 +869,6 @@
     </h1>
     <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
         <div class="ac2-toolbar">
-            <!-- Add button -->
-            <div class="ac2-add-wrap">
-                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)" data-i18n="ac2-add-btn">
-                    + Add
-                </button>
-            </div>
-
-            <!-- Pushes the buttons below to the right -->
-            <span style="margin-left:auto;"></span>
-
-            <!-- Show or hide icons outside the AOI (only while an AOI is selected) -->
-            <button class="ac2-toolbar-btn" id="aoi-nearby-btn" onclick="toggleNearbyFacilities()" style="display:none;" data-i18n="ac2-show-nearby">Show Nearby Facilities</button>
-
-            <!-- Clear the AOI (only while an AOI is selected) -->
-            <button class="ac2-toolbar-btn" id="aoi-clear-btn" onclick="clearAOI()" style="display:none;" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
-
-            <!-- Select Area of Interest -->
-            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" data-i18n="ac2-select-aoi">Select Area of Interest (AOI)</button>
-
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
                 <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()" data-i18n="ac2-units-btn">Units &#9662;</button>
@@ -929,6 +910,25 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 <span data-i18n="ac2-download">Download</span>
             </button>
+
+            <!-- Pushes the buttons below to the right -->
+            <span style="margin-left:auto;"></span>
+
+            <!-- Show or hide icons outside the AOI (only while an AOI is selected) -->
+            <button class="ac2-toolbar-btn" id="aoi-nearby-btn" onclick="toggleNearbyFacilities()" style="display:none;" data-i18n="ac2-show-nearby">Show Nearby Facilities</button>
+
+            <!-- Clear the AOI (only while an AOI is selected) -->
+            <button class="ac2-toolbar-btn" id="aoi-clear-btn" onclick="clearAOI()" style="display:none;" data-i18n="ac2-clear-aoi-btn">&#10005; Clear Area of Interest</button>
+
+            <!-- Select Area of Interest -->
+            <button class="ac2-toolbar-btn" onclick="handleSelectArea()" data-i18n="ac2-select-aoi">Select Area of Interest (AOI)</button>
+
+            <!-- Add button -->
+            <div class="ac2-add-wrap">
+                <button class="ac2-toolbar-btn" id="ac2-add-btn" onclick="toggleAddPanel(this)" data-i18n="ac2-add-btn">
+                    + Add
+                </button>
+            </div>
         </div>
     </div>
     <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
@@ -4000,7 +4000,7 @@
             if (!isOpen) {
                 var rect = btn.getBoundingClientRect();
                 panel.style.top = (rect.bottom + 6) + 'px';
-                panel.style.left = rect.left + 'px';
+                panel.style.left = Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - panel.offsetWidth - 8)) + 'px';
             }
         }
 
