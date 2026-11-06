@@ -1648,10 +1648,11 @@
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
                     ctx.fillStyle = isDark ? '#c8d8f0' : '#666';
-                    ctx.fillText(formatWaste(b.available), cx, base - availH - 2);
+                    // Selected amount sits under the available amount
+                    ctx.fillText(formatWaste(b.available), cx, base - availH - (b.used > 0 ? 14 : 2));
                     if (b.used > 0) {
                         ctx.fillStyle = '#FF7043';
-                        ctx.fillText(formatWaste(b.used), cx, base - availH - 14);
+                        ctx.fillText(formatWaste(b.used), cx, base - availH - 2);
                     }
                 }
                 ctx.fillStyle = textColor;
