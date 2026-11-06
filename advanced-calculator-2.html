@@ -1608,8 +1608,6 @@
                     '<span class="fds-arrow" id="fds-arrow-' + key + '">' + (isOpen ? '▾' : '▸') + '</span>' +
                     '<span class="fds-label">' + (FEEDSTOCK_BAR_LABELS[key] || key) +
                     ' <span class="fds-count">(' + count + ')</span>' +
-                    (key === 'foodwaste' && namedFeats ? ' <span class="fds-count">' +
-                        Math.round(namedFeats.reduce(function(t, f) { return t + f.tons; }, 0)).toLocaleString() + ' t/yr</span>' : '') +
                     '</span>' + badge;
                 var allSelected = allFacilitiesSelected(key);
                 var allBtn = document.createElement('button');
