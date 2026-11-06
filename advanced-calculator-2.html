@@ -1763,10 +1763,29 @@
 
             var padL = 46, padR = 10, padT = 40, padB = 26;
             var chartW = W - padL - padR, chartH = H - padT - padB;
-            var maxVal = Math.max.apply(null, bars.map(function(b) { return b.available; }));
-            if (maxVal > 0) {
-                var mag = Math.pow(10, Math.floor(Math.log10(maxVal)));
-                maxVal = Math.ceil(maxVal / mag) * mag;
+            function niceCeil(v) {
+                var mag = Math.pow(10, Math.floor(Math.log10(v)));
+                return Math.ceil(v / mag) * mag;
+            }
+            var ranked = bars.map(function(b) { return b.available; }).sort(function(a, b) { return b - a; });
+            var maxVal = ranked[0] > 0 ? niceCeil(ranked[0]) : 0;
+
+            // One bar over 3x the next: values up to the next largest get most of the height,
+            // and the range above is squeezed into the rest, with gridlines closer together
+            var LOWER_SHARE = 0.72;
+            var compressed = ranked[1] > 0 && ranked[0] > 3 * ranked[1];
+            var split = compressed ? niceCeil(ranked[1]) : 0;
+            function barHeight(v) {
+                if (!compressed) return v / maxVal * chartH;
+                if (v <= split) return v / split * chartH * LOWER_SHARE;
+                return chartH * (LOWER_SHARE + (v - split) / (maxVal - split) * (1 - LOWER_SHARE));
+            }
+            var ticks = [];
+            if (compressed) {
+                for (var q = 0; q <= 4; q++) ticks.push(split * q / 4);
+                for (var u = 1; u <= 3; u++) ticks.push(split + (maxVal - split) * u / 3);
+            } else {
+                for (var r = 0; r <= 4; r++) ticks.push(maxVal * r / 4);
             }
 
             ctx.fillStyle = mutedColor;
@@ -1774,11 +1793,15 @@
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText('(' + unitLabel + ')', padL, 4);
+            if (compressed) {
+                ctx.textAlign = 'right';
+                ctx.fillText('Scale compressed above ' + formatWaste(split), padL + chartW, 4);
+            }
 
             // Gridlines and y-axis labels
             ctx.lineWidth = 1;
-            for (var i = 0; i <= 4; i++) {
-                var y = padT + chartH - (chartH * i / 4);
+            ticks.forEach(function(v, i) {
+                var y = maxVal > 0 ? padT + chartH - barHeight(v) : padT + chartH - chartH * i / 4;
                 ctx.strokeStyle = isDark ? '#334466' : '#eee';
                 ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
                 if (maxVal > 0) {
@@ -1786,22 +1809,22 @@
                     ctx.font = '10px sans-serif';
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(formatWaste(maxVal * i / 4), padL - 5, y);
+                    ctx.fillText(formatWaste(v), padL - 5, y);
                 }
-            }
+            });
 
             var groupW = chartW / bars.length;
             var barW = Math.min(groupW * 0.6, 44);
             bars.forEach(function(b, i) {
                 var cx = padL + i * groupW + groupW / 2, barX = cx - barW / 2, base = padT + chartH;
                 if (b.available > 0) {
-                    var availH = Math.max(1, b.available / maxVal * chartH);
+                    var availH = Math.max(1, barHeight(b.available));
                     ctx.fillStyle = isDark ? '#445566' : '#ccc';
                     ctx.fillRect(barX, base - availH, barW, availH);
 
                     // Selected amount overlaps the available bar
                     if (b.used > 0) {
-                        var usedH = Math.max(2, b.used / maxVal * chartH);
+                        var usedH = Math.max(2, barHeight(b.used));
                         ctx.fillStyle = selectedPattern(ctx);
                         ctx.fillRect(barX, base - usedH, barW, usedH);
                         ctx.strokeStyle = '#2E9E4F';
