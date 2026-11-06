@@ -1027,7 +1027,7 @@
                 <div class="aoi-rs-section">
                     <div class="aoi-rs-label">Est. Population</div>
                     <div class="aoi-rs-value" id="aoi-population-display">—</div>
-                    <div class="aoi-rs-unit">people (2020 census)</div>
+                    <div class="aoi-rs-unit">people (U.S. Census Bureau estimates, July 1, 2025)</div>
                 </div>
                 <div>
                     <div class="fds-section-hdr">Feedstock Sources in AOI</div>
@@ -1082,6 +1082,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/polygon-clipping@0.15.7/dist/polygon-clipping.umd.min.js"></script>
     <script>
         // ===== UNITS =====
         var unitSystem = 'imperial';   // the site always opens in imperial units
@@ -3749,6 +3750,100 @@
         }
 
 
+        // ===== AOI POPULATION ESTIMATE =====
+        // U.S. Census Bureau estimates for July 1, 2025. Iowa is split into its incorporated cities and each
+        // county's remaining area (county population minus its cities), and each piece's population is spread
+        // evenly over its area. The estimate is the share of every piece that falls inside the selected area.
+        var popPieces = null;         // [{ pop, polys, bbox, area }]
+        var popLoadStarted = false;
+        var popCacheKey = null;       // AOI the last estimate was made for
+        var popCacheValue = null;
+
+        // Relative area of [[ring, hole, ...], ...]; only ever used as a ratio, so degrees are fine
+        function clipArea(polys) {
+            function ring(r) {
+                var a = 0;
+                for (var i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1];
+                return Math.abs(a) / 2;
+            }
+            return polys.reduce(function(total, rings) {
+                return rings.reduce(function(t, r, i) { return t + (i === 0 ? ring(r) : -ring(r)); }, total);
+            }, 0);
+        }
+
+        function clipBbox(polys) {
+            var b = [Infinity, Infinity, -Infinity, -Infinity];
+            polys.forEach(function(rings) {
+                rings[0].forEach(function(c) {
+                    if (c[0] < b[0]) b[0] = c[0];
+                    if (c[1] < b[1]) b[1] = c[1];
+                    if (c[0] > b[2]) b[2] = c[0];
+                    if (c[1] > b[3]) b[3] = c[1];
+                });
+            });
+            return b;
+        }
+
+        // The active AOI as polygon coordinates ([lng, lat])
+        function aoiClipPolys() {
+            function toRing(pts) { return pts.map(function(p) { return [p.lng, p.lat]; }); }
+            if (aoiCenter) {
+                var ring = [], latR = aoiRadiusKm / 111.32;
+                var lngR = latR / Math.cos(aoiCenter.lat * Math.PI / 180);
+                for (var i = 0; i < 96; i++) {
+                    var t = i / 96 * 2 * Math.PI;
+                    ring.push([aoiCenter.lng + lngR * Math.cos(t), aoiCenter.lat + latR * Math.sin(t)]);
+                }
+                return [[ring]];
+            }
+            if (aoiMultiPolys) return aoiMultiPolys.map(function(rings) { return rings.map(toRing); });
+            if (aoiPolyPoints && aoiPolyPoints.length >= 3) return [[toRing(aoiPolyPoints)]];
+            return null;
+        }
+
+        function estimateAoiPopulation(aoi) {
+            var box = clipBbox(aoi), total = 0;
+            popPieces.forEach(function(f) {
+                if (f.bbox[0] > box[2] || f.bbox[2] < box[0] || f.bbox[1] > box[3] || f.bbox[3] < box[1]) return;
+                try {
+                    total += f.pop * Math.min(1, clipArea(polygonClipping.intersection(aoi, f.polys)) / f.area);
+                } catch (e) {
+                    // Rare clipping failure: count the piece if its middle is in the AOI
+                    if (aoiContains({ lng: (f.bbox[0] + f.bbox[2]) / 2, lat: (f.bbox[1] + f.bbox[3]) / 2 })) total += f.pop;
+                }
+            });
+            return Math.round(total);
+        }
+
+        function updateAoiPopulation() {
+            var el = document.getElementById('aoi-population-display');
+            var aoi = aoiClipPolys();
+            if (!el || !aoi) return;
+            if (typeof polygonClipping === 'undefined') { el.textContent = '—'; return; }
+            if (!popPieces) {
+                el.textContent = '…';
+                if (popLoadStarted) return;
+                popLoadStarted = true;
+                fetch('geojson/aoi-population.geojson')
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        popPieces = d.features.map(function(f) {
+                            var polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+                            return { pop: f.properties.pop, polys: polys, bbox: clipBbox(polys), area: clipArea(polys) };
+                        });
+                        updateAoiPopulation();
+                    })
+                    .catch(function() { popLoadStarted = false; el.textContent = '—'; });
+                return;
+            }
+            var key = JSON.stringify(aoi);
+            if (key !== popCacheKey) {
+                popCacheKey = key;
+                popCacheValue = estimateAoiPopulation(aoi);
+            }
+            el.textContent = popCacheValue.toLocaleString('en-US');
+        }
+
         // ===== AOI AREA SIDEBAR =====
         function calcAOIAreaKm2() {
             if (aoiMultiPolys) return multiPolysAreaKm2(aoiMultiPolys);
@@ -3799,6 +3894,8 @@
                 var dCount = getAoiCount('digesters');
                 digestersEl.textContent = dCount !== null ? dCount : '…';
             }
+
+            updateAoiPopulation();
 
             document.getElementById('aoi-empty-msg').style.display = 'none';
             document.getElementById('aoi-stats').style.display = 'flex';
