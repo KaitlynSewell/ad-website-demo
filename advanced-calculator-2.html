@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106k"></script>
+    <script src="translations.js?v=20261106l"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -346,6 +346,29 @@
         html.dark-mode .ac2-info-popup { background: #1e3050; }
         html.dark-mode .ac2-info-title { color: #e8f0fe; }
         html.dark-mode .ac2-info-text { color: #c8d8f0; }
+
+        /* Crop residue prompt and sidebar rows */
+        #crop-overlay .ac2-info-text { display: block; }
+        .crop-input-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 13px; color: #444; }
+        .crop-input-row input { flex: 1; min-width: 0; padding: 7px 9px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px; }
+        .crop-error { min-height: 16px; font-size: 11px; color: #c0392b; }
+        .crop-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 6px; }
+        .crop-actions .calc-btn { padding: 6px 18px; font-size: 13px; }
+        .crop-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 0 2px 12px; font-size: 10px; color: #444; }
+        .crop-remove { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; padding: 0 3px; }
+        .crop-remove:hover { color: #c0392b; }
+        html.dark-mode .crop-row { color: #c8d8f0; }
+        html.dark-mode .crop-input-row { color: #c8d8f0; }
+        html.dark-mode .crop-input-row input { background: #162238; border-color: #2a4a7a; color: #e8f0fe; }
+
+        /* Add to Microgrid control in map popups */
+        .popup-microgrid { display: flex; align-items: center; gap: 6px; margin-top: 7px; padding-top: 6px; border-top: 1px solid #eee; font-size: 12px; }
+        .popup-plus {
+            width: 20px; height: 20px; padding: 0; font: bold 15px/17px sans-serif; color: white;
+            background: #2E9E4F; border: none; border-radius: 50%; cursor: pointer;
+        }
+        .popup-plus:hover { background: #237a3d; }
+        .popup-plus.added { background: #888; }
 
         /* Add dropdown panel */
         .ac2-add-wrap { position: relative; }
@@ -1156,6 +1179,27 @@
         </div>
     </div>
 
+    <!-- Crop residue amount prompt -->
+    <div class="ac2-info-overlay" id="crop-overlay" onclick="if (event.target === this) closeCropPrompt()">
+        <div class="ac2-info-popup" role="dialog" aria-modal="true" aria-labelledby="crop-title">
+            <button type="button" class="ac2-info-close" onclick="closeCropPrompt()" aria-label="Close">&#10005;</button>
+            <div class="ac2-info-title" id="crop-title"></div>
+            <div id="crop-form">
+                <label class="ac2-info-text" for="crop-amount" id="crop-question"></label>
+                <div class="crop-input-row">
+                    <input type="number" id="crop-amount" min="0" step="any" />
+                    <span id="crop-unit"></span>
+                </div>
+                <div class="crop-error" id="crop-error"></div>
+                <div class="crop-actions">
+                    <button type="button" class="ac2-panel-btn" onclick="closeCropPrompt()">Cancel</button>
+                    <button type="button" class="calc-btn" onclick="submitCropPrompt()">Add</button>
+                </div>
+            </div>
+            <div class="ac2-info-text" id="crop-no-aoi" style="display:none;">Select an Area of Interest (AOI) first, then add crop residues to it.</div>
+        </div>
+    </div>
+
     <!-- AOI mode selection panel -->
     <div class="aoi-mode-panel" id="aoi-mode-panel">
         <div class="aoi-mode-divider" data-i18n="ac2-aoi-select-method">Select method</div>
@@ -1400,11 +1444,12 @@
             if (!panel) return;
             var digesters = getAoiDigesters();
             panel.innerHTML = '';
-            if (!digesters.length) {
+            if (!digesters.length && !extrasForOption('digesters').length) {
                 panel.innerHTML = '<div style="font-size:11px;color:#888;font-style:italic;">No digesters in selected area.</div>';
                 return;
             }
             panel.appendChild(onlySelectedControl('digesters'));
+            appendExtras(panel, 'digesters');
             digesters.forEach(function(d) {
                 var facId      = d.lat + ',' + d.lng;
                 var isSelected = !!selectedDigesters[facId];
@@ -1474,7 +1519,7 @@
                 var k = sec.key, real = getAoiCount(k);
                 var added = Object.keys(placedItems).filter(function(id) {
                     return placedItems[id].key === sec.placed && aoiContains(placedItems[id]);
-                }).length;
+                }).length + extrasForOption(k).length;
                 document.getElementById('fac-count-' + k).textContent = real !== null ? real : '…';
                 document.getElementById('fac-added-' + k).style.display = added ? 'flex' : 'none';
                 document.getElementById('fac-added-count-' + k).textContent = added;
@@ -1500,11 +1545,12 @@
             var feats = getAoiFeaturesWithNames(key);
             panel.innerHTML = '';
             if (!feats) { panel.innerHTML = '<div class="fds-loading">Loading…</div>'; return; }
-            if (!feats.length) {
+            if (!feats.length && !extrasForOption(key).length) {
                 panel.innerHTML = '<div style="font-size:11px;color:#888;font-style:italic;">No ' + sec.label.toLowerCase() + ' in selected area.</div>';
                 return;
             }
             panel.appendChild(onlySelectedControl(key));
+            appendExtras(panel, key);
             var shown = facilityHighlights[key] || {};
             feats.forEach(function(f) {
                 var facId = facIdOf(f), on = !!shown[facId], place = [f.city, f.county].filter(Boolean).join(', ');
@@ -1549,6 +1595,8 @@
             });
             facilityHighlights = {};
             onlyShowSelected = {};
+            microgridExtras = {};
+            saveExtras();
         }
 
         function renderAoiFeedstockPanel() {
@@ -1564,11 +1612,12 @@
             var hasAny = false;
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var count = getAoiCount(key);
-                if (!count) return;
+                var extras = extrasForOption(key).length;
+                if (!count && !extras) return;
                 hasAny = true;
                 bgLoadFeatures(key);
                 var namedFeats = getAoiFeaturesWithNames(key);
-                var usedCount  = Object.keys(usedFeedstocks[key] || {}).length;
+                var usedCount  = Object.keys(usedFeedstocks[key] || {}).length + extras;
                 var isOpen     = !!openKeys[key];
 
                 var section = document.createElement('div');
@@ -1624,9 +1673,13 @@
                         list.appendChild(lbl);
                     });
                 }
+                appendExtras(list, key);
                 section.appendChild(list);
                 panel.appendChild(section);
             });
+
+            var crops = cropSection();
+            if (crops) { hasAny = true; panel.appendChild(crops); }
 
             if (!hasAny) {
                 panel.innerHTML = '<div class="fds-loading">No feedstock sources in selected area.</div>';
@@ -1651,6 +1704,12 @@
             feats.forEach(function(f) {
                 available += f.tons || 0;
                 if (used[facIdOf(f)]) selected += f.tons || 0;
+            });
+            // Facilities added from outside the area
+            extrasForOption(key).forEach(function(e) {
+                var f = extraFeature(e), tons = f ? f.tons || 0 : 0;
+                available += tons;
+                selected += tons;
             });
             return { available: available, used: selected };
         }
@@ -1697,6 +1756,10 @@
                     used: w ? w.used * scale : 0
                 };
             });
+
+            // Crop residues the user asked for
+            var cropTons = hasAoi ? cropTotalTons() : 0;
+            if (cropTons > 0) bars.push({ label: 'Crops', available: cropTons * scale, used: cropTons * scale });
 
             var padL = 46, padR = 10, padT = 40, padB = 26;
             var chartW = W - padL - padR, chartH = H - padT - padB;
@@ -2229,7 +2292,7 @@
         };
 
         // Net generation (MWh/year) by energy source inside the AOI; null while data loads
-        function aoiProductionBySource() {
+        function aoiProductionBySource(withExtras) {
             var totals = {}, loading = false;
             [['powerplants', null], ['standbyplants', null], ['windplants', 'Wind'], ['solarplants', 'Solar']].forEach(function(layer) {
                 bgLoadFeatures(layer[0]);
@@ -2240,12 +2303,24 @@
                     totals[src] = (totals[src] || 0) + (f.mwh || 0);
                 });
             });
-            return loading ? null : totals;
+            if (loading) return null;
+            // Proposed: plants added from outside the area, using their reported generation
+            if (withExtras) extrasList().forEach(function(e) {
+                var src = { windplants: 'Wind', solarplants: 'Solar' }[e.key];
+                if (!src && e.key !== 'powerplants' && e.key !== 'standbyplants') return;
+                var f = extraFeature(e);
+                if (!f) return;
+                src = src || f.plantType || 'Other';
+                totals[src] = (totals[src] || 0) + (f.mwh || 0);
+            });
+            return totals;
         }
 
         // Anything the user has proposed: placed generators, selected feedstocks or selected digesters
         function hasProposedAdditions() {
             return Object.keys(usedFeedstocks).length > 0 || Object.keys(selectedDigesters).length > 0 ||
+                Object.keys(cropAdditions).length > 0 ||
+                extrasList().some(function(e) { return ['powerplants', 'standbyplants', 'windplants', 'solarplants'].indexOf(e.key) === -1; }) ||
                 Object.keys(placedItems).some(function(id) {
                     var it = placedItems[id];
                     return (PROD_PER_FEAT[it.key] || 0) > 0 && aoiContains(it);
@@ -2317,13 +2392,19 @@
                 ? '<div class="ac2-legend-item" style="font-style:italic;">+ proposed: No Data</div>' : '';
 
             // Production by energy source
-            var totals = hasAoi ? aoiProductionBySource() : {};
-            var sources = Object.keys(ENERGY_SOURCE_COLORS).map(function(label) {
-                return { label: label, value: Math.max(0, ((totals || {})[label] || 0)) * scale, color: ENERGY_SOURCE_COLORS[label] };
-            }).filter(function(x) { return x.value > 0; });
-            var prodMessage = !hasAoi ? noArea : !totals ? 'Loading…' : !sources.length ? 'No Plants|in Area' : '';
-            drawDonut('current-production', 'current-production-legend', sources, unit, prodMessage);
-            drawDonut('proposed-production', 'proposed-production-legend', sources, unit, prodMessage, proposedNote);
+            function sourcesOf(totals) {
+                return Object.keys(ENERGY_SOURCE_COLORS).map(function(label) {
+                    return { label: label, value: Math.max(0, ((totals || {})[label] || 0)) * scale, color: ENERGY_SOURCE_COLORS[label] };
+                }).filter(function(x) { return x.value > 0; });
+            }
+            function prodMessage(totals, sources) {
+                return !hasAoi ? noArea : !totals ? 'Loading\u2026' : !sources.length ? 'No Plants|in Area' : '';
+            }
+            var currentTotals = hasAoi ? aoiProductionBySource(false) : {};
+            var proposedTotals = hasAoi ? aoiProductionBySource(true) : {};
+            var currentSources = sourcesOf(currentTotals), proposedSources = sourcesOf(proposedTotals);
+            drawDonut('current-production', 'current-production-legend', currentSources, unit, prodMessage(currentTotals, currentSources));
+            drawDonut('proposed-production', 'proposed-production-legend', proposedSources, unit, prodMessage(proposedTotals, proposedSources), proposedNote);
 
             // Usage by sector: the same estimate as Energy Demand, split by Iowa's sector shares
             var usage = hasAoi ? calcAOIAreaKm2() * IOWA_MWH_DEMAND_PER_KM2 * scale : 0;
@@ -2482,6 +2563,8 @@
             });
             placedItems = {};
             savePlacedItems();
+            cropAdditions = {};
+            saveCrops();
         }
 
         // ===== COST AND PRICE INFO POPUPS =====
@@ -2519,7 +2602,8 @@
         }
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeMetricInfo();
+            if (e.key === 'Escape') { closeMetricInfo(); closeCropPrompt(); }
+            if (e.key === 'Enter' && document.activeElement === document.getElementById('crop-amount')) submitCropPrompt();
         });
 
         // ===== MAP SETUP =====
@@ -2729,7 +2813,9 @@
                         var onFarm = p[5] || extra === 'On-Farm Digester';
                         if (extra === 'On-Farm Digester') extra = null;
                         if (name || city || extra != null || onFarm) {
-                            m.bindPopup('<strong>' + name + '</strong>' + '<br>' + cfg.label +
+                            m.layerKey = key;
+                            m.facName = name;
+                            m.infoHtml = ('<strong>' + name + '</strong>' + '<br>' + cfg.label +
                                         (onFarm ? '<br>On-Farm Digester' : '') +
                                         (city ? '<br>' + city + ', IA' : '') +
                                         (typeof extra === 'number' ? '<br>Head Count: ' + extra.toLocaleString('en-US') :
@@ -2738,6 +2824,7 @@
                                         (p[9] ? '<br>' + p[9] : '') +
                                         // p[6]: feedstocks (digester layers)
                                         (p[6] ? '<br><strong>Feedstocks:</strong> ' + p[6] : ''));
+                            m.bindPopup(facilityPopup);
                         }
                         m.plantType = p[8];   // p[8]: plant type (power plants layer)
                         return m;
@@ -2754,6 +2841,156 @@
 
         // With an AOI selected, only icons inside it show unless nearby facilities are turned on
         var showNearbyFacilities = false;
+
+        // ===== CROP RESIDUES AND FACILITIES ADDED FROM OUTSIDE THE AOI =====
+        var CROP_RESIDUES = {
+            'corn-stover': { label: 'Corn Stover', color: '#d4a017', i18n: 'ac2-crop-corn' },
+            'soybeans':    { label: 'Soybeans',    color: '#6b8e23', i18n: 'ac2-crop-soy' },
+            'switchgrass': { label: 'Switchgrass', color: '#3cb371', i18n: 'ac2-crop-switchgrass' }
+        };
+        var cropAdditions = {};      // crop key -> tons/year the user asked for
+        var microgridExtras = {};    // id -> { id, key, lat, lng, name }: facilities outside the AOI added by the user
+        try { cropAdditions = JSON.parse(localStorage.getItem('ac2CropAdditions')) || {}; } catch (e) {}
+        try { microgridExtras = JSON.parse(localStorage.getItem('ac2MicrogridExtras')) || {}; } catch (e) {}
+        var _cropPromptKey = null;
+        var _popupMarker = null;
+
+        function saveCrops() { try { localStorage.setItem('ac2CropAdditions', JSON.stringify(cropAdditions)); } catch (e) {} }
+        function saveExtras() { try { localStorage.setItem('ac2MicrogridExtras', JSON.stringify(microgridExtras)); } catch (e) {} }
+        function cropTotalTons() { return Object.keys(cropAdditions).reduce(function(t, k) { return t + cropAdditions[k]; }, 0); }
+
+        // Tons in the chosen units and period
+        function wasteDisplay() {
+            var metric = unitSystem === 'metric';
+            return { scale: periodFactor() * (metric ? 0.907185 : 1), label: (metric ? 'tonnes' : 'tons') + '/' + (PERIOD_LABELS[timePeriod] || 'yr') };
+        }
+
+        function openCropPrompt(key) {
+            _cropPromptKey = key;
+            var c = CROP_RESIDUES[key], metric = unitSystem === 'metric', hasAoi = hasAoiActive(), input = document.getElementById('crop-amount');
+            document.getElementById('crop-title').textContent = 'Add ' + c.label;
+            document.getElementById('crop-form').style.display = hasAoi ? '' : 'none';
+            document.getElementById('crop-no-aoi').style.display = hasAoi ? 'none' : '';
+            document.getElementById('crop-question').textContent = 'How many ' + (metric ? 'tonnes' : 'tons') + ' of ' + c.label.toLowerCase() + ' do you want per year?';
+            document.getElementById('crop-unit').textContent = (metric ? 'tonnes' : 'tons') + '/yr';
+            document.getElementById('crop-error').textContent = '';
+            var current = cropAdditions[key];
+            input.value = current ? Math.round(current * (metric ? 0.907185 : 1) * 100) / 100 : '';
+            document.getElementById('crop-overlay').classList.add('open');
+            if (hasAoi) input.focus();
+        }
+
+        function closeCropPrompt() { document.getElementById('crop-overlay').classList.remove('open'); }
+
+        function submitCropPrompt() {
+            var amount = parseFloat(document.getElementById('crop-amount').value);
+            if (!(amount > 0)) { document.getElementById('crop-error').textContent = 'Enter an amount greater than 0.'; return; }
+            cropAdditions[_cropPromptKey] = unitSystem === 'metric' ? amount / 0.907185 : amount;
+            saveCrops();
+            closeCropPrompt();
+            updateCharts();
+        }
+
+        function removeCrop(key) {
+            delete cropAdditions[key];
+            saveCrops();
+            updateCharts();
+        }
+
+        // Crop Residues section at the end of the feedstock list
+        function cropSection() {
+            var keys = Object.keys(cropAdditions).filter(function(k) { return CROP_RESIDUES[k]; });
+            if (!keys.length) return null;
+            var w = wasteDisplay(), section = document.createElement('div');
+            section.className = 'feedstock-dropdown';
+            var hdr = document.createElement('div');
+            hdr.className = 'feedstock-dropdown-hdr';
+            hdr.style.cursor = 'default';
+            hdr.innerHTML = '<span class="fds-label"><span data-i18n="ac2-panel-crops">Crop Residues</span> <span class="fds-count">(' + keys.length + ')</span></span>';
+            section.appendChild(hdr);
+            keys.forEach(function(k) {
+                var row = document.createElement('div');
+                row.className = 'crop-row';
+                var text = document.createElement('span');
+                text.textContent = CROP_RESIDUES[k].label + ' — ' + Math.round(cropAdditions[k] * w.scale).toLocaleString('en-US') + ' ' + w.label;
+                var x = document.createElement('button');
+                x.className = 'crop-remove';
+                x.title = 'Remove';
+                x.innerHTML = '&#10005;';
+                x.onclick = function() { removeCrop(k); };
+                row.appendChild(text);
+                row.appendChild(x);
+                section.appendChild(row);
+            });
+            return section;
+        }
+
+        function extraId(key, lat, lng) { return key + '|' + pointKey(lat, lng); }
+        function extrasList() { return Object.keys(microgridExtras).map(function(id) { return microgridExtras[id]; }); }
+        function extrasForOption(opt) { return extrasList().filter(function(e) { return optionForLayer(e.key) === opt; }); }
+
+        // Loaded data for an added facility (tons, generation)
+        function extraFeature(e) {
+            var want = pointKey(e.lat, e.lng);
+            return (bgFeatureCache[e.key] || []).filter(function(f) { return pointKey(f.lat, f.lng) === want; })[0] || null;
+        }
+
+        function removeMicrogridExtra(id) {
+            var e = microgridExtras[id];
+            if (!e) return;
+            delete microgridExtras[id];
+            saveExtras();
+            refreshOptionLayers(optionForLayer(e.key));
+            updateCharts();
+        }
+
+        // Rows for facilities added from outside the area, in a sidebar list
+        function appendExtras(container, opt) {
+            extrasForOption(opt).forEach(function(e) {
+                var item = document.createElement('div');
+                item.className = 'aoi-digester-item';
+                var name = document.createElement('div');
+                name.className = 'aoi-digester-name';
+                name.textContent = e.name;
+                var meta = document.createElement('div');
+                meta.className = 'aoi-digester-meta';
+                meta.textContent = 'Added from outside the selected area';
+                var btn = document.createElement('button');
+                btn.className = 'aoi-map-btn active';
+                btn.textContent = 'Remove from Microgrid';
+                btn.onclick = function() { removeMicrogridExtra(e.id); };
+                item.appendChild(name);
+                item.appendChild(meta);
+                item.appendChild(btn);
+                container.appendChild(item);
+            });
+        }
+
+        // Map popup: facilities outside the AOI get a + button
+        function facilityPopup(m) {
+            var c = m.getLatLng();
+            if (!hasAoiActive() || aoiContains(c)) return m.infoHtml;
+            _popupMarker = m;
+            var added = !!microgridExtras[extraId(m.layerKey, c.lat, c.lng)];
+            return m.infoHtml + '<div class="popup-microgrid">' +
+                '<button type="button" class="popup-plus' + (added ? ' added' : '') + '" onclick="togglePopupFacility()" title="' +
+                (added ? 'Remove from Microgrid' : 'Add to Microgrid') + '">' + (added ? '&minus;' : '+') + '</button>' +
+                '<span>' + (added ? 'In your Microgrid' : mapText('ac2-add-microgrid', 'Add to Microgrid')) + '</span></div>';
+        }
+
+        function togglePopupFacility() {
+            var m = _popupMarker;
+            if (!m) return;
+            var c = m.getLatLng(), id = extraId(m.layerKey, c.lat, c.lng);
+            if (microgridExtras[id]) delete microgridExtras[id];
+            else {
+                microgridExtras[id] = { id: id, key: m.layerKey, lat: c.lat, lng: c.lng, name: m.facName };
+                bgLoadFeatures(m.layerKey);
+            }
+            saveExtras();
+            m.getPopup().update();
+            updateCharts();
+        }
 
         // Sidebar dropdown option: option key -> true when only its selected facilities show on the map
         var onlyShowSelected = {};
@@ -2782,6 +3019,7 @@
                     if (used[facIdOf(f)]) keys[pointKey(f.lat, f.lng)] = true;
                 });
             }
+            extrasForOption(opt).forEach(function (e) { keys[pointKey(e.lat, e.lng)] = true; });
             return keys;
         }
 
@@ -2830,7 +3068,10 @@
                 return list.filter(function (m) { var c = m.getLatLng(); return chosen[pointKey(c.lat, c.lng)]; });
             }
             if (!hasAoiActive() || showNearbyFacilities) return list;
-            return list.filter(function (m) { return aoiContains(m.getLatLng()); });
+            return list.filter(function (m) {
+                var c = m.getLatLng();
+                return aoiContains(c) || microgridExtras[extraId(key, c.lat, c.lng)];
+            });
         }
 
         function applyAoiMarkerFilter() {
@@ -4003,7 +4244,7 @@
             // Digesters the user placed with + Add inside the selected area
             var added = Object.keys(placedItems).filter(function(id) {
                 return placedItems[id].key === 'digesters' && aoiContains(placedItems[id]);
-            }).length;
+            }).length + extrasForOption('digesters').length;
             document.getElementById('aoi-digesters-added').style.display = added ? 'flex' : 'none';
             document.getElementById('aoi-digesters-added-count').textContent = added;
 
@@ -4069,10 +4310,16 @@
                 li('wind',            'ac2-layer-wind',            'Wind Turbines') +
                 li('solar',           'ac2-layer-solar',           'Solar Panels') +
                 li('digesters',       'ac2-layer-digesters',       'Anaerobic Digesters') +
-                li('lmop',            'ac2-layer-lmop',            'LMOP Sites') +
                 grp('Utilities', false, 'ac2-panel-utilities') +
                 li('elec-connection', 'ac2-layer-elec-connection', 'Electric Connection') +
-                li('gas-connection',  'ac2-layer-gas-connection',  'Gas Connection');
+                li('gas-connection',  'ac2-layer-gas-connection',  'Gas Connection') +
+                grp('Crop Residues', false, 'ac2-panel-crops') +
+                Object.keys(CROP_RESIDUES).map(function(key) {
+                    var c = CROP_RESIDUES[key];
+                    return '<div class="ac2-add-item" data-crop="' + key + '"><div class="ac2-add-radio"></div>' +
+                        '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c.color + '" stroke="#333" stroke-width="0.2"/></svg>' +
+                        '<span data-i18n="' + c.i18n + '">' + c.label + '</span></div>';
+                }).join('');
 
             // Click an item → enter placement mode (click again to cancel)
             panel.querySelectorAll('.ac2-add-item[data-key]').forEach(function(el) {
@@ -4080,6 +4327,14 @@
                     var key = this.dataset.key;
                     if (placementMode === key) { exitPlacementMode(); }
                     else { enterPlacementMode(key); }
+                });
+            });
+
+            // Crop residues are not placed on the map: ask for an amount instead
+            panel.querySelectorAll('.ac2-add-item[data-crop]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    panel.classList.remove('open');
+                    openCropPrompt(this.dataset.crop);
                 });
             });
 
