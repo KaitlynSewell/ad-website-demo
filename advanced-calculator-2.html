@@ -166,6 +166,12 @@
             align-items: start;
         }
         .ac2-chart-grid .ac2-chart-box { width: auto; }
+        .ac2-double-pie { display: flex; gap: 12px; width: 100%; align-items: flex-start; }
+        .ac2-pie-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .ac2-pie-label { font-size: 12px; font-weight: bold; color: #2c3e50; }
+        .ac2-pie-col .ac2-legend-item { font-size: 11px; gap: 5px; }
+        .ac2-pie-col .ac2-legend-dot { width: 9px; height: 9px; }
+        html.dark-mode .ac2-pie-label { color: #e8f0fe; }
 
         .ac2-chart-title {
             font-size: 15px;
@@ -976,25 +982,35 @@
                         </div>
                         <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Current AOI Energy Production vs Usage</div>
-                            <canvas id="bar-chart-1" width="380" height="250" style="max-width:100%;height:auto;"></canvas>
-                            <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#9a0f0f;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Power Plants</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Wind</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#f39c12;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Solar</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Usage</span>
+                            <div class="ac2-double-pie">
+                                <div class="ac2-pie-col">
+                                    <div class="ac2-pie-label">Production</div>
+                                    <canvas id="current-production" width="160" height="160" style="max-width:100%;height:auto;"></canvas>
+                                    <div class="ac2-chart-legend" id="current-production-legend"></div>
+                                </div>
+                                <div class="ac2-pie-col">
+                                    <div class="ac2-pie-label">Usage</div>
+                                    <canvas id="current-usage" width="160" height="160" style="max-width:100%;height:auto;"></canvas>
+                                    <div class="ac2-chart-legend" id="current-usage-legend"></div>
+                                </div>
                             </div>
-                            <div style="font-size:10px;color:#888;text-align:center;">Production is average yearly net generation from plants in the area. Usage is estimated from Iowa's average use per unit of area.</div>
+                            <div style="font-size:10px;color:#888;text-align:center;">Production is average yearly net generation from plants in the area. Usage is estimated from Iowa's average use per unit of area, split by Iowa's sector shares.</div>
                         </div>
                         <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Proposed AOI Energy Production vs Usage</div>
-                            <canvas id="bar-chart-2" width="380" height="250" style="max-width:100%;height:auto;"></canvas>
-                            <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#9a0f0f;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Power Plants</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Wind</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#f39c12;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Solar</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Usage</span>
+                            <div class="ac2-double-pie">
+                                <div class="ac2-pie-col">
+                                    <div class="ac2-pie-label">Production</div>
+                                    <canvas id="proposed-production" width="160" height="160" style="max-width:100%;height:auto;"></canvas>
+                                    <div class="ac2-chart-legend" id="proposed-production-legend"></div>
+                                </div>
+                                <div class="ac2-pie-col">
+                                    <div class="ac2-pie-label">Usage</div>
+                                    <canvas id="proposed-usage" width="160" height="160" style="max-width:100%;height:auto;"></canvas>
+                                    <div class="ac2-chart-legend" id="proposed-usage-legend"></div>
+                                </div>
                             </div>
-                            <div style="font-size:10px;color:#888;text-align:center;">Production shows existing plants. Proposed facilities show No Data until generation data is available.</div>
+                            <div style="font-size:10px;color:#888;text-align:center;">Production shows existing plants. Proposed facilities show No Data until generation data is available. Usage is estimated as in the Current chart.</div>
                         </div>
                     </div>
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
@@ -1696,8 +1712,15 @@
             foodwaste: 'geojson/foodwaste.geojson'
         };
 
-        // Iowa average electricity use: net retail sales (~50,200 GWh) / Iowa area (145,746 km²)
-        var IOWA_MWH_DEMAND_PER_KM2 = 50200000 / 145746;              // ≈ 344 MWh/km²/yr
+        // Iowa electricity sales by sector, MWh (U.S. EIA State Electricity Profile, Iowa, Table 8, 2024; transportation is 0)
+        var IOWA_SALES_BY_SECTOR = [
+            { label: 'Residential', mwh: 14468850, color: '#4169e1' },
+            { label: 'Commercial',  mwh: 12814989, color: '#2ec4b6' },
+            { label: 'Industrial',  mwh: 27646583, color: '#8e44ad' }
+        ];
+        var IOWA_SALES_MWH = IOWA_SALES_BY_SECTOR.reduce(function(t, x) { return t + x.mwh; }, 0);   // 54,930,422
+        // Iowa average electricity use per unit of land (Iowa area 145,746 km²)
+        var IOWA_MWH_DEMAND_PER_KM2 = IOWA_SALES_MWH / 145746;
 
         // Feedstock bar chart — ordered list of feedstock layer keys and their display labels
         var FEEDSTOCK_BAR_KEYS   = ['beef','dairy','swine','chickens','turkeys','foodwaste','wastewater','landfill'];
@@ -1839,6 +1862,7 @@
                             item.tons = Number(props[WASTE_TONS_FIELD[key]]) || 0;
                         }
                         if (props.MWhYear != null) item.mwh = Number(props.MWhYear) || 0;
+                        if (props.PlantType) item.plantType = props.PlantType;
                         if (AOI_FACILITY_SECTIONS.some(function(sec) { return sec.key === key; })) {
                             item.county = props.County || '';
                             item.detail = facilityDetail(key, props);
@@ -2132,22 +2156,25 @@
         var HAS_GENERATION_DATA = false;
 
         // ===== AOI ENERGY PRODUCTION VS USAGE =====
-        var ENERGY_SOURCES = [
-            { label: 'Power Plants', keys: ['powerplants', 'standbyplants'], color: '#9a0f0f' },
-            { label: 'Wind',         keys: ['windplants'],                   color: '#00BCD4' },
-            { label: 'Solar',        keys: ['solarplants'],                  color: '#f39c12' }
-        ];
+        // Production pie sections, in display order
+        var ENERGY_SOURCE_COLORS = {
+            'Wind': '#00BCD4', 'Solar': '#f39c12', 'Natural Gas': '#c0392b', 'Coal': '#4a4a4a',
+            'Oil / Petroleum': '#8b5a2b', 'Hydroelectric': '#3498db', 'Biogas': '#2ecc71', 'Other': '#9b59b6'
+        };
 
-        // Net generation (MWh/year) of a set of plant layers inside the AOI; null while data loads
-        function aoiGenerationMWh(keys) {
-            var total = 0, loading = false;
-            keys.forEach(function(key) {
-                bgLoadFeatures(key);
-                var feats = getAoiFeaturesWithNames(key);
+        // Net generation (MWh/year) by energy source inside the AOI; null while data loads
+        function aoiProductionBySource() {
+            var totals = {}, loading = false;
+            [['powerplants', null], ['standbyplants', null], ['windplants', 'Wind'], ['solarplants', 'Solar']].forEach(function(layer) {
+                bgLoadFeatures(layer[0]);
+                var feats = getAoiFeaturesWithNames(layer[0]);
                 if (!feats) { loading = true; return; }
-                feats.forEach(function(f) { total += f.mwh || 0; });
+                feats.forEach(function(f) {
+                    var src = layer[1] || f.plantType || 'Other';
+                    totals[src] = (totals[src] || 0) + (f.mwh || 0);
+                });
             });
-            return loading ? null : Math.max(0, total);
+            return loading ? null : totals;
         }
 
         // Anything the user has proposed: placed generators, selected feedstocks or selected digesters
@@ -2159,121 +2186,86 @@
                 });
         }
 
-        function drawEnergyBalance() {
-            drawEnergyChart('bar-chart-1', false);
-            drawEnergyChart('bar-chart-2', true);
+        // Ring chart with the total in the middle; empty ring with a message when there is nothing to show
+        function drawDonut(canvasId, legendId, segments, unit, message, extraLegend) {
+            var canvas = document.getElementById(canvasId), legend = document.getElementById(legendId);
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+            var cx = W / 2, cy = H / 2, r = Math.min(cx, cy) - 6, inner = r * 0.58;
+            var isDark = document.documentElement.classList.contains('dark-mode');
+            var strong = isDark ? '#e8f0fe' : '#2c3e50', muted = isDark ? '#a0b8d8' : '#999';
+            ctx.clearRect(0, 0, W, H);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (message) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = muted;
+                ctx.font = '12px sans-serif';
+                var lines = message.split('|');
+                lines.forEach(function(t, i) { ctx.fillText(t, cx, cy + (i - (lines.length - 1) / 2) * 15); });
+                legend.innerHTML = extraLegend || '';
+                return;
+            }
+
+            var total = segments.reduce(function(t, x) { return t + x.value; }, 0);
+            var angle = -Math.PI / 2;
+            segments.forEach(function(seg) {
+                var next = angle + seg.value / total * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, angle, next);
+                ctx.arc(cx, cy, inner, next, angle, true);
+                ctx.closePath();
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = isDark ? '#1e3050' : 'white';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                angle = next;
+            });
+            ctx.fillStyle = strong;
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(formatWaste(total), cx, cy - 6);
+            ctx.fillStyle = muted;
+            ctx.font = '10px sans-serif';
+            ctx.fillText(unit, cx, cy + 10);
+
+            legend.innerHTML = segments.map(function(seg) {
+                var pct = seg.value / total * 100;
+                return '<div class="ac2-legend-item"><div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
+                    '<span>' + seg.label + ' — ' + (pct > 0 && pct < 1 ? '&lt;1' : Math.round(pct)) + '%</span></div>';
+            }).join('') + (extraLegend || '');
         }
 
-        function drawEnergyChart(canvasId, proposed) {
-            var canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            var W = canvas.width, H = canvas.height;
-            ctx.clearRect(0, 0, W, H);
-            var isDark = document.documentElement.classList.contains('dark-mode');
-            var textColor = isDark ? '#e8f0fe' : '#555';
-            var mutedColor = isDark ? '#a0b8d8' : '#999';
+        function drawEnergyBalance() {
+            var hasAoi = hasAoiActive();
+            var scale = ENERGY_UNITS[energyUnit].factor * periodFactor(), unit = unitPeriodLabel();
+            var noArea = 'No Area|Selected';
+            var proposedNote = hasAoi && !HAS_GENERATION_DATA && hasProposedAdditions()
+                ? '<div class="ac2-legend-item" style="font-style:italic;">+ proposed: No Data</div>' : '';
 
-            var hasAoi = hasAoiActive(), loading = false;
-            var scale = ENERGY_UNITS[energyUnit].factor * periodFactor();
-            var sources = ENERGY_SOURCES.map(function(src) {
-                var mwh = hasAoi ? aoiGenerationMWh(src.keys) : 0;
-                if (mwh === null) { loading = true; mwh = 0; }
-                return { color: src.color, value: mwh * scale };
-            });
-            var production = sources.reduce(function(t, x) { return t + x.value; }, 0);
-            // Same estimate as Energy Demand in the Selected Area sidebar
+            // Production by energy source
+            var totals = hasAoi ? aoiProductionBySource() : {};
+            var sources = Object.keys(ENERGY_SOURCE_COLORS).map(function(label) {
+                return { label: label, value: Math.max(0, ((totals || {})[label] || 0)) * scale, color: ENERGY_SOURCE_COLORS[label] };
+            }).filter(function(x) { return x.value > 0; });
+            var prodMessage = !hasAoi ? noArea : !totals ? 'Loading…' : !sources.length ? 'No Plants|in Area' : '';
+            drawDonut('current-production', 'current-production-legend', sources, unit, prodMessage);
+            drawDonut('proposed-production', 'proposed-production-legend', sources, unit, prodMessage, proposedNote);
+
+            // Usage by sector: the same estimate as Energy Demand, split by Iowa's sector shares
             var usage = hasAoi ? calcAOIAreaKm2() * IOWA_MWH_DEMAND_PER_KM2 * scale : 0;
-
-            var padL = 54, padR = 10, padT = 34, padB = 26;
-            var chartW = W - padL - padR, chartH = H - padT - padB;
-            var maxVal = Math.max(production, usage);
-            if (maxVal > 0) {
-                var mag = Math.pow(10, Math.floor(Math.log10(maxVal)));
-                maxVal = Math.ceil(maxVal / mag) * mag;
-            }
-
-            ctx.fillStyle = mutedColor;
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText('(' + unitPeriodLabel() + ')', padL, 4);
-
-            ctx.lineWidth = 1;
-            for (var i = 0; i <= 4; i++) {
-                var y = padT + chartH - (chartH * i / 4);
-                ctx.strokeStyle = isDark ? '#334466' : '#eee';
-                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
-                if (maxVal > 0) {
-                    ctx.fillStyle = mutedColor;
-                    ctx.font = '10px sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(formatWaste(maxVal * i / 4), padL - 5, y);
-                }
-            }
-
-            var barW = Math.min(chartW * 0.24, 110), base = padT + chartH;
-            function barLabel(text, cx) {
-                ctx.fillStyle = textColor;
-                ctx.font = '10.5px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillText(text, cx, base + 6);
-            }
-            function totalLabel(value, cx, top) {
-                ctx.fillStyle = isDark ? '#c8d8f0' : '#666';
-                ctx.font = '11px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(formatWaste(value), cx, top - 2);
-            }
-
-            // Production: stacked by source
-            var prodX = padL + chartW * 0.3, useX = padL + chartW * 0.7, top = base;
-            if (maxVal > 0) {
-                sources.forEach(function(src) {
-                    if (src.value <= 0) return;
-                    var h = Math.max(1, src.value / maxVal * chartH);
-                    top -= h;
-                    ctx.fillStyle = src.color;
-                    ctx.fillRect(prodX - barW / 2, top, barW, h);
-                    if (h > 16) {
-                        ctx.fillStyle = 'white';
-                        ctx.font = '10px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(formatWaste(src.value), prodX, top + h / 2);
-                    }
-                });
-                if (hasAoi && !loading) totalLabel(production, prodX, top);
-                if (proposed && hasAoi && !loading && !HAS_GENERATION_DATA && hasProposedAdditions()) {
-                    ctx.fillStyle = mutedColor;
-                    ctx.font = 'italic 10px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    ctx.fillText('+ proposed: No Data', prodX, top - 15);
-                }
-
-                // Usage
-                var useH = Math.max(1, usage / maxVal * chartH);
-                ctx.fillStyle = '#4169e1';
-                ctx.fillRect(useX - barW / 2, base - useH, barW, useH);
-                totalLabel(usage, useX, base - useH);
-            }
-            barLabel('Production', prodX);
-            barLabel('Usage', useX);
-
-            var message = !hasAoi ? 'No Area Selected' : loading ? 'Loading…' : '';
-            if (message) {
-                ctx.fillStyle = mutedColor;
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                var msgW = ctx.measureText(message).width + 16;
-                ctx.clearRect(padL + chartW / 2 - msgW / 2, padT + chartH / 2 - 11, msgW, 22);
-                ctx.fillText(message, padL + chartW / 2, padT + chartH / 2);
-            }
+            var sectors = IOWA_SALES_BY_SECTOR.map(function(x) {
+                return { label: x.label, value: usage * x.mwh / IOWA_SALES_MWH, color: x.color };
+            });
+            drawDonut('current-usage', 'current-usage-legend', sectors, unit, hasAoi ? '' : noArea);
+            drawDonut('proposed-usage', 'proposed-usage-legend', sectors, unit, hasAoi ? '' : noArea);
         }
 
         function updateCharts() {
