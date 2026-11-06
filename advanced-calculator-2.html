@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106f"></script>
+    <script src="translations.js?v=20261106g"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -158,15 +158,14 @@
         html.dark-mode .ac2-legend-box { background: #1e3050; border-color: #2a4a7a; }
         html.dark-mode .ac2-legend-box .legend { background: transparent; }
 
-        /* Charts below the map: two per row (one per row on narrow screens) */
+        /* Charts below the map: as many per row as fit */
         .ac2-chart-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
             gap: 12px;
             align-items: start;
         }
         .ac2-chart-grid .ac2-chart-box { width: auto; }
-        @media (max-width: 900px) { .ac2-chart-grid { grid-template-columns: 1fr; } }
 
         .ac2-chart-title {
             font-size: 15px;
@@ -967,7 +966,7 @@
                     <div class="ac2-chart-grid">
                         <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Available vs Selected Digester Feedstocks</div>
-                            <canvas id="feedstock-bar" width="520" height="250" style="max-width:100%;"></canvas>
+                            <canvas id="feedstock-bar" width="380" height="250" style="max-width:100%;height:auto;"></canvas>
                             <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:11px;color:#555;">
                                 <span><span style="display:inline-block;width:10px;height:10px;background:#ccc;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
                                 <span><span style="display:inline-block;width:10px;height:10px;background-color:#2E9E4F;background-image:radial-gradient(white 1px, transparent 1.2px);background-size:4px 4px;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Selected for Microgrid</span>
@@ -975,8 +974,8 @@
                             <div style="font-size:10px;color:#888;text-align:center;">Wastewater is not shown because no waste amounts are available.</div>
                         </div>
                         <div class="ac2-chart-box">
-                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">AOI Energy Production vs Usage</div>
-                            <canvas id="bar-chart-1" width="520" height="250" style="max-width:100%;"></canvas>
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Current AOI Energy Production vs Usage</div>
+                            <canvas id="bar-chart-1" width="380" height="250" style="max-width:100%;height:auto;"></canvas>
                             <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
                                 <span><span style="display:inline-block;width:10px;height:10px;background:#9a0f0f;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Power Plants</span>
                                 <span><span style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Wind</span>
@@ -986,14 +985,15 @@
                             <div style="font-size:10px;color:#888;text-align:center;">Production is average yearly net generation from plants in the area. Usage is estimated from Iowa's average use per unit of area.</div>
                         </div>
                         <div class="ac2-chart-box">
-                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Current Microgrid Energy Generation By Source Type</div>
-                            <canvas id="pie-chart-1" width="220" height="220"></canvas>
-                            <div class="ac2-chart-legend" id="pie-legend-1"></div>
-                        </div>
-                        <div class="ac2-chart-box">
-                            <div class="ac2-chart-title" data-i18n="ac2-chart-proposed-energy-gen">Proposed Microgrid Energy Generation By Source Type</div>
-                            <canvas id="pie-chart-3" width="220" height="220"></canvas>
-                            <div class="ac2-chart-legend" id="pie-legend-3"></div>
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-energy-gen">Proposed AOI Energy Production vs Usage</div>
+                            <canvas id="bar-chart-2" width="380" height="250" style="max-width:100%;height:auto;"></canvas>
+                            <div style="display:flex; gap:14px; justify-content:center; margin-top:6px; font-size:11px; color:#555;">
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#9a0f0f;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Power Plants</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Wind</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#f39c12;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Solar</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#4169e1;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Usage</span>
+                            </div>
+                            <div style="font-size:10px;color:#888;text-align:center;">Production shows existing plants. Proposed facilities show No Data until generation data is available.</div>
                         </div>
                     </div>
                     <div class="ac2-prod-cost-box" style="background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden; min-height:100px;">
@@ -1173,141 +1173,6 @@
             }
         });
 
-        // ===== PIE CHART DRAWING =====
-        var DEFAULT_PIE1 = [
-            { label: 'Biogas',   value: 30, color: '#2ecc71' },
-            { label: 'Wind',     value: 22, color: '#00BCD4' },
-            { label: 'Heat',     value: 22, color: '#e74c3c' },
-            { label: 'Electric', value: 18, color: '#f1c40f' },
-            { label: 'Solar',    value:  8, color: '#3498db' }
-        ];
-        var DEFAULT_PIE2 = [
-            { label: 'Energy Sales',   value: 45, color: '#2ecc71' },
-            { label: 'Tipping Fees',   value: 30, color: '#4169e1' },
-            { label: 'RINs / Credits', value: 15, color: '#e6c229' },
-            { label: 'By-products',    value: 10, color: '#9b59b6' }
-        ];
-
-        // ===== PIE CHART HOVER TOOLTIPS =====
-        var pieSliceData = {};
-
-        function initPieHover(canvasId) {
-            var canvas = document.getElementById(canvasId);
-            if (!canvas || canvas._hoverInit) return;
-            canvas._hoverInit = true;
-            var tt = document.createElement('div');
-            tt.style.cssText = 'position:fixed;pointer-events:none;background:rgba(20,20,20,0.85);color:#fff;padding:7px 11px;border-radius:5px;font-size:12px;line-height:1.6;z-index:99999;display:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
-            document.body.appendChild(tt);
-            canvas.addEventListener('mousemove', function(e) {
-                var data = pieSliceData[canvasId];
-                if (!data || !data.slices.length) return;
-                var rect = canvas.getBoundingClientRect();
-                var sx = canvas.width / rect.width, sy = canvas.height / rect.height;
-                var dx = (e.clientX - rect.left) * sx - data.cx;
-                var dy = (e.clientY - rect.top) * sy - data.cy;
-                var dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < data.innerR || dist > data.r) { tt.style.display = 'none'; return; }
-                // Convert to clockwise-from-top angle in [0, 2π)
-                var mouseTA = Math.atan2(dy, dx) + Math.PI / 2;
-                if (mouseTA < 0) mouseTA += 2 * Math.PI;
-                if (mouseTA >= 2 * Math.PI) mouseTA -= 2 * Math.PI;
-                var hit = null;
-                for (var i = 0; i < data.slices.length; i++) {
-                    var s = data.slices[i];
-                    if (mouseTA >= s.startTA && mouseTA < s.endTA) { hit = s; break; }
-                }
-                if (!hit) hit = data.slices[data.slices.length - 1]; // last slice catches rounding edge
-                var pct = (hit.value / data.total * 100).toFixed(1);
-                tt.innerHTML = '<strong>' + hit.label + '</strong><br>' +
-                    hit.value.toLocaleString() + (data.unit ? ' ' + data.unit : '') + '<br>' +
-                    pct + '% of total';
-                tt.style.display = 'block';
-                var tx = e.clientX + 14;
-                if (tx + 180 > window.innerWidth) tx = e.clientX - 180;
-                tt.style.left = tx + 'px';
-                tt.style.top = (e.clientY - 10) + 'px';
-            });
-            canvas.addEventListener('mouseleave', function() { tt.style.display = 'none'; });
-        }
-
-        function drawPie(canvasId, legendId, segments, unit) {
-            var canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var cx = canvas.width / 2, cy = canvas.height / 2;
-            var r = Math.min(cx, cy) - 10;
-            var total = segments.reduce(function(s, d) { return s + d.value; }, 0);
-            if (total === 0) { drawZeroPie(canvasId, legendId, segments); return; }
-            var angle = -Math.PI / 2;
-            var slices = [];
-            segments.forEach(function(seg) {
-                var slice = (seg.value / total) * 2 * Math.PI;
-                var startTA = angle + Math.PI / 2;
-                if (startTA < 0) startTA += 2 * Math.PI;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, r, angle, angle + slice);
-                ctx.closePath();
-                ctx.fillStyle = seg.color;
-                ctx.fill();
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                angle += slice;
-                var endTA = angle + Math.PI / 2;
-                if (endTA < 0) endTA += 2 * Math.PI;
-                slices.push({ startTA: startTA, endTA: endTA, value: seg.value, label: seg.label, color: seg.color });
-            });
-            pieSliceData[canvasId] = { cx: cx, cy: cy, r: r, innerR: r * 0.42, total: total, slices: slices, unit: unit || '' };
-            initPieHover(canvasId);
-            var isDark = document.documentElement.classList.contains('dark-mode');
-            ctx.beginPath();
-            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#f0f0f0');
-            ctx.fill();
-            ctx.fillStyle = isDark ? '#e8f0fe' : '#2c3e50';
-            ctx.font = 'bold 20px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(total.toLocaleString(), cx, cy - 7);
-            ctx.font = '11px sans-serif';
-            ctx.fillStyle = isDark ? '#a0b8d8' : '#888';
-            ctx.fillText(unit || 'total', cx, cy + 10);
-            var legend = document.getElementById(legendId);
-            legend.innerHTML = segments.map(function(seg) {
-                var pct = Math.round(seg.value / total * 100);
-                return '<div class="ac2-legend-item">' +
-                    '<div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
-                    '<span>' + seg.label + ' \u2014 ' + pct + '%</span></div>';
-            }).join('');
-        }
-
-        function drawNoInputsPie(canvasId, legendId) {
-            var canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var cx = canvas.width / 2, cy = canvas.height / 2;
-            var r = Math.min(cx, cy) - 10;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ccc';
-            ctx.fill();
-            var isDark = document.documentElement.classList.contains('dark-mode');
-            ctx.beginPath();
-            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#fff');
-            ctx.fill();
-            ctx.fillStyle = isDark ? '#e8f0fe' : '#2c3e50';
-            ctx.font = 'bold 20px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('0', cx, cy);
-            var legend = document.getElementById(legendId);
-            legend.innerHTML = '<div class="ac2-legend-item" style="color:#888;font-style:italic;">No Inputs Selected</div>';
-        }
-
         function toggleFacility(key, facId) {
             if (!usedFeedstocks[key]) usedFeedstocks[key] = {};
             if (usedFeedstocks[key][facId]) {
@@ -1319,7 +1184,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
-            drawProposedPie();
+            drawEnergyBalance();
         }
 
         function selectAllFacilities(key) {
@@ -1330,7 +1195,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
-            drawProposedPie();
+            drawEnergyBalance();
         }
 
         function deselectAllFacilities(key) {
@@ -1338,7 +1203,7 @@
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
-            drawProposedPie();
+            drawEnergyBalance();
         }
 
         function allFacilitiesSelected(key) {
@@ -1429,7 +1294,7 @@
                 selectedDigesters[facId] = true;
             }
             renderAoiDigesterPanel();
-            drawProposedPie();
+            drawEnergyBalance();
         }
 
         function renderAoiDigesterPanel() {
@@ -1807,91 +1672,6 @@
             }
         }
 
-        function drawProposedPie() {
-            if (!HAS_GENERATION_DATA) { drawZeroPie('pie-chart-3', 'pie-legend-3', []); return; }
-            var eu = ENERGY_UNITS[energyUnit];
-            var pf = periodFactor();
-            var production = {};
-
-            // User-placed theoretical items from Add panel
-            Object.keys(placedItems).forEach(function(id) {
-                var item = placedItems[id];
-                var cat = PIE1_CAT[item.key];
-                if (!cat) return;
-                production[cat] = (production[cat] || 0) + (PROD_PER_FEAT[item.key] || 0) * eu.factor * pf;
-            });
-
-            // User-selected feedstock sources (via AOI sidebar toggles)
-            Object.keys(usedFeedstocks).forEach(function(key) {
-                var mwh = usedFeedstockMWh(key);
-                if (!mwh) return;
-                var cat = PIE1_CAT[key];
-                if (!cat) return;
-                production[cat] = (production[cat] || 0) + mwh * eu.factor * pf;
-            });
-
-            // User-selected digesters (via AOI sidebar Show on Map)
-            var dCount = Object.keys(selectedDigesters).length;
-            if (dCount > 0) {
-                production['Biogas'] = (production['Biogas'] || 0) + dCount * (PROD_PER_FEAT['digesters'] || 2100) * eu.factor * pf;
-            }
-
-            // Loaded non-feedstock layers in AOI (powerplants, ethanol)
-            var filtered = getFeaturesInAOI();
-            ['powerplants', 'ethanol'].forEach(function(key) {
-                var count = filtered[key] ? filtered[key].length : 0;
-                if (!count) return;
-                var cat = PIE1_CAT[key];
-                if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
-            });
-
-            var zerosegs = Object.keys(PIE1_COLORS).map(function(cat) {
-                return { label: cat, value: 0, color: PIE1_COLORS[cat] };
-            });
-            var segs = Object.keys(PIE1_COLORS)
-                .map(function(cat) { return { label: cat, value: Math.round(production[cat] || 0), color: PIE1_COLORS[cat] }; })
-                .filter(function(s) { return s.value > 0; });
-
-            if (segs.length === 0) {
-                drawZeroPie('pie-chart-3', 'pie-legend-3', zerosegs);
-            } else {
-                drawPie('pie-chart-3', 'pie-legend-3', segs, unitPeriodLabel());
-            }
-        }
-
-        function drawZeroPie(canvasId, legendId, segments) {
-            var canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var cx = canvas.width / 2, cy = canvas.height / 2;
-            var r = Math.min(cx, cy) - 10;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#ccc';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 4]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            var isDark = document.documentElement.classList.contains('dark-mode');
-            ctx.beginPath();
-            ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-            ctx.fillStyle = isDark ? '#2a4a7a' : (getComputedStyle(document.body).backgroundColor || '#f0f0f0');
-            ctx.fill();
-            ctx.fillStyle = isDark ? '#a0b8d8' : '#bbb';
-            ctx.font = '13px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('No Data', cx, cy);
-            var legend = document.getElementById(legendId);
-            legend.innerHTML = segments.map(function(seg) {
-                return '<div class="ac2-legend-item">' +
-                    '<div class="ac2-legend-dot" style="background:' + seg.color + '"></div>' +
-                    '<span>' + seg.label + ' \u2014 0%</span></div>';
-            }).join('');
-        }
-
         // ===== LAYER CONFIG =====
         var LAYER_FILES = {
             beef: 'geojson/beef.geojson', dairy: 'geojson/dairy.geojson',
@@ -1906,30 +1686,7 @@
             foodwaste: 'geojson/foodwaste.geojson'
         };
 
-        // Energy generation data is still being sourced. Until then the generation pie charts and the
-        // production line for placed items show "No Data"; set this to true once real data is in.
-        var HAS_GENERATION_DATA = false;
-
-        // Map each layer key to a pie category (energy generation by source type)
-        var PIE1_CAT = {
-            wind: 'Wind', solar: 'Solar',
-            digesters: 'Biogas', lmop: 'Biogas', wastewater: 'Biogas', landfill: 'Biogas',
-            biodiesel: 'Biogas', ethanol: 'Electric',
-            beef: 'Biogas', dairy: 'Biogas', swine: 'Biogas', horses: 'Biogas',
-            turkeys: 'Biogas', chickens: 'Biogas', sheep: 'Biogas', foodwaste: 'Biogas',
-            powerplants: 'Electric'
-        };
-        var PIE1_COLORS = {
-            'Biogas': '#2ecc71', 'Wind': '#00BCD4', 'Solar': '#f39c12',
-            'Electric': '#f1c40f', 'Grid': '#95a5a6'
-        };
-
-        // Iowa statewide energy density constants (EIA 2023)
-        // Wind: ~11,800 MW installed at 40% CF over 145,746 km² Iowa area
-        // Solar: ~3,100 MW installed at 18% CF over 145,746 km²
-        // Demand: Iowa net retail electricity consumption ~50,200 GWh / 145,746 km²
-        var IOWA_WIND_MWH_PER_KM2   = 11800 * 8760 * 0.40 / 145746;  // ≈ 284 MWh/km²/yr
-        var IOWA_SOLAR_MWH_PER_KM2  = 3100  * 8760 * 0.18 / 145746;  // ≈ 33  MWh/km²/yr
+        // Iowa average electricity use: net retail sales (~50,200 GWh) / Iowa area (145,746 km²)
         var IOWA_MWH_DEMAND_PER_KM2 = 50200000 / 145746;              // ≈ 344 MWh/km²/yr
 
         // Feedstock bar chart — ordered list of feedstock layer keys and their display labels
@@ -1960,10 +1717,6 @@
             powerplants: 1100, pipelines: 150, landfill: 240,
             wind: 4200, solar: 950
         };
-        // Food waste is counted by tonnage, not per location: each selected location contributes
-        // the average of its EPA low/high excess food estimates (tons/yr) times this factor.
-        // ~100 m³ CH4 per wet ton of food waste × ~10 kWh/m³ × ~35% engine efficiency ≈ 0.35 MWh electricity per ton
-        var FOOD_WASTE_MWH_PER_TON = 0.35;
         // Assumed avoided grid electricity price ($ per MWh) used to estimate Savings
         var GRID_PRICE_PER_MWH = 90;
         var LAYER_COLORS = {
@@ -2097,18 +1850,6 @@
 
         function facIdOf(f) { return f.id || (f.lat + ',' + f.lng); }
 
-        // Energy (MWh/yr, before unit/period scaling) from the user's selected sources of one feedstock
-        function usedFeedstockMWh(key) {
-            var used = usedFeedstocks[key] || {};
-            var count = Object.keys(used).length;
-            if (!count) return 0;
-            if (key !== 'foodwaste') return count * (PROD_PER_FEAT[key] || 500);
-            bgLoadFeatures('foodwaste');
-            var tons = 0;
-            (bgFeatureCache.foodwaste || []).forEach(function(f) { if (used[f.id]) tons += f.tons; });
-            return tons * FOOD_WASTE_MWH_PER_TON;
-        }
-
         function getAoiFeaturesWithNames(key) {
             var feats = bgFeatureCache[key];
             if (feats === null || feats === undefined) return feats;
@@ -2149,30 +1890,6 @@
             if (!features) return null; // still loading
             if (hasAoiActive()) return features.filter(aoiContains).length;
             return features.length;
-        }
-
-        // Compute AOI area in km² for wind/solar density estimates
-        function getAoiAreaKm2() {
-            if (aoiMultiPolys) return multiPolysAreaKm2(aoiMultiPolys);
-            if (aoiCenter) {
-                return Math.PI * aoiRadiusKm * aoiRadiusKm;
-            }
-            if (aoiPolyPoints && aoiPolyPoints.length >= 3) {
-                var n = aoiPolyPoints.length;
-                var centerLat = aoiPolyPoints.reduce(function(s, p) { return s + p.lat; }, 0) / n;
-                var cosLat = Math.cos(centerLat * Math.PI / 180);
-                var area = 0;
-                for (var i = 0; i < n; i++) {
-                    var j = (i + 1) % n;
-                    var xi = aoiPolyPoints[i].lng * 111.32 * cosLat;
-                    var yi = aoiPolyPoints[i].lat * 111.32;
-                    var xj = aoiPolyPoints[j].lng * 111.32 * cosLat;
-                    var yj = aoiPolyPoints[j].lat * 111.32;
-                    area += xi * yj - xj * yi;
-                }
-                return Math.abs(area) / 2;
-            }
-            return 0;
         }
 
         // Pre-load coords for all non-pipeline layers so AOI sidebar counts work
@@ -2400,65 +2117,9 @@
             return Object.keys(loadedLayers).length > 0;
         }
 
-        // ===== CURRENT ENERGY PIE (AOI total demand + actual local sources + grid import) =====
-        function drawCurrentPie() {
-            if (!HAS_GENERATION_DATA) { drawZeroPie('pie-chart-1', 'pie-legend-1', []); return; }
-            if (!hasAoiActive()) {
-                drawNoInputsPie('pie-chart-1', 'pie-legend-1');
-                return;
-            }
-
-            var eu      = ENERGY_UNITS[energyUnit];
-            var pf      = periodFactor();
-            var areaKm2 = getAoiAreaKm2();
-
-            // Total energy demand of the AOI — Iowa average consumption density
-            // Source: EIA 2019 Iowa retail sales (~50,200 GWh) / Iowa area (145,746 km²)
-            var totalDemand = Math.round(areaKm2 * IOWA_MWH_DEMAND_PER_KM2 * eu.factor * pf);
-
-            // Local generation from existing energy facilities in AOI (bgCoordCache, always pre-loaded)
-            var production = {};
-            ['digesters','wastewater','landfill','powerplants','ethanol','biodiesel'].forEach(function(key) {
-                var count = getAoiCount(key);
-                if (!count) return;
-                var cat = PIE1_CAT[key];
-                if (!cat) return;
-                production[cat] = (production[cat] || 0) + count * (PROD_PER_FEAT[key] || 500) * eu.factor * pf;
-            });
-
-            // Wind and Solar: area-based share of Iowa's installed capacity
-            if (areaKm2 > 0) {
-                var windLocal  = Math.round(areaKm2 * IOWA_WIND_MWH_PER_KM2  * eu.factor * pf);
-                var solarLocal = Math.round(areaKm2 * IOWA_SOLAR_MWH_PER_KM2 * eu.factor * pf);
-                if (windLocal  > 0) production['Wind']  = (production['Wind']  || 0) + windLocal;
-                if (solarLocal > 0) production['Solar'] = (production['Solar'] || 0) + solarLocal;
-            }
-
-            // Grid import = demand not met by local sources
-            var localTotal = Object.keys(production).reduce(function(s, k) { return s + production[k]; }, 0);
-            if (totalDemand > 0) {
-                if (localTotal >= totalDemand) {
-                    // More local generation than local demand — scale to demand (AOI exports surplus)
-                    var scale = totalDemand / localTotal;
-                    Object.keys(production).forEach(function(cat) { production[cat] = Math.round(production[cat] * scale); });
-                } else {
-                    production['Grid'] = totalDemand - localTotal;
-                }
-            }
-
-            var zerosegs = Object.keys(PIE1_COLORS).map(function(cat) {
-                return { label: cat, value: 0, color: PIE1_COLORS[cat] };
-            });
-            var segs = Object.keys(PIE1_COLORS)
-                .map(function(cat) { return { label: cat, value: Math.round(production[cat] || 0), color: PIE1_COLORS[cat] }; })
-                .filter(function(s) { return s.value > 0; });
-
-            if (!segs.length) {
-                drawZeroPie('pie-chart-1', 'pie-legend-1', zerosegs);
-            } else {
-                drawPie('pie-chart-1', 'pie-legend-1', segs, unitPeriodLabel());
-            }
-        }
+        // Energy generation data for proposed facilities is still being sourced; until it is added
+        // the Proposed chart and placed item popups show "No Data".
+        var HAS_GENERATION_DATA = false;
 
         // ===== AOI ENERGY PRODUCTION VS USAGE =====
         var ENERGY_SOURCES = [
@@ -2479,8 +2140,22 @@
             return loading ? null : Math.max(0, total);
         }
 
+        // Anything the user has proposed: placed generators, selected feedstocks or selected digesters
+        function hasProposedAdditions() {
+            return Object.keys(usedFeedstocks).length > 0 || Object.keys(selectedDigesters).length > 0 ||
+                Object.keys(placedItems).some(function(id) {
+                    var it = placedItems[id];
+                    return (PROD_PER_FEAT[it.key] || 0) > 0 && aoiContains(it);
+                });
+        }
+
         function drawEnergyBalance() {
-            var canvas = document.getElementById('bar-chart-1');
+            drawEnergyChart('bar-chart-1', false);
+            drawEnergyChart('bar-chart-2', true);
+        }
+
+        function drawEnergyChart(canvasId, proposed) {
+            var canvas = document.getElementById(canvasId);
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             var W = canvas.width, H = canvas.height;
@@ -2562,6 +2237,13 @@
                     }
                 });
                 if (hasAoi && !loading) totalLabel(production, prodX, top);
+                if (proposed && hasAoi && !loading && !HAS_GENERATION_DATA && hasProposedAdditions()) {
+                    ctx.fillStyle = mutedColor;
+                    ctx.font = 'italic 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText('+ proposed: No Data', prodX, top - 15);
+                }
 
                 // Usage
                 var useH = Math.max(1, usage / maxVal * chartH);
@@ -2587,12 +2269,6 @@
         function updateCharts() {
             var hasAoi    = hasAoiActive();
             var hasLayers = hasAnyLoadedLayer();
-
-            // Current Energy pie — requires AOI to compute demand + local sources + grid import
-            drawCurrentPie();
-
-            // Proposed pie — user selections
-            drawProposedPie();
 
             // Feedstock availability bar — AOI counts vs user selected
             drawFeedstockBar();
