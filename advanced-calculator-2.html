@@ -1453,7 +1453,10 @@
                 if (!real && !added) return;
                 hasAny = true;
                 var sel = energySelection(key), inArea = feats || [];
-                var used = inArea.filter(function(f) { return sel[facIdOf(f)]; }).length + extrasForOption(key).length;
+                var placedHere = Object.keys(placedItems).filter(function(id) {
+                    return placedItems[id].key === sec.placed && aoiContains(placedItems[id]);
+                });
+                var used = inArea.filter(function(f) { return sel[facIdOf(f)]; }).length + extrasForOption(key).length + placedHere.length;
                 var isOpen = !!openKeys[key];
 
                 var section = document.createElement('div');
@@ -1490,6 +1493,18 @@
                 } else {
                     list.appendChild(onlySelectedControl(key));
                     appendExtras(list, key);
+                    // Items placed with + Add: selected from the start; unticking removes them
+                    placedHere.forEach(function(id) {
+                        var row = document.createElement('label');
+                        row.className = 'fds-item';
+                        var box = document.createElement('input');
+                        box.type = 'checkbox';
+                        box.checked = true;
+                        box.onchange = function() { removePlacedItem(Number(id)); };
+                        row.appendChild(box);
+                        row.appendChild(document.createTextNode(' ' + (LAYER_LABELS[placedItems[id].key] || placedItems[id].key) + ' (proposed)'));
+                        list.appendChild(row);
+                    });
                     feats.forEach(function(f) {
                         var lbl = document.createElement('label');
                         lbl.className = 'fds-item';
@@ -1860,6 +1875,14 @@
                 default:
                     return makeIconSvg(LAYER_SHAPES[key] || 'circle', c, s);
             }
+        }
+
+        // Placed items are selected by default, so their icons get the selected border
+        function placedIconHtml(key, size) {
+            if (LAYER_SHAPES[key]) return makeIconSvg(LAYER_SHAPES[key], LAYER_COLORS[key] || '#888', size, SELECTED_BORDER_SCALE);
+            return makeKeyIconHtml(key, size).replace(/stroke-width="([0-9.]+)"/g, function(m, w) {
+                return 'stroke-width="' + (parseFloat(w) * 2.5) + '"';
+            });
         }
 
         // ===== PLACEMENT MODE STATE =====
@@ -2453,7 +2476,7 @@
         function placeItem(key, latlng, restoring) {
             var id = ++placedItemId;
             var label = LAYER_LABELS[key] || key;
-            var iconHtml = makeKeyIconHtml(key, 18);
+            var iconHtml = placedIconHtml(key, 18);
             var prod = PROD_PER_FEAT[key] || 0;
 
             var marker = L.marker([latlng.lat, latlng.lng], {
@@ -2473,6 +2496,7 @@
                     '<strong>' + label + '</strong>' +
                     '<div style="margin:5px 0 4px;padding:3px 7px;background:#fff8e1;border-left:3px solid #f39c12;font-size:11px;color:#7a5000;">' +
                     '&#9651; Theoretical — user placed</div>' +
+                    '<div style="color:#2E9E4F;font-weight:bold;margin-bottom:4px;">&#10003; In your Microgrid</div>' +
                     '<div style="color:#555;margin-bottom:7px">' + prodTxt + '</div>' +
                     '<button onclick="removePlacedItem(' + id + ')" style="font-size:11px;padding:2px 9px;cursor:pointer;background:#e74c3c;color:#fff;border:none;border-radius:3px;">Remove</button>' +
                     '</div>';
