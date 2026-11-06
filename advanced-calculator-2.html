@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106d"></script>
+    <script src="translations.js?v=20261106e"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -1022,6 +1022,8 @@
                             <div style="display:flex;align-items:baseline;gap:5px;">
                                 <div class="aoi-rs-value" id="aoi-digesters-display">—</div>
                                 <div class="aoi-rs-unit" data-i18n="ac2-sidebar-in-area">in selected area</div>
+                                <div class="aoi-rs-value" id="aoi-digesters-total" style="display:none;margin-left:12px;"></div>
+                                <div class="aoi-rs-unit" id="aoi-digesters-total-label" style="display:none;" data-i18n="ac2-sidebar-total-digesters">Total (Real + Proposed)</div>
                             </div>
                         </div>
                         <span class="aoi-digester-arrow" id="aoi-digester-arrow">▸</span>
@@ -2535,7 +2537,24 @@
             });
         }
 
-        function placeItem(key, latlng) {
+        function savePlacedItems() {
+            var list = Object.keys(placedItems).map(function(id) {
+                var it = placedItems[id];
+                return { key: it.key, lat: it.lat, lng: it.lng };
+            });
+            try { localStorage.setItem('ac2PlacedItems', JSON.stringify(list)); } catch(e) {}
+        }
+
+        // Put back everything the user placed before the page was refreshed
+        function restorePlacedItems() {
+            try {
+                (JSON.parse(localStorage.getItem('ac2PlacedItems')) || []).forEach(function(it) {
+                    placeItem(it.key, L.latLng(it.lat, it.lng), true);
+                });
+            } catch(e) {}
+        }
+
+        function placeItem(key, latlng, restoring) {
             var id = ++placedItemId;
             var label = LAYER_LABELS[key] || key;
             var iconHtml = makeKeyIconHtml(key, 18);
@@ -2564,6 +2583,8 @@
             }).addTo(microgridMap);
 
             placedItems[id] = { key: key, lat: latlng.lat, lng: latlng.lng, marker: marker };
+            if (restoring) return;
+            savePlacedItems();
             updateCharts();
         }
 
@@ -2571,6 +2592,7 @@
             if (!placedItems[id]) return;
             microgridMap.removeLayer(placedItems[id].marker);
             delete placedItems[id];
+            savePlacedItems();
             updateCharts();
         }
 
@@ -2579,6 +2601,7 @@
                 microgridMap.removeLayer(placedItems[id].marker);
             });
             placedItems = {};
+            savePlacedItems();
         }
 
         function updateProdCost(filtered) {
@@ -3989,6 +4012,13 @@
             document.getElementById('aoi-digesters-added').style.display = added ? 'flex' : 'none';
             document.getElementById('aoi-digesters-added-count').textContent = added;
 
+            // Real + proposed total, shown beside the digester count once one is added
+            var realCount = getAoiCount('digesters');
+            var totalEl = document.getElementById('aoi-digesters-total');
+            totalEl.textContent = realCount !== null ? realCount + added : '\u2026';
+            totalEl.style.display = added ? '' : 'none';
+            document.getElementById('aoi-digesters-total-label').style.display = added ? '' : 'none';
+
             updateAoiPopulation();
 
             document.getElementById('aoi-empty-msg').style.display = 'none';
@@ -4063,6 +4093,7 @@
         buildAddPanel();
         restoreAoiState();
         setNearbyFacilities(false);
+        restorePlacedItems();
 
         // Restore unit system, energy unit, and time period
         (function() {
