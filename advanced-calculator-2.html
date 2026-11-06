@@ -1406,7 +1406,7 @@
             if (!isOpen) renderAoiDigesterPanel();
         }
 
-        function toggleDigesterOnMap(facId) {
+        function toggleDigesterOnMap(facId, quiet) {
             if (digesterHighlightMarkers[facId]) {
                 microgridMap.removeLayer(digesterHighlightMarkers[facId]);
                 delete digesterHighlightMarkers[facId];
@@ -1429,8 +1429,7 @@
                     radius: 12, color: '#FF5722', fillColor: '#FF5722',
                     fillOpacity: 0.75, weight: 3
                 }).bindPopup(popupHtml).addTo(microgridMap);
-                marker.openPopup();
-                microgridMap.panTo([d.lat, d.lng]);
+                if (!quiet) { marker.openPopup(); microgridMap.panTo([d.lat, d.lng]); }
                 digesterHighlightMarkers[facId] = marker;
                 selectedDigesters[facId] = true;
             }
@@ -1517,6 +1516,7 @@
         function updateFacilitySections() {
             AOI_FACILITY_SECTIONS.forEach(function(sec) {
                 var k = sec.key, real = getAoiCount(k);
+                bgLoadFeatures(k);
                 var added = Object.keys(placedItems).filter(function(id) {
                     return placedItems[id].key === sec.placed && aoiContains(placedItems[id]);
                 }).length + extrasForOption(k).length;
@@ -1568,7 +1568,7 @@
             });
         }
 
-        function toggleFacilityOnMap(key, f) {
+        function toggleFacilityOnMap(key, f, quiet) {
             var shown = facilityHighlights[key] = facilityHighlights[key] || {}, facId = facIdOf(f);
             if (shown[facId]) {
                 microgridMap.removeLayer(shown[facId]);
@@ -1579,8 +1579,7 @@
                     radius: 12, color: '#FF5722', fillColor: '#FF5722', fillOpacity: 0.75, weight: 3
                 }).bindPopup('<strong>' + f.name + '</strong>' + (place ? '<br>' + place : '') +
                              '<br><span style="color:#666;font-size:11px;">' + f.detail + '</span>').addTo(microgridMap);
-                marker.openPopup();
-                microgridMap.panTo([f.lat, f.lng]);
+                if (!quiet) { marker.openPopup(); microgridMap.panTo([f.lat, f.lng]); }
                 shown[facId] = marker;
             }
             renderFacilityPanel(key);
@@ -3009,29 +3008,57 @@
             });
         }
 
-        // Map popup: facilities outside the AOI get a + button
+        // Map popup: with an AOI selected, every facility gets a + button
         function facilityPopup(m) {
-            var c = m.getLatLng();
-            if (!hasAoiActive() || aoiContains(c)) return m.infoHtml;
+            if (!hasAoiActive()) return m.infoHtml;
             _popupMarker = m;
-            var added = !!microgridExtras[extraId(m.layerKey, c.lat, c.lng)];
+            bgLoadFeatures(m.layerKey);
+            var c = m.getLatLng(), added = !!selectedPointKeys(optionForLayer(m.layerKey))[pointKey(c.lat, c.lng)];
             return m.infoHtml + '<div class="popup-microgrid">' +
                 '<button type="button" class="popup-plus' + (added ? ' added' : '') + '" onclick="togglePopupFacility()" title="' +
                 (added ? 'Remove from Microgrid' : 'Add to Microgrid') + '">' + (added ? '&minus;' : '+') + '</button>' +
                 '<span>' + (added ? 'In your Microgrid' : mapText('ac2-add-microgrid', 'Add to Microgrid')) + '</span></div>';
         }
 
+        function featureAt(key, c) {
+            var want = pointKey(c.lat, c.lng);
+            return (bgFeatureCache[key] || []).filter(function(f) { return pointKey(f.lat, f.lng) === want; })[0];
+        }
+
+        // Inside the AOI the button selects the facility in its sidebar section; returns false if it has none
+        function toggleInsideFacility(m) {
+            var key = m.layerKey, c = m.getLatLng(), want = pointKey(c.lat, c.lng);
+            if (optionForLayer(key) === 'digesters') {
+                var d = (digesterDataCache || []).filter(function(x) { return pointKey(x.lat, x.lng) === want; })[0];
+                if (d) toggleDigesterOnMap(d.lat + ',' + d.lng, true);
+                return true;
+            }
+            var f = featureAt(key, c);
+            if (AOI_FACILITY_SECTIONS.some(function(x) { return x.key === key; })) {
+                if (f) toggleFacilityOnMap(key, f, true);
+                return true;
+            }
+            if (FEEDSTOCK_BAR_KEYS.indexOf(key) !== -1) {
+                if (f) toggleFacility(key, facIdOf(f));
+                return true;
+            }
+            return false;
+        }
+
         function togglePopupFacility() {
             var m = _popupMarker;
             if (!m) return;
-            var c = m.getLatLng(), id = extraId(m.layerKey, c.lat, c.lng);
-            if (microgridExtras[id]) delete microgridExtras[id];
-            else {
-                microgridExtras[id] = { id: id, key: m.layerKey, lat: c.lat, lng: c.lng, name: m.facName };
-                bgLoadFeatures(m.layerKey);
+            var c = m.getLatLng();
+            if (!(aoiContains(c) && toggleInsideFacility(m))) {
+                var id = extraId(m.layerKey, c.lat, c.lng);
+                if (microgridExtras[id]) delete microgridExtras[id];
+                else {
+                    microgridExtras[id] = { id: id, key: m.layerKey, lat: c.lat, lng: c.lng, name: m.facName };
+                    bgLoadFeatures(m.layerKey);
+                }
+                saveExtras();
+                refreshSelectedIcons(optionForLayer(m.layerKey));
             }
-            saveExtras();
-            refreshSelectedIcons(optionForLayer(m.layerKey));
             m.getPopup().update();
             updateCharts();
         }
