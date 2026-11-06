@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106b"></script>
+    <script src="translations.js?v=20261106c"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -892,6 +892,9 @@
             <!-- Select Area of Interest -->
             <button class="ac2-toolbar-btn" onclick="handleSelectArea()" style="margin-left:auto;" data-i18n="ac2-select-aoi">Select Area of Interest (AOI)</button>
 
+            <!-- Show or hide icons outside the AOI (only while an AOI is selected) -->
+            <button class="ac2-toolbar-btn" id="aoi-nearby-btn" onclick="toggleNearbyFacilities()" style="display:none;" data-i18n="ac2-show-nearby">Show Nearby Facilities</button>
+
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
                 <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()" data-i18n="ac2-units-btn">Units &#9662;</button>
@@ -1675,6 +1678,7 @@
         }
 
         function drawProposedPie() {
+            if (!HAS_GENERATION_DATA) { drawZeroPie('pie-chart-3', 'pie-legend-3', []); return; }
             var eu = ENERGY_UNITS[energyUnit];
             var pf = periodFactor();
             var production = {};
@@ -1749,7 +1753,7 @@
             ctx.font = '13px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('No data', cx, cy);
+            ctx.fillText('No Data', cx, cy);
             var legend = document.getElementById(legendId);
             legend.innerHTML = segments.map(function(seg) {
                 return '<div class="ac2-legend-item">' +
@@ -1771,6 +1775,10 @@
             pipelines: 'geojson/pipelines.geojson', landfill: 'geojson/landfill.geojson',
             foodwaste: 'geojson/foodwaste.geojson'
         };
+
+        // Energy generation data is still being sourced. Until then the generation pie charts and the
+        // production line for placed items show "No Data"; set this to true once real data is in.
+        var HAS_GENERATION_DATA = false;
 
         // Map each layer key to a pie category (energy generation by source type)
         var PIE1_CAT = {
@@ -2258,6 +2266,7 @@
 
         // ===== CURRENT ENERGY PIE (AOI total demand + actual local sources + grid import) =====
         function drawCurrentPie() {
+            if (!HAS_GENERATION_DATA) { drawZeroPie('pie-chart-1', 'pie-legend-1', []); return; }
             if (!hasAoiActive()) {
                 drawNoInputsPie('pie-chart-1', 'pie-legend-1');
                 return;
@@ -2546,7 +2555,8 @@
                 var pf2  = periodFactor();
                 var upl2 = unitPeriodLabel();
                 var prodVal = Math.round(prod * eu2.factor * pf2);
-                var prodTxt = prod > 0 ? 'Est. ' + prodVal.toLocaleString() + ' ' + upl2 : 'Infrastructure only';
+                var prodTxt = prod <= 0 ? 'Infrastructure only'
+                    : HAS_GENERATION_DATA ? 'Est. ' + prodVal.toLocaleString() + ' ' + upl2 : 'Energy generation: No Data';
                 return '<div style="min-width:170px;font-size:12px">' +
                     '<strong>' + label + '</strong>' +
                     '<div style="margin:5px 0 4px;padding:3px 7px;background:#fff8e1;border-left:3px solid #f39c12;font-size:11px;color:#7a5000;">' +
@@ -2837,7 +2847,7 @@
                         return m;
                     });
                     cluster.allMarkers = markers;
-                    cluster.addLayers(key === 'powerplants' ? filterPlantType(markers) : markers);
+                    cluster.addLayers(visibleMarkers(key, markers));
                     if (key === 'powerplants') applyPlantTypeFilter();
                 })
                 .catch(function (err) { console.error('Failed to load coords for', key, err); });
@@ -2851,6 +2861,40 @@
             return sel ? sel.value : '';
         }
 
+        // With an AOI selected, only icons inside it show unless nearby facilities are turned on
+        var showNearbyFacilities = false;
+
+        function visibleMarkers(key, markers) {
+            var list = key === 'powerplants' ? filterPlantType(markers) : markers;
+            if (!hasAoiActive() || showNearbyFacilities) return list;
+            return list.filter(function (m) { return aoiContains(m.getLatLng()); });
+        }
+
+        function applyAoiMarkerFilter() {
+            Object.keys(layerGroups).forEach(function (key) {
+                var cluster = layerGroups[key];
+                if (!cluster.allMarkers) return;   // still loading, or the pipelines layer
+                cluster.clearLayers();
+                cluster.addLayers(visibleMarkers(key, cluster.allMarkers));
+            });
+        }
+
+        function updateNearbyButton() {
+            var btn = document.getElementById('aoi-nearby-btn');
+            var key = showNearbyFacilities ? 'ac2-hide-nearby' : 'ac2-show-nearby';
+            btn.style.display = hasAoiActive() ? '' : 'none';
+            btn.setAttribute('data-i18n', key);
+            btn.textContent = mapText(key, showNearbyFacilities ? 'Hide Nearby Facilities' : 'Show Nearby Facilities');
+        }
+
+        function setNearbyFacilities(on) {
+            showNearbyFacilities = on;
+            updateNearbyButton();
+            applyAoiMarkerFilter();
+        }
+
+        function toggleNearbyFacilities() { setNearbyFacilities(!showNearbyFacilities); }
+
         function filterPlantType(markers) {
             var t = selectedPlantType();
             return t ? markers.filter(function (m) { return m.plantType === t; }) : markers;
@@ -2861,10 +2905,9 @@
         function applyPlantTypeFilter() {
             var cluster = layerGroups.powerplants;
             if (cluster && cluster.allMarkers) {
-                var shown = filterPlantType(cluster.allMarkers);
                 cluster.clearLayers();
-                cluster.addLayers(shown);
-                setLegendCount('powerplants', shown.length);
+                cluster.addLayers(visibleMarkers('powerplants', cluster.allMarkers));
+                setLegendCount('powerplants', filterPlantType(cluster.allMarkers).length);
             } else if (!selectedPlantType() && powerplantTotal !== null) {
                 setLegendCount('powerplants', powerplantTotal);
             }
@@ -3161,6 +3204,7 @@
         });
 
         function zoomToFarm(item) {
+            if (hasAoiActive() && !showNearbyFacilities && !aoiContains(item)) setNearbyFacilities(true);
             map.flyTo([item.lat, item.lng], 14);
             if (!layerGroups[item.key]) {
                 toggleLayer(item.key, true);
@@ -3436,6 +3480,7 @@
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
+            setNearbyFacilities(false);
         }
 
         microgridMap.on('click', function(e) {
@@ -3511,6 +3556,7 @@
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
+            setNearbyFacilities(false);
         });
 
         document.getElementById('aoi-radius-input').addEventListener('change', function() {
@@ -3522,6 +3568,8 @@
                 updateAoiSidebar();
                 updateCharts();
                 saveAoiState();
+                updateNearbyButton();
+                applyAoiMarkerFilter();
             }
         });
 
@@ -3550,6 +3598,7 @@
             clearAllPlacedItems();
             updateCharts();
             saveAoiState();
+            setNearbyFacilities(false);
         }
 
         // ===== MUNICIPALITY AOI (Iowa cities / counties) =====
@@ -3775,6 +3824,7 @@
             updateAoiSidebar();
             updateCharts();
             saveAoiState();
+            setNearbyFacilities(false);
         }
 
         // After a page reload, rebuild the chosen-municipality list from the saved names
@@ -4008,6 +4058,7 @@
 
         buildAddPanel();
         restoreAoiState();
+        setNearbyFacilities(false);
 
         // Restore unit system, energy unit, and time period
         (function() {
