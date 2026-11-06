@@ -1667,8 +1667,7 @@
                         cb.checked = checked;
                         cb.onchange = (function(k, id) { return function() { toggleFacility(k, id); }; })(key, facId);
                         lbl.appendChild(cb);
-                        var displayName = f.name + (f.city ? ' — ' + f.city : '') +
-                            (key === 'foodwaste' ? ' (' + (Math.round(f.tons * 10) / 10) + ' t/yr)' : '');
+                        var displayName = f.name + (f.city ? ' — ' + f.city : '') + ' (' + wasteAmountText(f) + ')';
                         lbl.appendChild(document.createTextNode(' ' + displayName));
                         list.appendChild(lbl);
                     });
@@ -2920,6 +2919,13 @@
             updateCharts();
         }
 
+        // Waste amount for one facility in the chosen units and period
+        function wasteAmountText(f) {
+            if (f.tons === undefined) return 'No Data';
+            var w = wasteDisplay(), v = f.tons * w.scale;
+            return (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString('en-US') + ' ' + w.label;
+        }
+
         // Crop Residues section at the end of the feedstock list
         function cropSection() {
             var keys = Object.keys(cropAdditions).filter(function(k) { return CROP_RESIDUES[k]; });
@@ -2978,7 +2984,8 @@
                 name.textContent = e.name;
                 var meta = document.createElement('div');
                 meta.className = 'aoi-digester-meta';
-                meta.textContent = 'Added from outside the selected area';
+                var data = extraFeature(e);
+                meta.textContent = 'Added from outside the selected area' + (data && data.tons !== undefined ? ' \u00b7 ' + wasteAmountText(data) : '');
                 var btn = document.createElement('button');
                 btn.className = 'aoi-map-btn active';
                 btn.textContent = 'Remove from Microgrid';
