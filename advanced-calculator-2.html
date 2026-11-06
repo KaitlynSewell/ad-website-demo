@@ -2758,7 +2758,19 @@
                    '<ellipse cx="14.6" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/><ellipse cx="17.4" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/></svg>';
         }
 
+        // A thicker border (borderScale over 1) comes out the same width on every shape. Wind, sun and
+        // food waste start with thicker lines, so they scale less and keep their fill on top of the border.
         function makeIconSvg(shape, color, size, borderScale) {
+            if (borderScale > 1) {
+                var factor = { wind: 0.5, sun: 0.25, apple: 0.3 }[shape] || 1;
+                var layered = factor < 1 ? ' paint-order="stroke"' : '';
+                return baseIconSvg(shape, color, size, borderScale * factor)
+                    .replace('<svg ', '<svg style="overflow:visible"' + layered + ' ');
+            }
+            return baseIconSvg(shape, color, size, 1);
+        }
+
+        function baseIconSvg(shape, color, size, borderScale) {
             var k = borderScale || 1, thin = 0.2 * k;
             if (shape === 'square') {
                 return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 16 16">' +
@@ -3064,8 +3076,8 @@
             });
         }
 
-        // Selected facilities get a map icon border four times as thick
-        var SELECTED_BORDER_SCALE = 4;
+        // Selected facilities get a map icon border ten times as thick
+        var SELECTED_BORDER_SCALE = 10;
         function refreshSelectedIcons(opt) {
             var chosen = selectedPointKeys(opt);
             layersForOption(opt).forEach(function (key) {
