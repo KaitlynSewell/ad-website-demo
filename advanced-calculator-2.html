@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261104b"></script>
+    <script src="translations.js?v=20261106a"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -955,12 +955,13 @@
                     </div>
                     <div class="ac2-chart-grid">
                         <div class="ac2-chart-box">
-                            <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Available vs Used Anaerobic Digestion Feedstocks</div>
-                            <canvas id="feedstock-bar" width="260" height="190"></canvas>
+                            <div class="ac2-chart-title" data-i18n="ac2-chart-ad-inputs">Available vs Selected Digester Feedstocks</div>
+                            <canvas id="feedstock-bar" width="520" height="250" style="max-width:100%;"></canvas>
                             <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:11px;color:#555;">
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
-                                <span><span style="display:inline-block;width:10px;height:10px;background:#FF7043;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>In Your Microgrid</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background:#ccc;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
+                                <span><span style="display:inline-block;width:10px;height:10px;background-color:#FF7043;background-image:radial-gradient(white 1px, transparent 1.2px);background-size:4px 4px;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Selected for Microgrid</span>
                             </div>
+                            <div style="font-size:10px;color:#888;text-align:center;">Wastewater is not shown because no waste amounts are available.</div>
                         </div>
                         <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Energy Used vs Stored by Type</div>
@@ -1589,6 +1590,43 @@
             }
         }
 
+        // Short number for chart labels: 1.2M, 340k, 86
+        function formatWaste(v) {
+            if (v >= 1e6) return (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M';
+            if (v >= 1e3) return (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + 'k';
+            return v >= 10 || v === 0 ? String(Math.round(v)) : v.toFixed(1);
+        }
+
+        // Waste in the AOI for one layer: { available, used } in tons/year; null while its data loads
+        function aoiWasteTons(key) {
+            bgLoadFeatures(key);
+            var feats = getAoiFeaturesWithNames(key);
+            if (!feats) return null;
+            var used = usedFeedstocks[key] || {}, available = 0, selected = 0;
+            feats.forEach(function(f) {
+                available += f.tons || 0;
+                if (used[facIdOf(f)]) selected += f.tons || 0;
+            });
+            return { available: available, used: selected };
+        }
+
+        // Dotted fill for the selected overlay
+        var _selectedPattern = null;
+        function selectedPattern(ctx) {
+            if (!_selectedPattern) {
+                var c = document.createElement('canvas');
+                c.width = c.height = 6;
+                var p = c.getContext('2d');
+                p.fillStyle = '#FF7043';
+                p.fillRect(0, 0, 6, 6);
+                p.fillStyle = 'white';
+                p.beginPath(); p.arc(1.5, 1.5, 1.1, 0, 2 * Math.PI); p.fill();
+                p.beginPath(); p.arc(4.5, 4.5, 1.1, 0, 2 * Math.PI); p.fill();
+                _selectedPattern = ctx.createPattern(c, 'repeat');
+            }
+            return _selectedPattern;
+        }
+
         function drawFeedstockBar() {
             var canvas = document.getElementById('feedstock-bar');
             if (!canvas) return;
@@ -1597,44 +1635,37 @@
             ctx.clearRect(0, 0, W, H);
             var isDark = document.documentElement.classList.contains('dark-mode');
             var textColor = isDark ? '#e8f0fe' : '#555';
+            var mutedColor = isDark ? '#a0b8d8' : '#999';
 
-            // Available = bgCoordCache AOI count — works without any loaded layers
-            // Used      = individually selected facilities in usedFeedstocks
-            var bars = [];
-            FEEDSTOCK_BAR_KEYS.forEach(function(key) {
-                var avail = getAoiCount(key);
-                if (avail === null) avail = 0;
-                var used = Object.keys(usedFeedstocks[key] || {}).length;
-                if (avail > 0 || used > 0) {
-                    bars.push({ label: key === 'foodwaste' ? 'Food' : (FEEDSTOCK_BAR_LABELS[key] || key), available: avail, used: used });
-                }
+            // Tons/year -> chosen units and period
+            var metric = unitSystem === 'metric';
+            var scale = periodFactor() * (metric ? 0.907185 : 1);
+            var unitLabel = (metric ? 'tonnes' : 'tons') + '/' + (PERIOD_LABELS[timePeriod] || 'yr');
+
+            var hasAoi = hasAoiActive(), loading = false;
+            var bars = FEEDSTOCK_BAR_KEYS.filter(function(key) { return key !== 'wastewater'; }).map(function(key) {
+                var w = hasAoi ? aoiWasteTons(key) : null;
+                if (hasAoi && !w) loading = true;
+                return {
+                    label: key === 'foodwaste' ? 'Food' : (FEEDSTOCK_BAR_LABELS[key] || key),
+                    available: w ? w.available * scale : 0,
+                    used: w ? w.used * scale : 0
+                };
             });
 
-            if (bars.length === 0) {
-                ctx.fillStyle = isDark ? '#a0b8d8' : '#bbb';
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('No feedstock data in area', W / 2, H / 2);
-                return;
+            var padL = 46, padR = 10, padT = 40, padB = 26;
+            var chartW = W - padL - padR, chartH = H - padT - padB;
+            var maxVal = Math.max.apply(null, bars.map(function(b) { return b.available; }));
+            if (maxVal > 0) {
+                var mag = Math.pow(10, Math.floor(Math.log10(maxVal)));
+                maxVal = Math.ceil(maxVal / mag) * mag;
             }
 
-            var padL = 34, padR = 10, padT = 20, padB = 32;
-            var chartW = W - padL - padR;
-            var chartH = H - padT - padB;
-
-            var maxVal = Math.max.apply(null, bars.map(function(b) { return Math.max(b.available, b.used); }));
-            var mag = Math.pow(10, Math.floor(Math.log10(maxVal || 1)));
-            maxVal = Math.ceil(maxVal / mag) * mag;
-            if (maxVal === 0) maxVal = 10;
-
-            // AOI indicator (top-right)
-            var areaLabel = hasAoiActive() ? 'In AOI' : 'All Iowa';
-            ctx.fillStyle = isDark ? '#a0b8d8' : '#999';
-            ctx.font = '9px sans-serif';
-            ctx.textAlign = 'right';
+            ctx.fillStyle = mutedColor;
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            ctx.fillText('(' + areaLabel + ')', W - padR, 2);
+            ctx.fillText('(' + unitLabel + ')', padL, 4);
 
             // Gridlines and y-axis labels
             ctx.lineWidth = 1;
@@ -1642,62 +1673,60 @@
                 var y = padT + chartH - (chartH * i / 4);
                 ctx.strokeStyle = isDark ? '#334466' : '#eee';
                 ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
-                ctx.fillStyle = isDark ? '#a0b8d8' : '#999';
-                ctx.font = '9px sans-serif';
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'middle';
-                var val = Math.round(maxVal * i / 4);
-                ctx.fillText(val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val, padL - 3, y);
+                if (maxVal > 0) {
+                    ctx.fillStyle = mutedColor;
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(formatWaste(maxVal * i / 4), padL - 5, y);
+                }
             }
 
             var groupW = chartW / bars.length;
-            var barW   = Math.min(groupW * 0.55, 28);
-
+            var barW = Math.min(groupW * 0.6, 44);
             bars.forEach(function(b, i) {
-                var cx   = padL + i * groupW + groupW / 2;
-                var barX = cx - barW / 2;
-
-                // Grey available bar (background)
-                var availH = (b.available / maxVal) * chartH;
-                ctx.fillStyle = isDark ? '#445566' : '#ccc';
-                ctx.fillRect(barX, padT + chartH - availH, barW, availH || 1);
-
-                // Orange used bar (foreground, overlaid)
-                var usedH = b.used > 0 ? (b.used / maxVal) * chartH : 0;
-                if (usedH > 0) {
-                    ctx.fillStyle = '#FF7043';
-                    ctx.fillRect(barX, padT + chartH - usedH, barW, usedH);
-                }
-
-                // Value labels: available above grey top, used inside orange if tall enough
-                ctx.font = '8px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
+                var cx = padL + i * groupW + groupW / 2, barX = cx - barW / 2, base = padT + chartH;
                 if (b.available > 0) {
-                    ctx.fillStyle = isDark ? '#a0b8d8' : '#888';
-                    var dA = b.available >= 1000 ? (b.available / 1000).toFixed(1) + 'k' : b.available;
-                    ctx.fillText(dA, cx, padT + chartH - availH - 1);
-                }
-                if (b.used > 0) {
-                    ctx.fillStyle = '#FF7043';
-                    var dU = b.used >= 1000 ? (b.used / 1000).toFixed(1) + 'k' : b.used;
-                    var labelY = padT + chartH - usedH - 1;
-                    // place inside bar if tall enough, otherwise above
-                    if (usedH > 14) {
-                        ctx.fillStyle = 'white';
-                        ctx.textBaseline = 'top';
-                        labelY = padT + chartH - usedH + 2;
-                    }
-                    ctx.fillText(dU, cx, labelY);
-                }
+                    var availH = Math.max(1, b.available / maxVal * chartH);
+                    ctx.fillStyle = isDark ? '#445566' : '#ccc';
+                    ctx.fillRect(barX, base - availH, barW, availH);
 
-                // X-axis label
+                    // Selected amount overlaps the available bar
+                    if (b.used > 0) {
+                        var usedH = Math.max(2, b.used / maxVal * chartH);
+                        ctx.fillStyle = selectedPattern(ctx);
+                        ctx.fillRect(barX, base - usedH, barW, usedH);
+                        ctx.strokeStyle = '#FF7043';
+                        ctx.strokeRect(barX + 0.5, base - usedH + 0.5, barW - 1, usedH - 1);
+                    }
+
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillStyle = isDark ? '#c8d8f0' : '#666';
+                    ctx.fillText(formatWaste(b.available), cx, base - availH - 2);
+                    if (b.used > 0) {
+                        ctx.fillStyle = '#FF7043';
+                        ctx.fillText(formatWaste(b.used), cx, base - availH - 14);
+                    }
+                }
                 ctx.fillStyle = textColor;
-                ctx.font = '8.5px sans-serif';
+                ctx.font = '10.5px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'top';
-                ctx.fillText(b.label, cx, padT + chartH + 4);
+                ctx.fillText(b.label, cx, base + 6);
             });
+
+            var message = !hasAoi ? 'No Area Selected' : loading ? 'Loading…' : maxVal === 0 ? 'No feedstock data in area' : '';
+            if (message) {
+                ctx.fillStyle = isDark ? '#a0b8d8' : '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                var msgW = ctx.measureText(message).width + 16;
+                ctx.clearRect(padL + chartW / 2 - msgW / 2, padT + chartH / 2 - 11, msgW, 22);   // keep gridlines out of the text
+                ctx.fillText(message, padL + chartW / 2, padT + chartH / 2);
+            }
         }
 
         function drawProposedPie() {
@@ -1928,6 +1957,11 @@
 
         // Cache of named features per feedstock key, loaded lazily from GeoJSON
         var bgFeatureCache = {};
+        // Waste amount (tons/year) field for each layer; food waste uses foodWasteTons(), wastewater has no amounts
+        var WASTE_TONS_FIELD = {
+            beef:'ManureTons', dairy:'ManureTons', swine:'ManureTons', chickens:'ManureTons', turkeys:'ManureTons',
+            landfill:'TonsYr'
+        };
         var FEEDSTOCK_NAME_FIELD = {
             beef:'facName', dairy:'facName', swine:'facName', chickens:'facName',
             turkeys:'facName', sheep:'facName', horses:'facName',
@@ -1959,10 +1993,12 @@
                             // Many food waste locations share an address, so give each its own id
                             item.id = 'fw' + i;
                             item.tons = foodWasteTons(props);
+                        } else if (WASTE_TONS_FIELD[key]) {
+                            item.tons = Number(props[WASTE_TONS_FIELD[key]]) || 0;
                         }
                         bgFeatureCache[key].push(item);
                     });
-                    if (hasAoiActive()) renderAoiFeedstockPanel();
+                    if (hasAoiActive()) { renderAoiFeedstockPanel(); drawFeedstockBar(); }
                     if (key === 'foodwaste') updateCharts();
                 })
                 .catch(function() { bgFeatureCache[key] = []; });
