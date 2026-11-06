@@ -480,16 +480,25 @@
         }
         html.dark-mode .legend-count { color: #999; }
 
-        .legend-subfilter {
-            padding-left: 34px;
-            margin-top: 3px;
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
-        .legend-subfilter select {
-            font-size: 0.92em;
-            padding: 1px 2px;
-            max-width: 100%;
+        .legend-arrow {
+            margin-top: 5px;
+            padding: 0 6px;
+            font-size: 13px;
+            line-height: 1;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
         }
-        html.dark-mode .legend-subfilter select { background: #333; color: #eee; border-color: #555; }
+        .legend-arrow:hover { color: #111; }
+        html.dark-mode .legend-arrow { color: #bbb; }
+        html.dark-mode .legend-arrow:hover { color: white; }
+        .legend-subitems { padding-left: 22px; }
 
         .legend-item svg {
             flex-shrink: 0;
@@ -3004,11 +3013,6 @@
 
         var PLANT_TYPES = ['Coal', 'Natural Gas', 'Oil / Petroleum', 'Hydroelectric', 'Biogas', 'Other'];
 
-        function selectedPlantType() {
-            var sel = document.getElementById('powerplant-type');
-            return sel ? sel.value : '';
-        }
-
         // With an AOI selected, only icons inside it show unless nearby facilities are turned on
         var showNearbyFacilities = false;
 
@@ -3043,22 +3047,47 @@
 
         function toggleNearbyFacilities() { setNearbyFacilities(!showNearbyFacilities); }
 
+        var plantTypesOn = {};        // plant type -> true when its box is checked
+        var plantTypeCounts = {};     // plant type -> number of plants
+        var legendEl = null;          // legend element (not in the page yet while it is being built)
+        var settingPlantTypes = false;
+
         function filterPlantType(markers) {
-            var t = selectedPlantType();
-            return t ? markers.filter(function (m) { return m.plantType === t; }) : markers;
+            return markers.filter(function (m) { return plantTypesOn[m.plantType]; });
         }
 
-        // Show only the chosen plant type and update the legend count to match
+        // Check exactly these plant types; the Power Plants box and layer follow
+        function setPlantTypes(types) {
+            plantTypesOn = {};
+            types.forEach(function (t) { plantTypesOn[t] = true; });
+            try { localStorage.setItem('powerplantTypes', JSON.stringify(types)); } catch (e) {}
+            PLANT_TYPES.forEach(function (t, i) { legendEl.querySelector('#ptype-' + i).checked = !!plantTypesOn[t]; });
+            var parent = legendEl.querySelector('#toggle-powerplants');
+            parent.checked = types.length > 0;
+            parent.indeterminate = types.length > 0 && types.length < PLANT_TYPES.length;
+            settingPlantTypes = true;
+            toggleLayer('powerplants', types.length > 0);
+            settingPlantTypes = false;
+            applyPlantTypeFilter();
+        }
+
+        // Show only the checked plant types and update the legend count to match
         var powerplantTotal = null;
         function applyPlantTypeFilter() {
             var cluster = layerGroups.powerplants;
             if (cluster && cluster.allMarkers) {
                 cluster.clearLayers();
                 cluster.addLayers(visibleMarkers('powerplants', cluster.allMarkers));
-                setLegendCount('powerplants', filterPlantType(cluster.allMarkers).length);
-            } else if (!selectedPlantType() && powerplantTotal !== null) {
-                setLegendCount('powerplants', powerplantTotal);
             }
+            updatePowerplantCount();
+        }
+
+        function updatePowerplantCount() {
+            if (powerplantTotal === null) return;
+            var on = Object.keys(plantTypesOn);
+            setLegendCount('powerplants', on.length
+                ? on.reduce(function (n, t) { return n + (plantTypeCounts[t] || 0); }, 0)
+                : powerplantTotal);
         }
 
         // Pipeline layer stays as pre-built vector tiles (too large for client-side)
@@ -3105,6 +3134,7 @@
         function buildLegend() {
             var div = document.createElement('div');
             div.className = 'legend';
+            legendEl = div;
             function li(id, svgHtml, label, i18nKey) {
                 return '<label class="legend-item"><input type="checkbox" id="' + id + '" />' + svgHtml + '<span' + (i18nKey ? ' data-i18n="' + i18nKey + '"' : '') + '>' + label + '</span>' +
                        '<span class="legend-count" id="count-' + id.replace('toggle-', '') + '"></span></label>';
@@ -3144,11 +3174,14 @@
                 li('toggle-landfill',    rect('#8b4513'), 'Landfill Sites', 'legend-landfill') +
                 li('toggle-foodwaste',  apple('#d62839'), 'Food Waste', 'legend-foodwaste') +
                 grp('Power and Gas', false, 'sec-utilities', 'legend-utilities-group') +
-                li('toggle-powerplants', rect('#9a0f0f'), 'Power Plants', 'legend-powerplants') +
-                '<div class="legend-subfilter"><select id="powerplant-type" aria-label="Power plant type">' +
-                    '<option value="">All plant types</option>' +
-                    PLANT_TYPES.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
-                '</select></div>' +
+                '<div class="legend-row">' + li('toggle-powerplants', rect('#9a0f0f'), 'Power Plants', 'legend-powerplants') +
+                    '<button type="button" class="legend-arrow" id="powerplant-types-arrow" title="Show plant types" aria-expanded="false">&#9656;</button></div>' +
+                '<div class="legend-subitems" id="powerplant-types" style="display:none;">' +
+                    PLANT_TYPES.map(function (t, i) {
+                        return '<label class="legend-item"><input type="checkbox" id="ptype-' + i + '" /><span>' + t + '</span>' +
+                               '<span class="legend-count" id="count-ptype-' + i + '"></span></label>';
+                    }).join('') +
+                '</div>' +
                 li('toggle-standbyplants', rect('#c98585'), 'Standby Power Plants', 'legend-standbyplants') +
                 li('toggle-windplants',  windSvg('#00bcd4', 16, 0.8), 'Wind Power', 'legend-windplants') +
                 li('toggle-solarplants', sunSvg('#f5d000', 16, 0.8), 'Solar Power', 'legend-solarplants') +
@@ -3161,32 +3194,30 @@
                     var secCb = div.querySelector('#' + secId);
                     if (!secCb) return;
                     var keys = sectionKeys[secId];
-                    var checkedCount = keys.filter(function (key) {
+                    var fullCount = keys.filter(function (key) {
+                        var cb = div.querySelector('#toggle-' + key);
+                        return cb && cb.checked && !cb.indeterminate;
+                    }).length;
+                    var onCount = keys.filter(function (key) {
                         var cb = div.querySelector('#toggle-' + key);
                         return cb && cb.checked;
                     }).length;
-                    secCb.checked = checkedCount === keys.length;
-                    secCb.indeterminate = checkedCount > 0 && checkedCount < keys.length;
+                    secCb.checked = fullCount === keys.length;
+                    secCb.indeterminate = onCount > 0 && fullCount < keys.length;
                 });
             }
 
             function updateLegendButtons() {
-                var checkedCount = allKeys.filter(function (key) {
+                var onCount = allKeys.filter(function (key) {
                     var cb = div.querySelector('#toggle-' + key);
                     return cb && cb.checked;
                 }).length;
-                var selectBtn = div.querySelector('#legend-select-all-btn');
-                var clearBtn  = div.querySelector('#legend-clear-all-btn');
-                if (checkedCount === 0) {
-                    selectBtn.style.display = '';
-                    clearBtn.style.display  = 'none';
-                } else if (checkedCount === allKeys.length) {
-                    selectBtn.style.display = 'none';
-                    clearBtn.style.display  = '';
-                } else {
-                    selectBtn.style.display = '';
-                    clearBtn.style.display  = '';
-                }
+                var fullCount = allKeys.filter(function (key) {
+                    var cb = div.querySelector('#toggle-' + key);
+                    return cb && cb.checked && !cb.indeterminate;
+                }).length;
+                div.querySelector('#legend-select-all-btn').style.display = fullCount < allKeys.length ? '' : 'none';
+                div.querySelector('#legend-clear-all-btn').style.display  = onCount > 0 ? '' : 'none';
             }
 
             div.querySelector('#legend-select-all-btn').addEventListener('click', function () {
@@ -3194,6 +3225,7 @@
                     var cb = div.querySelector('#toggle-' + key);
                     if (cb && !cb.checked) { cb.checked = true; toggleLayer(key, true); }
                 });
+                setPlantTypes(PLANT_TYPES.slice());
                 updateLegendButtons();
                 updateSectionCheckboxes();
                 saveLegendState();
@@ -3222,6 +3254,7 @@
                             toggleLayer(key, checked);
                         }
                     });
+                    if (checked && sectionKeys[secId].indexOf('powerplants') !== -1) setPlantTypes(PLANT_TYPES.slice());
                     updateLegendButtons();
                     updateSectionCheckboxes();
                     saveLegendState();
@@ -3231,27 +3264,35 @@
             allKeys.forEach(function (key) {
                 var cb = div.querySelector('#toggle-' + key);
                 if (cb) cb.addEventListener('change', function () {
-                    toggleLayer(key, this.checked);
+                    // Partly selected Power Plants box: a click selects every type, like the section boxes
+                    var partial = key === 'powerplants' && Object.keys(plantTypesOn).length > 0 &&
+                                  Object.keys(plantTypesOn).length < PLANT_TYPES.length;
+                    toggleLayer(key, partial || this.checked);
                     updateLegendButtons();
                     updateSectionCheckboxes();
                     saveLegendState();
                 });
             });
 
-            // Power Plants type filter: choosing a type also turns the layer on
-            var typeSel = div.querySelector('#powerplant-type');
-            try { typeSel.value = localStorage.getItem('powerplantType') || ''; } catch (e) {}
-            typeSel.addEventListener('change', function () {
-                try { localStorage.setItem('powerplantType', this.value); } catch (e) {}
-                var cb = div.querySelector('#toggle-powerplants');
-                if (this.value && !cb.checked) {
-                    cb.checked = true;
-                    toggleLayer('powerplants', true);
+            // Power Plants arrow shows or hides the plant types
+            var typesBox = div.querySelector('#powerplant-types');
+            var typesArrow = div.querySelector('#powerplant-types-arrow');
+            typesArrow.addEventListener('click', function () {
+                var open = typesBox.style.display === 'none';
+                typesBox.style.display = open ? 'block' : 'none';
+                typesArrow.innerHTML = open ? '&#9662;' : '&#9656;';
+                typesArrow.title = open ? 'Hide plant types' : 'Show plant types';
+                typesArrow.setAttribute('aria-expanded', open);
+            });
+
+            // Plant type boxes: any combination; checking one turns the layer on
+            PLANT_TYPES.forEach(function (t, i) {
+                div.querySelector('#ptype-' + i).addEventListener('change', function () {
+                    setPlantTypes(PLANT_TYPES.filter(function (x, j) { return div.querySelector('#ptype-' + j).checked; }));
                     updateLegendButtons();
                     updateSectionCheckboxes();
                     saveLegendState();
-                }
-                applyPlantTypeFilter();
+                });
             });
 
             function saveLegendState() {
@@ -3268,6 +3309,9 @@
                 if (!saved) return;
                 try {
                     var state = JSON.parse(saved);
+                    var savedTypes = JSON.parse(localStorage.getItem('powerplantTypes') || '[]').filter(function (t) {
+                        return PLANT_TYPES.indexOf(t) !== -1;
+                    });
                     allKeys.forEach(function (key) {
                         if (state[key] === true) {
                             var cb = div.querySelector('#toggle-' + key);
@@ -3277,6 +3321,7 @@
                             }
                         }
                     });
+                    if (state.powerplants === true && savedTypes.length) setPlantTypes(savedTypes);
                     updateLegendButtons();
                     updateSectionCheckboxes();
                 } catch (e) {}
@@ -3310,6 +3355,8 @@
 
         function toggleLayer(key, visible) {
             if (!layerConfig[key]) return;
+            // The Power Plants box switches every plant type on or off
+            if (key === 'powerplants' && !settingPlantTypes) { setPlantTypes(visible ? PLANT_TYPES.slice() : []); return; }
             if (visible) {
                 if (!layerGroups[key]) {
                     layerGroups[key] = layerConfig[key].line ? createPipelineLayer() : createPointLayer(key);
@@ -3353,6 +3400,7 @@
 
         function zoomToFarm(item) {
             if (hasAoiActive() && !showNearbyFacilities && !aoiContains(item)) setNearbyFacilities(true);
+            if (item.key === 'powerplants') setPlantTypes(PLANT_TYPES.slice());
             map.flyTo([item.lat, item.lng], 14);
             if (!layerGroups[item.key]) {
                 toggleLayer(item.key, true);
@@ -3390,8 +3438,12 @@
                     var n = Array.isArray(d) ? d.length : (d.features || []).length;
                     if (key === 'powerplants') {
                         powerplantTotal = n;
-                        var t = selectedPlantType();
-                        if (t) n = d.filter(function (p) { return p[8] === t; }).length;
+                        d.forEach(function (p) { plantTypeCounts[p[8]] = (plantTypeCounts[p[8]] || 0) + 1; });
+                        PLANT_TYPES.forEach(function (t, i) {
+                            document.getElementById('count-ptype-' + i).textContent = '(' + (plantTypeCounts[t] || 0) + ')';
+                        });
+                        updatePowerplantCount();
+                        return;
                     }
                     setLegendCount(key, n);
                 })
