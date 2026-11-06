@@ -1761,6 +1761,9 @@
             var cropTons = hasAoi ? cropTotalTons() : 0;
             if (cropTons > 0) bars.push({ label: 'Crops', available: cropTons * scale, used: cropTons * scale });
 
+            // Only feedstocks present in the selected area get a category
+            if (hasAoi) bars = bars.filter(function(b) { return b.available > 0; });
+
             var padL = 46, padR = 10, padT = 40, padB = 26;
             var chartW = W - padL - padR, chartH = H - padT - padB;
             function niceCeil(v) {
