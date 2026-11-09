@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261106m"></script>
+    <script src="translations.js?v=20261109a"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -343,6 +343,44 @@
         html.dark-mode .ac2-metric-title { color: #e8f0fe; }
         html.dark-mode .ac2-metric-value { color: #a0b8d8; }
         html.dark-mode .ac2-info-btn { color: #7ab8f0; background: #1e3050; border-color: #7ab8f0; }
+        .ac2-metric-value.has-value { font-size: 15px; font-weight: bold; font-style: normal; color: #2c3e50; }
+        html.dark-mode .ac2-metric-value.has-value { color: #e8f0fe; }
+
+        /* AD model panel: assign feedstocks to digesters and run the model */
+        .ac2-model-box {
+            background: white; border: 1px solid #ddd; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 18px; color: #2c3e50; font-size: 13px;
+        }
+        .ac2-model-title { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
+        .ac2-model-intro, .ac2-model-hint { font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 12px; }
+        .ac2-model-digesters { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .ac2-model-dig { border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px; }
+        .ac2-model-dig-name { font-weight: bold; margin-bottom: 6px; overflow-wrap: anywhere; }
+        .ac2-model-dig label { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+        .ac2-model-dig input { width: 110px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+        .ac2-model-load { font-size: 12px; margin-top: 6px; color: #555; }
+        .ac2-model-load.over { color: #c0392b; font-weight: bold; }
+        .ac2-model-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+        .ac2-model-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .ac2-model-table th, .ac2-model-table td { text-align: left; padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .ac2-model-table th { font-weight: bold; color: #555; }
+        .ac2-model-table td.num { text-align: right; white-space: nowrap; }
+        .ac2-model-table select { max-width: 220px; padding: 3px 4px; font-size: 12px; }
+        .ac2-model-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .calc-btn:disabled { background: #9aa9d6; cursor: not-allowed; }
+        .ac2-model-reason { font-size: 12px; color: #888; }
+        .ac2-model-status { margin-top: 12px; font-size: 12px; line-height: 1.5; }
+        .ac2-model-status ul { margin: 4px 0 0 18px; padding: 0; }
+        .ac2-model-status.error { color: #c0392b; }
+        .ac2-model-status.warn { color: #9a6700; }
+        html.dark-mode .ac2-model-box { background: #1e3050; border-color: #2a4a7a; color: #e8f0fe; }
+        html.dark-mode .ac2-model-intro, html.dark-mode .ac2-model-hint, html.dark-mode .ac2-model-load,
+        html.dark-mode .ac2-model-table th, html.dark-mode .ac2-model-reason { color: #a0b8d8; }
+        html.dark-mode .ac2-model-dig { border-color: #2a4a7a; }
+        html.dark-mode .ac2-model-table th, html.dark-mode .ac2-model-table td { border-bottom-color: #2a4a7a; }
+        html.dark-mode .ac2-model-dig input, html.dark-mode .ac2-model-table select { background: #162238; color: #e8f0fe; border-color: #2a4a7a; }
+        html.dark-mode .ac2-model-load.over, html.dark-mode .ac2-model-status.error { color: #ff8a80; }
+        html.dark-mode .ac2-model-status.warn { color: #f0c36d; }
         html.dark-mode .ac2-info-btn:hover { color: #1e3050; background: #7ab8f0; }
         html.dark-mode .ac2-info-popup { background: #1e3050; }
         html.dark-mode .ac2-info-title { color: #e8f0fe; }
@@ -1118,6 +1156,11 @@
                             <div class="ac2-metric-value" id="metric-reduction" data-i18n="ac2-metric-no-inputs">No Inputs Selected</div>
                         </div>
                     </div>
+                    <div class="ac2-model-box">
+                        <div class="ac2-model-title" data-i18n="ac2-model-title">Run the AD Model</div>
+                        <div class="ac2-model-intro" data-i18n="ac2-model-intro">Choose the digester each selected feedstock goes to and enter each digester's capacity, then run the model. Each feedstock can go to only one digester, and the feedstock sent to a digester can't exceed its capacity.</div>
+                        <div id="model-panel"></div>
+                    </div>
             </div>
             <div class="calc-container"></div>
         </div>
@@ -1521,6 +1564,7 @@
                 panel.appendChild(section);
             });
             if (!hasAny) panel.innerHTML = '<div class="fds-loading">No energy producers in selected area.</div>';
+            renderModelPanel();   // digester selection feeds the AD model panel
         }
 
         function clearFacilityHighlights() {
@@ -2385,6 +2429,7 @@
 
             // Cost and price boxes
             updateMetricBoxes();
+            renderModelPanel();
 
             if (hasAoi) updateAoiSidebar();
         }
@@ -2529,10 +2574,10 @@
         // ===== COST AND PRICE INFO POPUPS =====
         // Popup text for each info button. Replace 'Description coming soon.' with the final text.
         var METRIC_INFO_TEXT = {
-            operating: 'Description coming soon.',
-            starting:  'Description coming soon.',
+            operating: 'Total yearly operating cost of the digesters from the AD model: feedstock, labor, maintenance, insurance and taxes, H2S cleanup media, feedstock hauling, CHP engine upkeep and any natural gas for heating.',
+            starting:  'Total cost to build the digesters from the AD model (installed equipment plus working capital): feed handling, digesters, solids separation, lagoon, gas cleanup, CHP engine-generator and backup boiler.',
             ghg:       'Description coming soon.',
-            price:     'Description coming soon.',
+            price:     'Cost of the electricity the digesters produce, from the AD model: the price per kWh at which the project breaks even over its life (8% rate of return). The CHP engine at each digester burns the biogas to make electricity.',
             reduction: 'Description coming soon.'
         };
         var _metricInfoOpener = null;
@@ -2541,10 +2586,307 @@
         function updateMetricBoxes() {
             var key = hasAoiActive() ? 'ac2-metric-no-data' : 'ac2-metric-no-inputs';
             var text = mapText(key, hasAoiActive() ? 'No Data' : 'No Inputs Selected');
+            // Model results show only while they match the current selections
+            var totals = (modelResult && modelResult.status === 'ok' && modelResultSig === currentModelSig()) ? modelResult.totals : null;
             document.querySelectorAll('.ac2-metric-value').forEach(function(el) {
-                el.setAttribute('data-i18n', key);
-                el.textContent = text;
+                var value = totals ? modelMetricText(el.id, totals) : null;
+                if (value) {
+                    el.removeAttribute('data-i18n');
+                    el.textContent = value;
+                    el.classList.add('has-value');
+                } else {
+                    el.setAttribute('data-i18n', key);
+                    el.textContent = text;
+                    el.classList.remove('has-value');
+                }
             });
+        }
+
+        function modelMetricText(id, t) {
+            if (id === 'metric-starting') return fmtUSD(t.total_capex);
+            if (id === 'metric-operating') return fmtUSD(t.total_opex_yr) + '/yr';
+            if (id === 'metric-price' && t.lcoe_per_kWh != null) return '$' + t.lcoe_per_kWh.toFixed(3) + '/kWh';
+            return null;   // GHG boxes: no model values yet
+        }
+
+        function fmtUSD(v) { return '$' + Math.round(v).toLocaleString('en-US'); }
+
+        // ===== AD MODEL =====
+        // The BioSTEAM model (IBAM2ModelCode.py) runs on a Hugging Face Space. Add ?api=http://localhost:8000
+        // to the page address to use a model server running on your own computer instead.
+        var MODEL_API_URL = (function() {
+            var m = /[?&]api=([^&]+)/.exec(location.search);
+            return m ? decodeURIComponent(m[1]) : '';
+        })();
+        var modelAssign = {};     // feedstock id -> digester id
+        var modelCapacity = {};   // digester id -> capacity (short tons/yr)
+        var modelResult = null, modelResultSig = null, modelRunning = false;
+        try { modelAssign = JSON.parse(localStorage.getItem('ac2ModelAssign')) || {}; } catch (e) {}
+        try { modelCapacity = JSON.parse(localStorage.getItem('ac2ModelCapacity')) || {}; } catch (e) {}
+        function saveModelState() {
+            try {
+                localStorage.setItem('ac2ModelAssign', JSON.stringify(modelAssign));
+                localStorage.setItem('ac2ModelCapacity', JSON.stringify(modelCapacity));
+            } catch (e) {}
+        }
+
+        // Digesters the user selected in the sidebar, added from outside the area, or placed with + Add
+        function modelDigesters() {
+            var list = [];
+            if (digesterDataCache) getAoiDigesters().forEach(function(d) {
+                if (selectedDigesters[facIdOf(d)]) list.push({ id: 'dig|' + pointKey(d.lat, d.lng), name: d.name + (d.city ? ' — ' + d.city : ''), lat: d.lat, lng: d.lng });
+            });
+            extrasForOption('digesters').forEach(function(e) {
+                list.push({ id: 'dig|' + pointKey(e.lat, e.lng), name: (e.name || 'Digester') + ' (added)', lat: e.lat, lng: e.lng });
+            });
+            var n = 0;
+            Object.keys(placedItems).forEach(function(id) {
+                var it = placedItems[id];
+                if (it.key !== 'digesters' || !aoiContains(it)) return;
+                n++;
+                list.push({ id: 'new|' + pointKey(it.lat, it.lng), name: mapText('ac2-model-proposed', 'Proposed digester') + ' ' + n, lat: it.lat, lng: it.lng });
+            });
+            return list;
+        }
+
+        // Feedstocks the user selected (farms and facilities, ones added from outside the area, and crops)
+        function modelFeedstocks() {
+            var list = [];
+            function row(key, f) {
+                return { id: key + '|' + facIdOf(f), type: key, typeLabel: FEEDSTOCK_BAR_LABELS[key] || key,
+                         name: (f.name || 'Unknown') + (f.city ? ' — ' + f.city : ''), tons: f.tons, lat: f.lat, lng: f.lng };
+            }
+            FEEDSTOCK_BAR_KEYS.forEach(function(key) {
+                var used = usedFeedstocks[key] || {};
+                (getAoiFeaturesWithNames(key) || []).forEach(function(f) { if (used[facIdOf(f)]) list.push(row(key, f)); });
+                extrasForOption(key).forEach(function(e) { list.push(row(key, extraFeature(e) || { lat: e.lat, lng: e.lng, name: e.name })); });
+            });
+            Object.keys(cropAdditions).forEach(function(k) {
+                var label = (CROP_RESIDUES[k] || {}).label || k;
+                list.push({ id: 'crop|' + k, type: k, typeLabel: label, name: label, tons: cropAdditions[k] });
+            });
+            return list;
+        }
+
+        // Tons already assigned to each digester
+        function modelLoads(digs, feeds) {
+            var load = {};
+            digs.forEach(function(d) { load[d.id] = 0; });
+            feeds.forEach(function(f) { var d = modelAssign[f.id]; if (d in load) load[d] += f.tons || 0; });
+            return load;
+        }
+
+        // The request sent to the model server: one entry per digester that has feedstock
+        function buildModelRequest(digs, feeds) {
+            var runs = digs.map(function(d) {
+                return {
+                    digester: { id: d.id, name: d.name, lat: d.lat, lng: d.lng, capacity_tons_yr: modelCapacity[d.id] != null ? modelCapacity[d.id] : null },
+                    feedstocks: feeds.filter(function(f) { return modelAssign[f.id] === d.id; }).map(function(f) {
+                        return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null };
+                    })
+                };
+            }).filter(function(r) { return r.feedstocks.length > 0; });
+            return runs.length ? { digesters: runs } : null;
+        }
+
+        function currentModelSig() {
+            var req = buildModelRequest(modelDigesters(), modelFeedstocks());
+            return req ? JSON.stringify(req) : null;
+        }
+
+        var _modelRenderQueued = false;
+        function renderModelPanel() {
+            if (_modelRenderQueued) return;
+            _modelRenderQueued = true;
+            setTimeout(function() { _modelRenderQueued = false; drawModelPanel(); }, 0);
+        }
+
+        function modelUnits() {
+            var metric = unitSystem === 'metric';
+            return { factor: metric ? 0.907185 : 1, label: metric ? 'tonnes/yr' : 'tons/yr' };
+        }
+        function fmtTons(t) { var u = modelUnits(); return Math.round(t * u.factor).toLocaleString('en-US') + ' ' + u.label; }
+
+        function mEl(tag, cls, text) {
+            var e = document.createElement(tag);
+            if (cls) e.className = cls;
+            if (text != null) e.textContent = text;
+            return e;
+        }
+
+        function drawModelPanel() {
+            var panel = document.getElementById('model-panel');
+            if (!panel) return;
+            var digs = modelDigesters(), feeds = modelFeedstocks(), u = modelUnits();
+            var digById = {};
+            digs.forEach(function(d) { digById[d.id] = d; });
+            // With one digester, everything that fits goes to it automatically
+            if (digs.length === 1) {
+                var only = digs[0], cap = modelCapacity[only.id], load = modelLoads(digs, feeds)[only.id], changed = false;
+                feeds.forEach(function(f) {
+                    if (!(f.tons > 0) || digById[modelAssign[f.id]]) return;
+                    if (cap != null && load + f.tons > cap) return;
+                    modelAssign[f.id] = only.id; load += f.tons; changed = true;
+                });
+                if (changed) saveModelState();
+            }
+            var loads = modelLoads(digs, feeds);
+            panel.innerHTML = '';
+            if (!digs.length || !feeds.length) {
+                panel.appendChild(mEl('div', 'ac2-model-hint', !digs.length
+                    ? mapText('ac2-model-need-digester', 'Select a digester in the Energy Production list, or place one with + Add, to run the model.')
+                    : mapText('ac2-model-need-feed', 'Select feedstocks (farms, facilities or crops) to send to the digester.')));
+                appendModelStatus(panel);
+                return;
+            }
+
+            // Digester cards: capacity and how much is assigned
+            var cards = mEl('div', 'ac2-model-digesters');
+            digs.forEach(function(d) {
+                var card = mEl('div', 'ac2-model-dig');
+                card.appendChild(mEl('div', 'ac2-model-dig-name', d.name));
+                var lbl = mEl('label', null, mapText('ac2-model-capacity', 'Capacity') + ':');
+                var input = document.createElement('input');
+                input.type = 'number'; input.min = '0'; input.step = 'any';
+                input.placeholder = mapText('ac2-model-capacity-ph', 'Enter amount');
+                input.setAttribute('aria-label', 'Capacity of ' + d.name + ' (' + u.label + ')');
+                if (modelCapacity[d.id] != null) input.value = Math.round(modelCapacity[d.id] * u.factor * 100) / 100;
+                input.onchange = function() {
+                    var v = parseFloat(this.value);
+                    if (v > 0) modelCapacity[d.id] = v / u.factor; else delete modelCapacity[d.id];
+                    saveModelState(); drawModelPanel(); updateMetricBoxes();
+                };
+                lbl.appendChild(input);
+                lbl.appendChild(document.createTextNode(u.label));
+                card.appendChild(lbl);
+                var cap = modelCapacity[d.id];
+                var over = cap != null && loads[d.id] > cap * (1 + 1e-9);
+                card.appendChild(mEl('div', 'ac2-model-load' + (over ? ' over' : ''),
+                    mapText('ac2-model-assigned', 'Assigned') + ': ' + fmtTons(loads[d.id]) + (cap != null ? ' / ' + fmtTons(cap) : '') +
+                    (over ? ' — ' + mapText('ac2-model-over', 'over capacity') : '')));
+                cards.appendChild(card);
+            });
+            panel.appendChild(cards);
+
+            // Feedstock table: pick a digester for each one
+            var wrap = mEl('div', 'ac2-model-table-wrap'), table = mEl('table', 'ac2-model-table');
+            var head = mEl('tr');
+            [mapText('ac2-model-col-feed', 'Feedstock'), mapText('ac2-model-col-type', 'Type'),
+             mapText('ac2-model-col-amount', 'Amount'), mapText('ac2-model-col-digester', 'Send to')].forEach(function(h, i) {
+                var th = mEl('th', i === 2 ? 'num' : null, h); th.scope = 'col'; head.appendChild(th);
+            });
+            var thead = mEl('thead'); thead.appendChild(head); table.appendChild(thead);
+            var tbody = mEl('tbody');
+            feeds.forEach(function(f) {
+                var tr = mEl('tr');
+                tr.appendChild(mEl('td', null, f.name));
+                tr.appendChild(mEl('td', null, f.typeLabel));
+                tr.appendChild(mEl('td', 'num', f.tons > 0 ? fmtTons(f.tons) : mapText('ac2-model-no-amount', 'No amount data')));
+                var td = mEl('td'), sel = document.createElement('select');
+                sel.setAttribute('aria-label', 'Digester for ' + f.name);
+                var none = mEl('option', null, mapText('ac2-model-not-used', '— Not used —')); none.value = ''; sel.appendChild(none);
+                var current = digById[modelAssign[f.id]] ? modelAssign[f.id] : '';
+                digs.forEach(function(d) {
+                    var opt = mEl('option', null, d.name); opt.value = d.id;
+                    var cap = modelCapacity[d.id];
+                    if (d.id !== current && cap != null && loads[d.id] + (f.tons || 0) > cap * (1 + 1e-9)) {
+                        opt.disabled = true;
+                        opt.textContent = d.name + ' (' + mapText('ac2-model-full', 'not enough capacity') + ')';
+                    }
+                    sel.appendChild(opt);
+                });
+                sel.value = current;
+                sel.disabled = !(f.tons > 0);
+                sel.onchange = function() {
+                    if (this.value) modelAssign[f.id] = this.value; else delete modelAssign[f.id];
+                    saveModelState(); drawModelPanel(); updateMetricBoxes();
+                };
+                td.appendChild(sel); tr.appendChild(td); tbody.appendChild(tr);
+            });
+            table.appendChild(tbody); wrap.appendChild(table); panel.appendChild(wrap);
+
+            // Run button, with the reason when it can't run yet
+            var req = buildModelRequest(digs, feeds), reason = '';
+            if (!req) reason = mapText('ac2-model-why-none', 'Send at least one feedstock to a digester.');
+            else req.digesters.forEach(function(r) {
+                var cap = modelCapacity[r.digester.id];
+                if (reason) return;
+                if (cap == null) reason = mapText('ac2-model-why-cap', 'Enter a capacity for') + ' ' + r.digester.name + '.';
+                else if (loads[r.digester.id] > cap * (1 + 1e-9)) reason = r.digester.name + ' ' + mapText('ac2-model-why-over', 'has more feedstock than its capacity.');
+            });
+            var actions = mEl('div', 'ac2-model-actions');
+            var btn = mEl('button', 'calc-btn', modelRunning ? mapText('ac2-model-running', 'Running…') : mapText('ac2-model-run', 'Run Model'));
+            btn.type = 'button';
+            btn.disabled = modelRunning || !!reason;
+            btn.onclick = runModel;
+            actions.appendChild(btn);
+            if (reason && !modelRunning) actions.appendChild(mEl('span', 'ac2-model-reason', reason));
+            panel.appendChild(actions);
+            appendModelStatus(panel);
+        }
+
+        // Result of the last run, or why it didn't work
+        function appendModelStatus(panel) {
+            if (!modelResult && !modelRunning) return;
+            var box = mEl('div', 'ac2-model-status'), r = modelResult;
+            if (modelRunning) {
+                box.textContent = mapText('ac2-model-wait', 'Running the model… The first run can take a minute while the model server starts.');
+            } else if (modelResultSig !== currentModelSig()) {
+                box.className += ' warn';
+                box.textContent = mapText('ac2-model-stale', 'Your selections changed since the last run. Run the model again to update the results.');
+            } else if (r.status === 'ok') {
+                var t = r.totals;
+                box.appendChild(mEl('div', null, mapText('ac2-model-net', 'Net electricity to the microgrid') + ': ' +
+                    Math.round(t.net_electricity_MWh_yr).toLocaleString('en-US') + ' MWh/yr (' +
+                    Math.round(t.gross_electricity_kW).toLocaleString('en-US') + ' kW ' + mapText('ac2-model-gross', 'generated') + ')'));
+                var ul = mEl('ul');
+                r.digesters.forEach(function(d) {
+                    ul.appendChild(mEl('li', null, d.digester_name + ': ' +
+                        Math.round(d.energy.net_electricity_kW).toLocaleString('en-US') + ' kW net, ' +
+                        fmtUSD(d.costs.total_capex) + ' setup, ' + fmtUSD(d.costs.total_opex_yr) + '/yr operating' +
+                        (d.costs.lcoe_per_kWh != null ? ', $' + d.costs.lcoe_per_kWh.toFixed(3) + '/kWh' : '')));
+                });
+                box.appendChild(ul);
+            } else if (r.status === 'missing_values') {
+                box.className += ' warn';
+                box.appendChild(mEl('div', null, mapText('ac2-model-missing', "The model can't run yet because these values haven't been entered in the model:")));
+                var ul2 = mEl('ul');
+                (r.missing || []).forEach(function(m) { ul2.appendChild(mEl('li', null, m)); });
+                box.appendChild(ul2);
+            } else if (r.status === 'error') {
+                box.className += ' error';
+                var ul3 = mEl('ul');
+                (r.errors || []).forEach(function(m) { ul3.appendChild(mEl('li', null, m)); });
+                box.appendChild(ul3);
+            } else {
+                box.className += ' error';
+                box.textContent = r.message || mapText('ac2-model-unreachable', "Couldn't reach the model server. Try again in a minute.");
+            }
+            panel.appendChild(box);
+        }
+
+        function runModel() {
+            var req = buildModelRequest(modelDigesters(), modelFeedstocks());
+            if (!req || modelRunning) return;
+            var sig = JSON.stringify(req);
+            if (!MODEL_API_URL) {
+                modelResult = { status: 'unreachable', message: mapText('ac2-model-no-server', "The model server isn't set up yet.") };
+                modelResultSig = sig;
+                drawModelPanel();
+                return;
+            }
+            modelRunning = true;
+            drawModelPanel();
+            fetch(MODEL_API_URL.replace(/\/$/, '') + '/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sig })
+                .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(function(res) { modelResult = res; })
+                .catch(function() { modelResult = { status: 'unreachable' }; })
+                .then(function() {
+                    modelResultSig = sig;
+                    modelRunning = false;
+                    drawModelPanel();
+                    updateMetricBoxes();
+                });
         }
 
         function openMetricInfo(key, btn) {
