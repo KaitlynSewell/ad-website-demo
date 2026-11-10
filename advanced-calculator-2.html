@@ -76,6 +76,15 @@
         }
 
         .ac2-toolbar-btn:hover { background: rgba(255,255,255,0.35); }
+        /* Left and right groups take equal space so the Run Model button sits in the exact center */
+        .ac2-tb-side { flex: 1 1 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: max-content; }
+        .ac2-tb-right { justify-content: flex-end; }
+        .ac2-run-btn { flex: 0 0 auto; background: white; color: #2a52cc; border-color: white; font-weight: bold; padding: 7px 22px; }
+        .ac2-run-btn:hover { background: #eef2ff; }
+        .ac2-run-btn.not-ready { opacity: 0.75; }
+        .ac2-run-btn.running { cursor: progress; }
+        @keyframes ac2-flash { 0%, 100% { background: transparent; } 30% { background: #fff3c4; } }
+        .ac2-flash { animation: ac2-flash 1.6s ease; border-radius: 4px; }
 
         .ac2-units-wrap { position: relative; }
         .ac2-units-panel {
@@ -992,6 +1001,7 @@
     </h1>
     <div class="page-heading" style="font-size:18px; padding:8px 24px; background:#7a95e8; justify-content:flex-start; overflow:visible; position:relative; z-index:200;">
         <div class="ac2-toolbar">
+          <div class="ac2-tb-side ac2-tb-left">
             <!-- Units dropdown -->
             <div class="ac2-units-wrap" id="ac2-units-wrap">
                 <button class="ac2-toolbar-btn" id="ac2-units-btn" onclick="toggleUnitsPanel()" data-i18n="ac2-units-btn">Units &#9662;</button>
@@ -1034,8 +1044,12 @@
                 <span data-i18n="ac2-download">Download</span>
             </button>
 
-            <!-- Pushes the buttons below to the right -->
-            <span style="margin-left:auto;"></span>
+          </div>
+
+          <!-- Run the AD model (centered) -->
+          <button type="button" class="ac2-toolbar-btn ac2-run-btn" id="ac2-run-btn" onclick="onRunModelClick()" data-i18n="ac2-model-run">Run Model</button>
+
+          <div class="ac2-tb-side ac2-tb-right">
 
             <!-- Show or hide icons outside the AOI (only while an AOI is selected) -->
             <button class="ac2-toolbar-btn" id="aoi-nearby-btn" onclick="toggleNearbyFacilities()" style="display:none;" data-i18n="ac2-show-nearby">Show Nearby Facilities</button>
@@ -1052,6 +1066,7 @@
                     + Add
                 </button>
             </div>
+          </div>
         </div>
     </div>
     <div class="page-layout" style="overflow: hidden; flex: 1; min-height: 0;">
@@ -2736,6 +2751,9 @@
                 panel.appendChild(mEl('div', 'ac2-model-hint', !digs.length
                     ? mapText('ac2-model-need-digester', 'Select a digester in the Energy Production list, or place one with + Add, to run the model.')
                     : mapText('ac2-model-need-feed', 'Select feedstocks (farms, facilities or crops) to send to the digester.')));
+                setRunButton(!digs.length
+                    ? mapText('ac2-model-need-digester', 'Select a digester in the Energy Production list, or place one with + Add, to run the model.')
+                    : mapText('ac2-model-need-feed', 'Select feedstocks (farms, facilities or crops) to send to the digester.'));
                 appendModelStatus(panel);
                 return;
             }
@@ -2805,7 +2823,7 @@
             });
             table.appendChild(tbody); wrap.appendChild(table); panel.appendChild(wrap);
 
-            // Run button, with the reason when it can't run yet
+            // Why the model can't run yet (the Run Model button is in the toolbar)
             var req = buildModelRequest(digs, feeds), reason = '';
             if (!req) reason = mapText('ac2-model-why-none', 'Send at least one feedstock to a digester.');
             else req.digesters.forEach(function(r) {
@@ -2814,15 +2832,40 @@
                 if (cap == null) reason = mapText('ac2-model-why-cap', 'Enter a capacity for') + ' ' + r.digester.name + '.';
                 else if (loads[r.digester.id] > cap * (1 + 1e-9)) reason = r.digester.name + ' ' + mapText('ac2-model-why-over', 'has more feedstock than its capacity.');
             });
-            var actions = mEl('div', 'ac2-model-actions');
-            var btn = mEl('button', 'calc-btn', modelRunning ? mapText('ac2-model-running', 'Running…') : mapText('ac2-model-run', 'Run Model'));
-            btn.type = 'button';
-            btn.disabled = modelRunning || !!reason;
-            btn.onclick = runModel;
-            actions.appendChild(btn);
-            if (reason && !modelRunning) actions.appendChild(mEl('span', 'ac2-model-reason', reason));
-            panel.appendChild(actions);
+            if (reason && !modelRunning) {
+                var actions = mEl('div', 'ac2-model-actions');
+                actions.appendChild(mEl('span', 'ac2-model-reason', reason));
+                panel.appendChild(actions);
+            }
+            setRunButton(reason);
             appendModelStatus(panel);
+        }
+
+        // Toolbar Run Model button: shows Running…, and why it can't run yet as a tooltip
+        var modelRunReason = '';
+        function setRunButton(reason) {
+            modelRunReason = reason || '';
+            var b = document.getElementById('ac2-run-btn');
+            if (!b) return;
+            b.textContent = modelRunning ? mapText('ac2-model-running', 'Running…') : mapText('ac2-model-run', 'Run Model');
+            b.classList.toggle('not-ready', !!modelRunReason && !modelRunning);
+            b.classList.toggle('running', modelRunning);
+            b.title = modelRunning ? '' : (modelRunReason || mapText('ac2-model-run-tip', 'Run the AD model with the selected digesters and feedstocks'));
+            b.setAttribute('aria-busy', modelRunning ? 'true' : 'false');
+        }
+
+        // Clicking Run Model scrolls to the model panel; it runs the model, or highlights what's missing
+        function onRunModelClick() {
+            if (modelRunning) return;
+            drawModelPanel();
+            var box = document.querySelector('.ac2-model-box');
+            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (modelRunReason) {
+                var hint = document.querySelector('#model-panel .ac2-model-reason, #model-panel .ac2-model-hint');
+                if (hint) { hint.classList.remove('ac2-flash'); void hint.offsetWidth; hint.classList.add('ac2-flash'); }
+                return;
+            }
+            runModel();
         }
 
         // Result of the last run, or why it didn't work
