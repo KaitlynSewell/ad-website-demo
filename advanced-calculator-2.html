@@ -4843,9 +4843,9 @@
 
             panel.innerHTML =
                 grp('Energy Production', true, 'ac2-panel-eprod') +
+                li('digesters',       'ac2-layer-digesters',       'Anaerobic Digesters') +
                 li('wind',            'ac2-layer-wind',            'Wind Turbines') +
                 li('solar',           'ac2-layer-solar',           'Solar Panels') +
-                li('digesters',       'ac2-layer-digesters',       'Anaerobic Digesters') +
                 grp('Crop Residues', false, 'ac2-panel-crops') +
                 Object.keys(CROP_RESIDUES).map(function(key) {
                     var c = CROP_RESIDUES[key];
