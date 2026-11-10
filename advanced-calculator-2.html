@@ -2803,8 +2803,10 @@
             var digs = modelDigesters(), feeds = modelFeedstocks(), u = modelUnits();
             var digById = {};
             digs.forEach(function(d) { digById[d.id] = d; });
-            // With one digester, everything that fits goes to it automatically
-            if (digs.length === 1) {
+            // With one digester, everything that fits goes to it automatically. Wait until the digester data has
+            // loaded, or a page that has two digesters can look like it has one for a moment after loading.
+            var digestersLoaded = !Object.keys(selectedDigesters).length || (digesterDataCache && digesterDataCache.length > 0);
+            if (digs.length === 1 && digestersLoaded) {
                 var only = digs[0], cap = modelCapacity[only.id], load = modelLoads(digs, feeds)[only.id], changed = false;
                 feeds.forEach(function(f) {
                     if (!(f.tons > 0) || digById[modelAssign[f.id]]) return;
