@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261109b"></script>
+    <script src="translations.js?v=20261109c"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -2649,17 +2649,17 @@
         function modelDigesters() {
             var list = [];
             if (digesterDataCache) getAoiDigesters().forEach(function(d) {
-                if (selectedDigesters[facIdOf(d)]) list.push({ id: 'dig|' + pointKey(d.lat, d.lng), name: d.name + (d.city ? ' — ' + d.city : ''), lat: d.lat, lng: d.lng });
+                if (selectedDigesters[facIdOf(d)]) list.push({ id: 'dig|' + pointKey(d.lat, d.lng), name: d.name + (d.city ? ' — ' + d.city : ''), lat: d.lat, lng: d.lng, existing: true });
             });
             extrasForOption('digesters').forEach(function(e) {
-                list.push({ id: 'dig|' + pointKey(e.lat, e.lng), name: (e.name || 'Digester') + ' (added)', lat: e.lat, lng: e.lng });
+                list.push({ id: 'dig|' + pointKey(e.lat, e.lng), name: (e.name || 'Digester') + ' (added)', lat: e.lat, lng: e.lng, existing: true });
             });
             var n = 0;
             Object.keys(placedItems).forEach(function(id) {
                 var it = placedItems[id];
                 if (it.key !== 'digesters' || !aoiContains(it)) return;
                 n++;
-                list.push({ id: 'new|' + pointKey(it.lat, it.lng), name: mapText('ac2-model-proposed', 'Proposed digester') + ' ' + n, lat: it.lat, lng: it.lng });
+                list.push({ id: 'new|' + pointKey(it.lat, it.lng), name: mapText('ac2-model-proposed', 'Proposed digester') + ' ' + n, lat: it.lat, lng: it.lng, existing: false });
             });
             return list;
         }
@@ -2695,7 +2695,7 @@
         function buildModelRequest(digs, feeds) {
             var runs = digs.map(function(d) {
                 return {
-                    digester: { id: d.id, name: d.name, lat: d.lat, lng: d.lng, capacity_tons_yr: modelCapacity[d.id] != null ? modelCapacity[d.id] : null },
+                    digester: { id: d.id, name: d.name, lat: d.lat, lng: d.lng, existing: !!d.existing, capacity_tons_yr: modelCapacity[d.id] != null ? modelCapacity[d.id] : null },
                     feedstocks: feeds.filter(function(f) { return modelAssign[f.id] === d.id; }).map(function(f) {
                         return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null };
                     })
@@ -2763,6 +2763,9 @@
             digs.forEach(function(d) {
                 var card = mEl('div', 'ac2-model-dig');
                 card.appendChild(mEl('div', 'ac2-model-dig-name', d.name));
+                card.appendChild(mEl('div', 'ac2-model-load', d.existing
+                    ? mapText('ac2-model-existing', 'Existing digester: the digester tank is not included in setup costs')
+                    : mapText('ac2-model-new', 'New digester: built from scratch')));
                 var lbl = mEl('label', null, mapText('ac2-model-capacity', 'Capacity') + ':');
                 var input = document.createElement('input');
                 input.type = 'number'; input.min = '0'; input.step = 'any';
@@ -3204,7 +3207,9 @@
         var CROP_RESIDUES = {
             'corn-stover': { label: 'Corn Stover', color: '#d4a017', i18n: 'ac2-crop-corn' },
             'soybeans':    { label: 'Soybeans',    color: '#6b8e23', i18n: 'ac2-crop-soy' },
-            'switchgrass': { label: 'Switchgrass', color: '#3cb371', i18n: 'ac2-crop-switchgrass' }
+            'switchgrass': { label: 'Switchgrass', color: '#3cb371', i18n: 'ac2-crop-switchgrass' },
+            'prairie':     { label: 'Prairie Grass', color: '#8fbc5a', i18n: 'ac2-crop-prairie' },
+            'rye':         { label: 'Cereal Rye',    color: '#b5884e', i18n: 'ac2-crop-rye' }
         };
         var cropAdditions = {};      // crop key -> tons/year the user asked for
         var microgridExtras = {};    // id -> { id, key, lat, lng, name }: facilities outside the AOI added by the user
