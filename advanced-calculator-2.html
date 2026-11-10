@@ -1160,7 +1160,7 @@
                                 <span><span style="display:inline-block;width:10px;height:10px;background:#ccc;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Available in AOI</span>
                                 <span><span style="display:inline-block;width:10px;height:10px;background-color:#2E9E4F;background-image:radial-gradient(white 1px, transparent 1.2px);background-size:4px 4px;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>Selected for Microgrid</span>
                             </div>
-                            <div style="font-size:10px;color:#888;text-align:center;">Wastewater is not shown because no waste amounts are available.</div>
+                            <div style="font-size:10px;color:#888;text-align:center;">Wastewater and ethanol plants are not shown because no waste amounts are available yet.</div>
                         </div>
                         <div class="ac2-chart-box">
                             <div class="ac2-chart-title" data-i18n="ac2-chart-energy-used">Current AOI Energy Production vs Usage</div>
@@ -1801,7 +1801,7 @@
             var unitLabel = (metric ? 'tonnes' : 'tons') + '/' + (PERIOD_LABELS[timePeriod] || 'yr');
 
             var hasAoi = hasAoiActive(), loading = false;
-            var bars = FEEDSTOCK_BAR_KEYS.filter(function(key) { return key !== 'wastewater'; }).map(function(key) {
+            var bars = FEEDSTOCK_BAR_KEYS.filter(function(key) { return !NO_AMOUNT_KEYS[key]; }).map(function(key) {
                 var w = hasAoi ? aoiWasteTons(key) : null;
                 if (hasAoi && !w) loading = true;
                 return {
@@ -1937,11 +1937,12 @@
         var IOWA_MWH_DEMAND_PER_KM2 = IOWA_SALES_MWH / 145746;
 
         // Feedstock bar chart — ordered list of feedstock layer keys and their display labels
-        var FEEDSTOCK_BAR_KEYS   = ['beef','dairy','swine','chickens','turkeys','foodwaste','wastewater','landfill'];
+        var NO_AMOUNT_KEYS = { wastewater: true, ethanol: true };   // no waste amounts yet, so left out of the bar chart
+        var FEEDSTOCK_BAR_KEYS   = ['beef','dairy','swine','chickens','turkeys','foodwaste','wastewater','ethanol','landfill'];
         var FEEDSTOCK_BAR_LABELS = {
             beef:'Beef', dairy:'Dairy', swine:'Swine',
             chickens:'Poultry', turkeys:'Turkey', sheep:'Sheep', horses:'Horses',
-            wastewater:'Wastewater', landfill:'Landfill', foodwaste:'Food Waste'
+            wastewater:'Wastewater', ethanol:'Ethanol Plants', landfill:'Landfill', foodwaste:'Food Waste'
         };
 
         // Approximate annual production potential (MWh) per facility / placed unit
@@ -2030,7 +2031,8 @@
 
         // Cache of named features per feedstock key, loaded lazily from GeoJSON
         var bgFeatureCache = {};
-        // Waste amount (tons/year) field for each layer; food waste uses foodWasteTons(), wastewater has no amounts
+        // Waste amount (tons/year) field for each layer; food waste uses foodWasteTons(). Wastewater and ethanol
+        // plants have no amounts yet: add their field here once the data is in the geojson.
         var WASTE_TONS_FIELD = {
             beef:'ManureTons', dairy:'ManureTons', swine:'ManureTons', chickens:'ManureTons', turkeys:'ManureTons',
             landfill:'TonsYr'
@@ -2038,13 +2040,13 @@
         var FEEDSTOCK_NAME_FIELD = {
             beef:'facName', dairy:'facName', swine:'facName', chickens:'facName',
             turkeys:'facName', sheep:'facName', horses:'facName',
-            wastewater:'Name', landfill:'Name', foodwaste:'Name',
+            wastewater:'Name', landfill:'Name', foodwaste:'Name', ethanol:'Plant',
             windplants:'Plant', solarplants:'Plant', powerplants:'Plant', biodiesel:'Plant'
         };
         var FEEDSTOCK_CITY_FIELD = {
             beef:'CityName', dairy:'CityName', swine:'CityName', chickens:'CityName',
             turkeys:'CityName', sheep:'CityName', horses:'CityName',
-            wastewater:'City', landfill:'County', foodwaste:'City',
+            wastewater:'City', landfill:'County', foodwaste:'City', ethanol:'City',
             windplants:'City', solarplants:'City', powerplants:'City', biodiesel:'City'
         };
 
