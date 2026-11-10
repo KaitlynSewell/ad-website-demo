@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261110e"></script>
+    <script src="translations.js?v=20261110f"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -425,6 +425,13 @@
         .ac2-model-dig label { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
         .ac2-model-dig input { width: 110px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
         .ac2-model-load { font-size: 12px; margin-top: 6px; color: #555; }
+        .ac2-model-pathway { margin-top: 6px; }
+        .ac2-model-pathway select { padding: 3px 4px; font-size: 12px; }
+        .ac2-model-share { display: flex; flex-direction: column; align-items: stretch !important; gap: 2px !important; margin-top: 4px; }
+        .ac2-model-share input[type="range"] { width: 100%; padding: 0; border: none; }
+        .ac2-model-share-text { font-size: 11px; color: #555; }
+        html.dark-mode .ac2-model-pathway select { background: #162238; color: #e8f0fe; border-color: #2a4a7a; }
+        html.dark-mode .ac2-model-share-text { color: #a0b8d8; }
         .ac2-model-load.over { color: #c0392b; font-weight: bold; }
         .ac2-model-table-wrap { overflow-x: auto; margin-bottom: 12px; }
         .ac2-model-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -1220,12 +1227,19 @@
                             </div>
                             <div class="ac2-metric-value" id="metric-ghg" data-i18n="ac2-metric-no-inputs">No Inputs Selected</div>
                         </div>
-                        <div class="ac2-metric">
+                        <div class="ac2-metric" id="metric-box-elec">
                             <div class="ac2-metric-title">
-                                <span data-i18n="ac2-metric-price">Current Energy Price</span>
-                                <button type="button" class="ac2-info-btn" onclick="openMetricInfo('price', this)" aria-label="About Current Energy Price" title="About Current Energy Price">i</button>
+                                <span data-i18n="ac2-metric-elec-cost">Electricity Cost</span>
+                                <button type="button" class="ac2-info-btn" onclick="openMetricInfo('elec', this)" aria-label="About Electricity Cost" title="About Electricity Cost">i</button>
                             </div>
-                            <div class="ac2-metric-value" id="metric-price" data-i18n="ac2-metric-no-inputs">No Inputs Selected</div>
+                            <div class="ac2-metric-value" id="metric-elec-cost" data-i18n="ac2-metric-no-inputs">No Inputs Selected</div>
+                        </div>
+                        <div class="ac2-metric" id="metric-box-gas" style="display:none">
+                            <div class="ac2-metric-title">
+                                <span data-i18n="ac2-metric-gas-cost">Natural Gas Cost</span>
+                                <button type="button" class="ac2-info-btn" onclick="openMetricInfo('gas', this)" aria-label="About Natural Gas Cost" title="About Natural Gas Cost">i</button>
+                            </div>
+                            <div class="ac2-metric-value" id="metric-gas-cost" data-i18n="ac2-metric-no-inputs">No Inputs Selected</div>
                         </div>
                         <div class="ac2-metric">
                             <div class="ac2-metric-title">
@@ -2686,16 +2700,23 @@
         // ===== COST AND PRICE INFO POPUPS =====
         // Popup text for each info button. Replace 'Description coming soon.' with the final text.
         var METRIC_INFO_TEXT = {
-            operating: 'Total yearly operating cost of the digesters from the AD model: feedstock, labor, maintenance, insurance and taxes, H2S cleanup media, feedstock hauling, CHP engine upkeep and any natural gas for heating.',
-            starting:  'Total cost to build the digesters from the AD model (installed equipment plus working capital): feed handling, digesters, solids separation, lagoon, gas cleanup, CHP engine-generator and backup boiler.',
+            operating: 'Total yearly operating cost of the digesters from the AD model: feedstock, labor, maintenance, insurance and taxes, H2S cleanup media, feedstock hauling, digestate field application, CHP engine upkeep and any natural gas for heating.',
+            starting:  'Total cost to build the digesters from the AD model (installed equipment plus working capital): feed handling, digesters, solids separation and storage, gas cleanup, CHP engine-generator and/or RNG upgrading and pipeline injection, and backup boiler.',
             ghg:       'Description coming soon.',
-            price:     'Cost of the electricity the digesters produce, from the AD model: the price per kWh at which the project breaks even over its life (8% rate of return). The CHP engine at each digester burns the biogas to make electricity.',
+            elec:      'Cost of the electricity the digesters produce, from the AD model: the price per kWh at which the project breaks even over its life (8% rate of return). Shown when a digester makes electricity with a CHP engine. When a digester makes both electricity and RNG, its costs are shared by the energy in each product.',
+            gas:       'Cost of the renewable natural gas (RNG) the digesters produce, from the AD model: the price per MMBtu at which the project breaks even over its life (8% rate of return). Shown when a digester upgrades biogas to RNG for the gas pipeline. When a digester makes both electricity and RNG, its costs are shared by the energy in each product.',
             reduction: 'Description coming soon.'
         };
         var _metricInfoOpener = null;
 
         // No area selected: nothing to calculate yet. Area selected: no data for these boxes yet.
         function updateMetricBoxes() {
+            var paths = modelDigesters().map(function(d) { return modelPathwayOf(d.id).pathway; });
+            var showElec = !paths.length || paths.some(function(x) { return x !== 'RNG'; });
+            var showGas = paths.some(function(x) { return x !== 'CHP'; });
+            var be = document.getElementById('metric-box-elec'), bg = document.getElementById('metric-box-gas');
+            if (be) be.style.display = showElec ? '' : 'none';
+            if (bg) bg.style.display = showGas ? '' : 'none';
             var key = hasAoiActive() ? 'ac2-metric-no-data' : 'ac2-metric-no-inputs';
             var text = mapText(key, hasAoiActive() ? 'No Data' : 'No Inputs Selected');
             // Model results show only while they match the current selections
@@ -2717,7 +2738,8 @@
         function modelMetricText(id, t) {
             if (id === 'metric-starting') return fmtUSD(t.total_capex);
             if (id === 'metric-operating') return fmtUSD(t.total_opex_yr) + '/yr';
-            if (id === 'metric-price' && t.lcoe_per_kWh != null) return '$' + t.lcoe_per_kWh.toFixed(3) + '/kWh';
+            if (id === 'metric-elec-cost' && t.lcoe_per_kWh != null) return '$' + t.lcoe_per_kWh.toFixed(3) + '/kWh';
+            if (id === 'metric-gas-cost' && t.rng_cost_per_MMBtu != null) return '$' + t.rng_cost_per_MMBtu.toFixed(2) + '/MMBtu';
             return null;   // GHG boxes: no model values yet
         }
 
@@ -2735,11 +2757,49 @@
         var modelResult = null, modelResultSig = null, modelRunning = false;
         try { modelAssign = JSON.parse(localStorage.getItem('ac2ModelAssign')) || {}; } catch (e) {}
         try { modelCapacity = JSON.parse(localStorage.getItem('ac2ModelCapacity')) || {}; } catch (e) {}
+        var modelPathway = {};    // digester id -> { pathway: 'CHP' | 'RNG' | 'both', share: fraction of biogas to RNG }
+        try { modelPathway = JSON.parse(localStorage.getItem('ac2ModelPathway')) || {}; } catch (e) {}
         function saveModelState() {
             try {
                 localStorage.setItem('ac2ModelAssign', JSON.stringify(modelAssign));
                 localStorage.setItem('ac2ModelCapacity', JSON.stringify(modelCapacity));
+                localStorage.setItem('ac2ModelPathway', JSON.stringify(modelPathway));
             } catch (e) {}
+        }
+        function modelPathwayOf(id) {
+            var p = modelPathway[id] || {};
+            return { pathway: p.pathway || 'CHP', share: p.share != null ? p.share : 0.5 };
+        }
+
+        // Distance from a digester to the nearest gas pipeline on the map (straight line, miles)
+        var pipelineLines = null;   // null = not loaded, [] = loading or none
+        function loadPipelines() {
+            if (pipelineLines !== null) return;
+            pipelineLines = [];
+            fetch(LAYER_FILES['pipelines'] || 'geojson/pipelines.geojson').then(function(r) { return r.json(); }).then(function(d) {
+                var lines = [];
+                d.features.forEach(function(f) {
+                    var g = f.geometry; if (!g) return;
+                    (g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : []).forEach(function(l) { lines.push(l); });
+                });
+                pipelineLines = lines;
+                renderModelPanel();
+            }).catch(function() {});
+        }
+        function nearestPipelineMiles(lat, lng) {
+            if (!pipelineLines || !pipelineLines.length) return null;
+            var kx = 69.17 * Math.cos(lat * Math.PI / 180), ky = 69.05, best = Infinity;   // miles per degree
+            pipelineLines.forEach(function(line) {
+                for (var i = 1; i < line.length; i++) {
+                    var ax = (line[i-1][0] - lng) * kx, ay = (line[i-1][1] - lat) * ky;
+                    var bx = (line[i][0] - lng) * kx, by = (line[i][1] - lat) * ky;
+                    var dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+                    var t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+                    var px = ax + t * dx, py = ay + t * dy, dist = Math.sqrt(px * px + py * py);
+                    if (dist < best) best = dist;
+                }
+            });
+            return isFinite(best) ? best : null;
         }
 
         // Digesters the user selected in the sidebar, added from outside the area, or placed with + Add
@@ -2809,7 +2869,16 @@
         function buildModelRequest(digs, feeds) {
             var runs = digs.map(function(d) {
                 return {
-                    digester: { id: d.id, name: d.name, lat: d.lat, lng: d.lng, existing: !!d.existing, capacity_tons_yr: modelCapacity[d.id] != null ? modelCapacity[d.id] : null },
+                    digester: (function() {
+                        var pw = modelPathwayOf(d.id), out = { id: d.id, name: d.name, lat: d.lat, lng: d.lng, existing: !!d.existing,
+                            capacity_tons_yr: modelCapacity[d.id] != null ? modelCapacity[d.id] : null, pathway: pw.pathway };
+                        if (pw.pathway === 'both') out.rng_share = pw.share;
+                        if (pw.pathway !== 'CHP') {
+                            var miles = nearestPipelineMiles(d.lat, d.lng);
+                            if (miles != null) out.pipeline_miles = Math.round(miles * 100) / 100;
+                        }
+                        return out;
+                    })(),
                     feedstocks: feeds.filter(function(f) { return modelAssign[f.id] === d.id; }).map(function(f) {
                         return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null };
                     })
@@ -2896,6 +2965,50 @@
                 lbl.appendChild(input);
                 lbl.appendChild(document.createTextNode(u.label));
                 card.appendChild(lbl);
+
+                // Energy product: electricity (CHP), RNG, or both
+                var pw = modelPathwayOf(d.id);
+                var plbl = mEl('label', 'ac2-model-pathway', mapText('ac2-model-energy', 'Energy') + ':');
+                var psel = document.createElement('select');
+                psel.setAttribute('aria-label', 'Energy product for ' + d.name);
+                [['CHP', mapText('ac2-model-chp', 'Electricity (CHP)')], ['RNG', mapText('ac2-model-rng', 'Natural gas (RNG)')],
+                 ['both', mapText('ac2-model-both', 'Both')]].forEach(function(o) {
+                    var opt = mEl('option', null, o[1]); opt.value = o[0]; psel.appendChild(opt);
+                });
+                psel.value = pw.pathway;
+                psel.onchange = function() {
+                    modelPathway[d.id] = { pathway: this.value, share: pw.share };
+                    saveModelState(); drawModelPanel(); updateMetricBoxes();
+                };
+                plbl.appendChild(psel);
+                card.appendChild(plbl);
+                if (pw.pathway === 'both') {
+                    var slbl = mEl('label', 'ac2-model-share');
+                    var range = document.createElement('input');
+                    range.type = 'range'; range.min = '0'; range.max = '100'; range.step = '5';
+                    range.value = Math.round(pw.share * 100);
+                    range.setAttribute('aria-label', 'Share of biogas to RNG for ' + d.name);
+                    var shareText = mEl('span', 'ac2-model-share-text');
+                    function showShare(v) {
+                        shareText.textContent = v + '% ' + mapText('ac2-model-to-rng', 'of biogas to RNG') + ', ' + (100 - v) + '% ' + mapText('ac2-model-to-chp', 'to CHP');
+                    }
+                    showShare(range.value);
+                    range.oninput = function() { showShare(this.value); };
+                    range.onchange = function() {
+                        modelPathway[d.id] = { pathway: 'both', share: Number(this.value) / 100 };
+                        saveModelState(); drawModelPanel(); updateMetricBoxes();
+                    };
+                    slbl.appendChild(range);
+                    slbl.appendChild(shareText);
+                    card.appendChild(slbl);
+                }
+                if (pw.pathway !== 'CHP') {
+                    loadPipelines();
+                    var miles = nearestPipelineMiles(d.lat, d.lng);
+                    card.appendChild(mEl('div', 'ac2-model-load', mapText('ac2-model-pipeline', 'Nearest gas pipeline') + ': ' +
+                        (miles == null ? mapText('ac2-model-loading', 'loading…') : miles.toFixed(1) + ' mi ' + mapText('ac2-model-straight', '(straight line)'))));
+                }
+
                 var cap = modelCapacity[d.id];
                 var over = cap != null && loads[d.id] > cap * (1 + 1e-9);
                 card.appendChild(mEl('div', 'ac2-model-load' + (over ? ' over' : ''),
@@ -2987,6 +3100,17 @@
             runModel();
         }
 
+        // One line per digester in the results
+        function modelResultLine(d) {
+            var e = d.energy, c = d.costs, parts = [];
+            if (e.gross_electricity_kW > 0 || e.pathway !== 'RNG') parts.push(Math.round(e.net_electricity_kW).toLocaleString('en-US') + ' kW net electricity');
+            if (e.rng_MMBtu_yr > 0) parts.push(Math.round(e.rng_MMBtu_yr).toLocaleString('en-US') + ' MMBtu/yr RNG');
+            parts.push(fmtUSD(c.total_capex) + ' setup', fmtUSD(c.total_opex_yr) + '/yr operating');
+            if (c.lcoe_per_kWh != null) parts.push('$' + c.lcoe_per_kWh.toFixed(3) + '/kWh');
+            if (c.rng_cost_per_MMBtu != null) parts.push('$' + c.rng_cost_per_MMBtu.toFixed(2) + '/MMBtu');
+            return d.digester_name + ': ' + parts.join(', ');
+        }
+
         // Result of the last run, or why it didn't work
         function appendModelStatus(panel) {
             if (!modelResult && !modelRunning) return;
@@ -2998,15 +3122,14 @@
                 box.textContent = mapText('ac2-model-stale', 'Your selections changed since the last run. Run the model again to update the results.');
             } else if (r.status === 'ok') {
                 var t = r.totals;
-                box.appendChild(mEl('div', null, mapText('ac2-model-net', 'Net electricity to the microgrid') + ': ' +
+                if (t.gross_electricity_kW > 0) box.appendChild(mEl('div', null, mapText('ac2-model-net', 'Net electricity to the microgrid') + ': ' +
                     Math.round(t.net_electricity_MWh_yr).toLocaleString('en-US') + ' MWh/yr (' +
                     Math.round(t.gross_electricity_kW).toLocaleString('en-US') + ' kW ' + mapText('ac2-model-gross', 'generated') + ')'));
+                if (t.rng_MMBtu_yr > 0) box.appendChild(mEl('div', null, mapText('ac2-model-rng-total', 'RNG to the gas pipeline') + ': ' +
+                    Math.round(t.rng_MMBtu_yr).toLocaleString('en-US') + ' MMBtu/yr'));
                 var ul = mEl('ul');
                 r.digesters.forEach(function(d) {
-                    ul.appendChild(mEl('li', null, d.digester_name + ': ' +
-                        Math.round(d.energy.net_electricity_kW).toLocaleString('en-US') + ' kW net, ' +
-                        fmtUSD(d.costs.total_capex) + ' setup, ' + fmtUSD(d.costs.total_opex_yr) + '/yr operating' +
-                        (d.costs.lcoe_per_kWh != null ? ', $' + d.costs.lcoe_per_kWh.toFixed(3) + '/kWh' : '')));
+                    ul.appendChild(mEl('li', null, modelResultLine(d)));
                 });
                 box.appendChild(ul);
             } else if (r.status === 'missing_values') {
@@ -5008,7 +5131,7 @@
                 used: usedFeedstocks, digesters: selectedDigesters, highlights: facilityHighlights, only: onlyShowSelected,
                 crops: cropAdditions, extras: microgridExtras,
                 placed: Object.keys(placedItems).map(function(id) { var it = placedItems[id]; return { key: it.key, lat: it.lat, lng: it.lng }; }),
-                assign: modelAssign, capacity: modelCapacity,
+                assign: modelAssign, capacity: modelCapacity, pathway: modelPathway,
                 units: { system: unitSystem, energy: energyUnit, period: timePeriod },
                 legend: ls('legendState'), ptypes: ls('powerplantTypes')
             };
@@ -5137,7 +5260,9 @@
                 digs.forEach(function(d) {
                     var mine = feeds.filter(function(f) { return modelAssign[f.id] === d.id; });
                     var cap = modelCapacity[d.id];
-                    h += '<p style="margin:6px 0 2px"><b>' + mgEsc(d.name) + '</b> <span class="mg-muted">(' + (d.existing ? 'existing' : 'proposed new') +
+                    var pwr = modelPathwayOf(d.id), pwText = pwr.pathway === 'CHP' ? 'electricity (CHP)' : pwr.pathway === 'RNG' ? 'RNG' :
+                        'both: ' + Math.round(pwr.share * 100) + '% of biogas to RNG';
+                    h += '<p style="margin:6px 0 2px"><b>' + mgEsc(d.name) + '</b> <span class="mg-muted">(' + (d.existing ? 'existing' : 'proposed new') + ', ' + pwText +
                         (cap != null ? ', capacity ' + mgEsc(fmtTons(cap)) : ', capacity not entered') + ')</span></p>';
                     h += mine.length ? '<ul>' + mine.map(function(f) { return '<li>' + mgEsc(f.name + ' — ' + (f.tons > 0 ? fmtTons(f.tons) : 'no amount')) + '</li>'; }).join('') + '</ul>'
                         : '<p class="mg-muted" style="margin:0 0 4px 18px">No feedstock assigned.</p>';
@@ -5147,9 +5272,7 @@
             if (r && r.status === 'ok' && modelResultSig === currentModelSig()) {
                 h += '<h3>Model Results</h3><ul>';
                 r.digesters.forEach(function(d) {
-                    h += '<li>' + mgEsc(d.digester_name + ': ' + Math.round(d.energy.net_electricity_kW).toLocaleString('en-US') + ' kW net electricity, ' +
-                        fmtUSD(d.costs.total_capex) + ' setup, ' + fmtUSD(d.costs.total_opex_yr) + '/yr operating' +
-                        (d.costs.lcoe_per_kWh != null ? ', $' + d.costs.lcoe_per_kWh.toFixed(3) + '/kWh' : '')) + '</li>';
+                    h += '<li>' + mgEsc(modelResultLine(d)) + '</li>';
                 });
                 h += '</ul><p class="mg-muted">Net electricity to the microgrid: ' + Math.round(r.totals.net_electricity_MWh_yr).toLocaleString('en-US') + ' MWh/yr.</p>';
             } else {
@@ -5188,6 +5311,7 @@
         function mgMetricsHtml() {
             var rows = '';
             document.querySelectorAll('.ac2-metric').forEach(function(m) {
+                if (m.style.display === 'none') return;
                 var t = m.querySelector('.ac2-metric-title span'), v = m.querySelector('.ac2-metric-value');
                 if (t && v) rows += '<tr><th>' + mgEsc(t.textContent) + '</th><td>' + mgEsc(v.textContent) + '</td></tr>';
             });
@@ -5388,6 +5512,7 @@
                 put('ac2PlacedItems', snap.placed || []);
                 put('ac2ModelAssign', snap.assign || {});
                 put('ac2ModelCapacity', snap.capacity || {});
+                put('ac2ModelPathway', snap.pathway || {});
                 if (snap.units) { put('ac2EnergyUnit', snap.units.energy); put('ac2Period', snap.units.period); }
                 if (snap.legend) put('legendState', snap.legend);
                 if (snap.ptypes) put('powerplantTypes', snap.ptypes);
