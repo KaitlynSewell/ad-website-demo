@@ -33,6 +33,7 @@ LAYERS = {
     'sheep':       'geojson/sheep.geojson',
     'biodiesel':   'geojson/biodiesel.geojson',
     'ethanol':     'geojson/ethanol.geojson',
+    'truckwash':   'geojson/truckwash.geojson',
     'wastewater':  'geojson/wastewater.geojson',
     'utilities':   'geojson/utilities.geojson',
     'powerplants': 'geojson/powerplants.geojson',
