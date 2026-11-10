@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261109c"></script>
+    <script src="translations.js?v=20261110a"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -85,6 +85,57 @@
         .ac2-run-btn.running { cursor: progress; }
         @keyframes ac2-flash { 0%, 100% { background: transparent; } 30% { background: #fff3c4; } }
         .ac2-flash { animation: ac2-flash 1.6s ease; border-radius: 4px; }
+
+        /* Microgrid download / import dialog */
+        .mg-dialog .ac2-info-popup { max-width: 460px; }
+        .mg-dialog label { display: block; font-size: 13px; font-weight: bold; color: #2c3e50; margin: 6px 0 4px; }
+        .mg-dialog input[type="text"] { width: 100%; box-sizing: border-box; padding: 7px 9px; font-size: 14px; border: 1px solid #bbb; border-radius: 4px; }
+        .mg-dialog .mg-note { font-size: 12px; color: #666; line-height: 1.5; margin: 8px 0 0; }
+        .mg-dialog .mg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        .mg-dialog .mg-btn-secondary { padding: 9px 18px; background: white; color: #2c3e50; border: 1px solid #bbb; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        html.dark-mode .mg-dialog label { color: #e8f0fe; }
+        html.dark-mode .mg-dialog .mg-note { color: #a0b8d8; }
+        html.dark-mode .mg-dialog input[type="text"] { background: #162238; color: #e8f0fe; border-color: #2a4a7a; }
+        html.dark-mode .mg-dialog .mg-btn-secondary { background: #1e3050; color: #e8f0fe; border-color: #2a4a7a; }
+
+        /* Printable microgrid report: shown full screen while it is prepared, then printed alone */
+        #mg-report { display: none; }
+        #mg-report.mg-preparing {
+            display: block; position: fixed; inset: 0; z-index: 30000; overflow: auto;
+            background: #fff; color: #1f2933; padding: 24px;
+        }
+        #mg-report .mg-banner { position: sticky; top: -24px; margin: -24px -24px 18px; padding: 10px 24px; background: #2a52cc; color: #fff; font: bold 14px Arial, sans-serif; }
+        #mg-report .mg-page { max-width: 7.5in; margin: 0 auto; font: 11pt/1.45 Arial, Helvetica, sans-serif; color: #1f2933; }
+        #mg-report h1 { font-size: 22pt; margin: 0 0 2px; color: #1a3d8f; }
+        #mg-report .mg-sub { color: #5f6b7a; font-size: 10pt; margin-bottom: 14px; }
+        #mg-report h2 { font-size: 13.5pt; margin: 20px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #2a52cc; color: #1a3d8f; break-after: avoid; }
+        #mg-report h3 { font-size: 11pt; margin: 12px 0 4px; break-after: avoid; }
+        #mg-report table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+        #mg-report th, #mg-report td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid #d9dee5; }
+        #mg-report th { width: 34%; color: #3b4754; font-weight: bold; }
+        #mg-report ul { margin: 2px 0 6px 18px; padding: 0; font-size: 10pt; }
+        #mg-report .mg-muted { color: #6b7684; font-size: 9.5pt; }
+        #mg-report .mg-map-wrap { border: 1px solid #c5ccd6; break-inside: avoid; }
+        #mg-report .mg-map-wrap #microgrid-map { width: 100% !important; height: 4.6in !important; }
+        #mg-report #map-search, #mg-report .leaflet-top, #mg-report .aoi-toast, #mg-report .leaflet-popup { display: none !important; }
+        #mg-report .mg-chart { break-inside: avoid; border: 1px solid #d9dee5; border-radius: 6px; padding: 10px 12px; margin: 10px 0; }
+        #mg-report .mg-chart-title { font-weight: bold; font-size: 11pt; margin-bottom: 2px; }
+        #mg-report .mg-chart-imgs { display: flex; gap: 18px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin: 8px 0; }
+        #mg-report .mg-chart-imgs figure { margin: 0; text-align: center; font-size: 9.5pt; }
+        #mg-report .mg-chart-imgs img { display: block; margin: 0 auto 4px; }
+        #mg-report .mg-legend { font-size: 9pt; }
+        #mg-report .mg-legend * { color: #1f2933 !important; }
+        #mg-report .mg-code { break-before: page; }
+        #mg-report .mg-code-lines { font: 7.5pt/1.25 'Courier New', Courier, monospace; color: #333; word-break: break-all; }
+        #mg-report .mg-code-lines div { break-inside: avoid; }
+        @media print {
+            @page { size: letter; margin: 0.5in; }
+            html.mg-printing, html.mg-printing body { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
+            html.mg-printing body > *:not(#mg-report) { display: none !important; }
+            html.mg-printing #mg-report { display: block !important; position: static !important; overflow: visible !important; padding: 0 !important; }
+            html.mg-printing #mg-report .mg-banner { display: none !important; }
+            #mg-report * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
 
         .ac2-units-wrap { position: relative; }
         .ac2-units-panel {
@@ -1043,6 +1094,13 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 <span data-i18n="ac2-download">Download</span>
             </button>
+
+            <!-- Import a downloaded microgrid PDF -->
+            <button class="ac2-toolbar-btn" onclick="openImportPicker()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 20h14v-2H5v2zm7-18-7 7h4v6h6V9h4l-7-7z"/></svg>
+                <span data-i18n="ac2-import">Import Microgrid</span>
+            </button>
+            <input type="file" id="mg-import-input" accept=".pdf,application/pdf,.json,application/json" style="display:none" onchange="handleImportFile(this)">
 
           </div>
 
@@ -4695,9 +4753,6 @@
                 li('wind',            'ac2-layer-wind',            'Wind Turbines') +
                 li('solar',           'ac2-layer-solar',           'Solar Panels') +
                 li('digesters',       'ac2-layer-digesters',       'Anaerobic Digesters') +
-                grp('Utilities', false, 'ac2-panel-utilities') +
-                li('elec-connection', 'ac2-layer-elec-connection', 'Electric Connection') +
-                li('gas-connection',  'ac2-layer-gas-connection',  'Gas Connection') +
                 grp('Crop Residues', false, 'ac2-panel-crops') +
                 Object.keys(CROP_RESIDUES).map(function(key) {
                     var c = CROP_RESIDUES[key];
@@ -4748,9 +4803,532 @@
             }
         })();
 
-        function handleDownload() {
-            console.log('Download triggered');
+        // ===== DOWNLOAD (PRINT TO PDF) AND IMPORT MICROGRID =====
+        // Download builds a printable report of the microgrid and opens the print dialog (choose "Save as PDF").
+        // The report ends with the microgrid's selections encoded as text ("microgrid file data"). Import Microgrid
+        // reads that text back out of the PDF and rebuilds every selection.
+        var mgCurrentName = '';
+        try { mgCurrentName = localStorage.getItem('ac2MicrogridName') || ''; } catch (e) {}
+        var MG_FORMAT = 'IBAMMG';
+        var mgReportCleanup = null;   // closes the report preview and puts the map back
+        var PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        var PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        function mgEsc(t) {
+            return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
         }
+
+        // ---- Dialog (name the microgrid, confirm an import, show a message)
+        function mgDialog(opts) {
+            return new Promise(function(resolve) {
+                var overlay = document.createElement('div');
+                overlay.className = 'ac2-info-overlay mg-dialog open';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+                var html = '<div class="ac2-info-popup"><div class="ac2-info-title">' + mgEsc(opts.title) + '</div>';
+                if (opts.message) html += '<div class="ac2-info-text">' + opts.message + '</div>';
+                if (opts.input) {
+                    html += '<label for="mg-dialog-input">' + mgEsc(opts.input.label) + '</label>' +
+                        '<input type="text" id="mg-dialog-input" maxlength="120" autocomplete="off" placeholder="' + mgEsc(opts.input.placeholder) + '" value="' + mgEsc(opts.input.value || '') + '">';
+                }
+                if (opts.note) html += '<p class="mg-note">' + opts.note + '</p>';
+                html += '<div class="mg-actions">' +
+                    (opts.cancel ? '<button type="button" class="mg-btn-secondary" data-act="cancel">' + mgEsc(opts.cancel) + '</button>' : '') +
+                    '<button type="button" class="calc-btn" data-act="ok">' + mgEsc(opts.ok || 'OK') + '</button></div></div>';
+                overlay.innerHTML = html;
+                document.body.appendChild(overlay);
+                var input = overlay.querySelector('#mg-dialog-input');
+                function done(ok) {
+                    document.removeEventListener('keydown', onKey);
+                    overlay.remove();
+                    resolve(ok ? (input ? input.value.trim() : true) : null);
+                }
+                function onKey(e) {
+                    if (e.key === 'Escape') done(false);
+                    if (e.key === 'Enter' && (input ? document.activeElement === input : true)) done(true);
+                }
+                document.addEventListener('keydown', onKey);
+                overlay.addEventListener('click', function(e) {
+                    var act = e.target.getAttribute && e.target.getAttribute('data-act');
+                    if (act) done(act === 'ok');
+                    else if (e.target === overlay) done(false);
+                });
+                (input || overlay.querySelector('[data-act="ok"]')).focus();
+                if (input) input.select();
+            });
+        }
+
+        // ---- Area name for the default microgrid name
+        function mgAreaName() {
+            if (aoiMuniInfo && aoiMuniInfo.names && aoiMuniInfo.names.length) {
+                var names = aoiMuniInfo.names.map(function(n) { return n.split(' — ')[0]; });
+                return Promise.resolve(names.length <= 3 ? names.join(' & ') : names[0] + ' Area');
+            }
+            var c = null;
+            if (aoiCenter) c = aoiCenter;
+            else if (aoiLayer && aoiLayer.getBounds) c = aoiLayer.getBounds().getCenter();
+            if (!c) return Promise.resolve('Iowa');
+            var url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=en&lat=' + c.lat + '&lon=' + c.lng;
+            var timeout = new Promise(function(r) { setTimeout(function() { r(null); }, 3000); });
+            return Promise.race([fetch(url).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }), timeout])
+                .then(function(d) {
+                    var a = d && d.address;
+                    return (a && (a.city || a.town || a.village || a.hamlet || a.county)) || 'Selected Area';
+                });
+        }
+
+        function handleDownload() {
+            mgAreaName().then(function(area) {
+                var def = area + ' Microgrid';
+                return mgDialog({
+                    title: mapText('ac2-mg-name-title', 'Download Microgrid'),
+                    input: { label: mapText('ac2-mg-name-label', 'Microgrid name'), placeholder: def, value: mgCurrentName },
+                    note: mgEsc(mapText('ac2-mg-name-note', 'Leave blank to use') + ' "' + def + '". ') +
+                        mgEsc(mapText('ac2-mg-print-note', 'In the print window, choose "Save as PDF" as the destination. Keep the PDF: Import Microgrid can open it later to restore this microgrid.')),
+                    ok: mapText('ac2-mg-create', 'Create PDF'), cancel: mapText('ac2-mg-cancel', 'Cancel')
+                }).then(function(name) {
+                    if (name === null) return;
+                    var finalName = name || def;
+                    mgCurrentName = name;
+                    try { if (name) localStorage.setItem('ac2MicrogridName', name); else localStorage.removeItem('ac2MicrogridName'); } catch (e) {}
+                    return buildMicrogridReport(finalName);
+                });
+            });
+        }
+
+        // ---- Snapshot of every selection, and its text encoding
+        function mgSnapshot(name) {
+            var aoi = null;
+            if (aoiCenter) aoi = { type: 'circle', lat: +aoiCenter.lat.toFixed(6), lng: +aoiCenter.lng.toFixed(6), radiusKm: aoiRadiusKm };
+            else if (aoiMultiPolys && aoiMuniInfo) aoi = { type: 'municipality', info: aoiMuniInfo };
+            else if (aoiMultiPolys) aoi = { type: 'shape', polys: aoiMultiPolys };
+            else if (aoiPolyPoints) aoi = { type: 'polygon', points: aoiPolyPoints.map(function(p) { return { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) }; }) };
+            function ls(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+            return {
+                v: 1, name: name, saved: new Date().toISOString(), aoi: aoi,
+                used: usedFeedstocks, digesters: selectedDigesters, highlights: facilityHighlights, only: onlyShowSelected,
+                crops: cropAdditions, extras: microgridExtras,
+                placed: Object.keys(placedItems).map(function(id) { var it = placedItems[id]; return { key: it.key, lat: it.lat, lng: it.lng }; }),
+                assign: modelAssign, capacity: modelCapacity,
+                units: { system: unitSystem, energy: energyUnit, period: timePeriod },
+                legend: ls('legendState'), ptypes: ls('powerplantTypes')
+            };
+        }
+
+        function mgHash(s) {   // FNV-1a, to check the data survived the trip through the PDF
+            var h = 0x811c9dc5;
+            for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+            return ('0000000' + h.toString(16)).slice(-8);
+        }
+        function mgB64(bytes) {
+            var bin = '';
+            for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        function mgUnB64(s) {
+            s = s.replace(/-/g, '+').replace(/_/g, '/');
+            while (s.length % 4) s += '=';
+            var bin = atob(s), out = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+        function mgStreamBytes(bytes, stream) {
+            return new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer().then(function(b) { return new Uint8Array(b); });
+        }
+        function mgEncode(obj) {
+            var bytes = new TextEncoder().encode(JSON.stringify(obj));
+            var packed = typeof CompressionStream === 'function'
+                ? mgStreamBytes(bytes, new CompressionStream('deflate-raw')).then(function(b) { return ['z', b]; })
+                : Promise.resolve(['r', bytes]);
+            return packed.then(function(p) {
+                var payload = mgB64(p[1]);
+                var full = MG_FORMAT + '.1.' + p[0] + '.' + mgHash(payload) + '.' + payload;
+                var lines = [];
+                for (var i = 0, n = 1; i < full.length; i += 64, n++) {
+                    lines.push('MG' + ('000' + n).slice(n > 999 ? -4 : -3) + '~' + full.slice(i, i + 64) + '~');
+                }
+                return lines;
+            });
+        }
+        function mgDecode(text) {
+            var flat = text.replace(/\s+/g, '');
+            var re = /MG(\d{3,4})~([A-Za-z0-9_.\-]{1,64})~/g, m, parts = {};
+            while ((m = re.exec(flat))) parts[+m[1]] = m[2];
+            var keys = Object.keys(parts).map(Number).sort(function(a, b) { return a - b; });
+            if (!keys.length) return Promise.reject(new Error('nodata'));
+            for (var i = 0; i < keys.length; i++) if (keys[i] !== i + 1) return Promise.reject(new Error('gap'));
+            var full = keys.map(function(k) { return parts[k]; }).join('');
+            var bits = full.split('.');
+            if (bits.length !== 5 || bits[0] !== MG_FORMAT) return Promise.reject(new Error('format'));
+            if (mgHash(bits[4]) !== bits[3]) return Promise.reject(new Error('check'));
+            var bytes = mgUnB64(bits[4]);
+            var unpacked = bits[2] === 'z'
+                ? (typeof DecompressionStream === 'function' ? mgStreamBytes(bytes, new DecompressionStream('deflate-raw')) : Promise.reject(new Error('browser')))
+                : Promise.resolve(bytes);
+            return unpacked.then(function(b) { return JSON.parse(new TextDecoder().decode(b)); });
+        }
+
+        // ---- Report
+        var MG_CHART_TEXT = {
+            'feedstock-bar': 'Waste available in the area of interest for each feedstock type (gray) compared with the amount selected for the microgrid (green), in the chosen units and time period.',
+            'current-production': 'Average yearly electricity produced by existing plants in the area, by source (left), compared with the area\'s estimated electricity use by sector (right).',
+            'proposed-production': 'Electricity production with the facilities proposed for this microgrid (left), compared with the area\'s estimated electricity use (right).'
+        };
+
+        function mgAoiDescription() {
+            if (aoiMuniInfo && aoiMuniInfo.names) return (aoiMuniInfo.kind === 'county' ? 'County: ' : 'Cities: ') + aoiMuniInfo.names.join('; ');
+            if (aoiCenter) {
+                var r = unitSystem === 'imperial' ? (aoiRadiusKm * 0.621371).toFixed(1) + ' mi' : aoiRadiusKm.toFixed(1) + ' km';
+                return 'Circle, ' + r + ' radius around ' + aoiCenter.lat.toFixed(4) + ', ' + aoiCenter.lng.toFixed(4);
+            }
+            if (aoiPolyPoints) return 'Area drawn on the map (' + aoiPolyPoints.length + ' points)';
+            return 'No area of interest selected';
+        }
+
+        function mgSelectionsHtml() {
+            var h = '';
+            // Energy production (digesters, wind, solar, power plants, biodiesel)
+            var energy = '';
+            ENERGY_SECTIONS.forEach(function(sec) {
+                var items = [], sel = energySelection(sec.key), feats = energyFeatures(sec.key) || [];
+                feats.forEach(function(f) { if (sel[facIdOf(f)]) items.push(f.name + (f.city ? ' — ' + f.city : '') + (f.detail ? ' (' + f.detail + ')' : '')); });
+                extrasForOption(sec.key).forEach(function(e) { items.push((e.name || LAYER_LABELS[e.key] || e.key) + ' (added from outside the area)'); });
+                Object.keys(placedItems).forEach(function(id) {
+                    var it = placedItems[id];
+                    if (it.key === sec.placed && aoiContains(it)) items.push('Proposed ' + (LAYER_LABELS[it.key] || it.key) + ' at ' + it.lat.toFixed(4) + ', ' + it.lng.toFixed(4));
+                });
+                if (items.length) energy += '<h3>' + mgEsc(mapText(sec.i18n, sec.label)) + ' (' + items.length + ')</h3><ul>' +
+                    items.map(function(t) { return '<li>' + mgEsc(t) + '</li>'; }).join('') + '</ul>';
+            });
+            h += '<h3 style="margin-top:4px">Energy Production</h3>' + (energy || '<p class="mg-muted">None selected.</p>');
+            // Feedstock sources
+            var feed = '';
+            FEEDSTOCK_BAR_KEYS.forEach(function(key) {
+                var used = usedFeedstocks[key] || {}, items = [];
+                (getAoiFeaturesWithNames(key) || []).forEach(function(f) { if (used[facIdOf(f)]) items.push(mgEsc(f.name + (f.city ? ' — ' + f.city : '')) + ' <span class="mg-muted">' + mgEsc(wasteAmountText(f)) + '</span>'); });
+                extrasForOption(key).forEach(function(e) {
+                    var f = extraFeature(e);
+                    items.push(mgEsc((e.name || 'Facility') + ' (added from outside the area)') + (f ? ' <span class="mg-muted">' + mgEsc(wasteAmountText(f)) + '</span>' : ''));
+                });
+                if (items.length) feed += '<h3>' + mgEsc(FEEDSTOCK_BAR_LABELS[key] || key) + ' (' + items.length + ')</h3><ul><li>' + items.join('</li><li>') + '</li></ul>';
+            });
+            var crops = Object.keys(cropAdditions).filter(function(k) { return CROP_RESIDUES[k]; });
+            if (crops.length) {
+                var w = wasteDisplay();
+                feed += '<h3>Crop Residues (' + crops.length + ')</h3><ul>' + crops.map(function(k) {
+                    return '<li>' + mgEsc(CROP_RESIDUES[k].label) + ' <span class="mg-muted">' + Math.round(cropAdditions[k] * w.scale).toLocaleString('en-US') + ' ' + mgEsc(w.label) + '</span></li>';
+                }).join('') + '</ul>';
+            }
+            h += '<h3>Feedstock Sources</h3>' + (feed || '<p class="mg-muted">None selected.</p>');
+            // Other items placed with + Add
+            var energyPlaced = ENERGY_SECTIONS.map(function(s) { return s.placed; });
+            var others = Object.keys(placedItems).map(function(id) { return placedItems[id]; })
+                .filter(function(it) { return energyPlaced.indexOf(it.key) === -1; });
+            if (others.length) h += '<h3>Other Proposed Items</h3><ul>' + others.map(function(it) {
+                return '<li>' + mgEsc((LAYER_LABELS[it.key] || it.key) + ' at ' + it.lat.toFixed(4) + ', ' + it.lng.toFixed(4)) + '</li>';
+            }).join('') + '</ul>';
+            return h;
+        }
+
+        function mgModelHtml() {
+            var digs = modelDigesters(), feeds = modelFeedstocks(), feedById = {}, h = '';
+            feeds.forEach(function(f) { feedById[f.id] = f; });
+            if (digs.length) {
+                h += '<h3>Digester Assignments</h3>';
+                digs.forEach(function(d) {
+                    var mine = feeds.filter(function(f) { return modelAssign[f.id] === d.id; });
+                    var cap = modelCapacity[d.id];
+                    h += '<p style="margin:6px 0 2px"><b>' + mgEsc(d.name) + '</b> <span class="mg-muted">(' + (d.existing ? 'existing' : 'proposed new') +
+                        (cap != null ? ', capacity ' + mgEsc(fmtTons(cap)) : ', capacity not entered') + ')</span></p>';
+                    h += mine.length ? '<ul>' + mine.map(function(f) { return '<li>' + mgEsc(f.name + ' — ' + (f.tons > 0 ? fmtTons(f.tons) : 'no amount')) + '</li>'; }).join('') + '</ul>'
+                        : '<p class="mg-muted" style="margin:0 0 4px 18px">No feedstock assigned.</p>';
+                });
+            }
+            var r = modelResult;
+            if (r && r.status === 'ok' && modelResultSig === currentModelSig()) {
+                h += '<h3>Model Results</h3><ul>';
+                r.digesters.forEach(function(d) {
+                    h += '<li>' + mgEsc(d.digester_name + ': ' + Math.round(d.energy.net_electricity_kW).toLocaleString('en-US') + ' kW net electricity, ' +
+                        fmtUSD(d.costs.total_capex) + ' setup, ' + fmtUSD(d.costs.total_opex_yr) + '/yr operating' +
+                        (d.costs.lcoe_per_kWh != null ? ', $' + d.costs.lcoe_per_kWh.toFixed(3) + '/kWh' : '')) + '</li>';
+                });
+                h += '</ul><p class="mg-muted">Net electricity to the microgrid: ' + Math.round(r.totals.net_electricity_MWh_yr).toLocaleString('en-US') + ' MWh/yr.</p>';
+            } else {
+                h += '<p class="mg-muted">The AD model has not been run for these selections.</p>';
+            }
+            return h;
+        }
+
+        function mgChartsHtml() {
+            var h = '';
+            document.querySelectorAll('.ac2-chart-box').forEach(function(box) {
+                var titleEl = box.querySelector('.ac2-chart-title');
+                var canvases = box.querySelectorAll('canvas');
+                if (!titleEl || !canvases.length) return;
+                var imgs = '';
+                canvases.forEach(function(cv) {
+                    var col = cv.closest('.ac2-pie-col');
+                    var label = col && col.querySelector('.ac2-pie-label') ? col.querySelector('.ac2-pie-label').textContent : '';
+                    var legend = col && col.querySelector('.ac2-chart-legend') ? col.querySelector('.ac2-chart-legend').innerHTML : '';
+                    var wPx = cv.id === 'feedstock-bar' ? 420 : 190;
+                    imgs += '<figure>' + (label ? '<b>' + mgEsc(label) + '</b>' : '') + '<img alt="' + mgEsc(titleEl.textContent + (label ? ' — ' + label : '')) +
+                        '" src="' + cv.toDataURL('image/png') + '" style="width:' + wPx + 'px">' + (legend ? '<div class="mg-legend">' + legend + '</div>' : '') + '</figure>';
+                });
+                var notes = Array.prototype.slice.call(box.children).filter(function(c) {
+                    return c.tagName === 'DIV' && !c.classList.contains('ac2-chart-title') && !c.classList.contains('ac2-double-pie') && c.textContent.trim();
+                });
+                var keyLegend = notes.filter(function(n) { return n.querySelector('span span'); }).map(function(n) { return '<div class="mg-legend" style="text-align:center">' + n.innerHTML + '</div>'; }).join('');
+                var noteText = notes.filter(function(n) { return !n.querySelector('span span'); }).map(function(n) { return n.textContent.trim(); }).join(' ');
+                h += '<div class="mg-chart"><div class="mg-chart-title">' + mgEsc(titleEl.textContent.trim()) + '</div>' +
+                    '<div class="mg-muted">' + mgEsc((MG_CHART_TEXT[canvases[0].id] || '') + (noteText ? ' ' + noteText : '')) + '</div>' +
+                    '<div class="mg-chart-imgs">' + imgs + '</div>' + keyLegend + '</div>';
+            });
+            return h;
+        }
+
+        function mgMetricsHtml() {
+            var rows = '';
+            document.querySelectorAll('.ac2-metric').forEach(function(m) {
+                var t = m.querySelector('.ac2-metric-title span'), v = m.querySelector('.ac2-metric-value');
+                if (t && v) rows += '<tr><th>' + mgEsc(t.textContent) + '</th><td>' + mgEsc(v.textContent) + '</td></tr>';
+            });
+            return rows;
+        }
+
+        function mgWaitFor(test, ms) {
+            return new Promise(function(resolve) {
+                var end = Date.now() + ms;
+                (function check() { if (test() || Date.now() > end) resolve(); else setTimeout(check, 150); })();
+            });
+        }
+
+        // Make sure selected facilities show on the map: turn on (selected only) any option layer that is off
+        function mgShowSelectedLayers() {
+            var changed = [];
+            var opts = Object.keys(usedFeedstocks).filter(function(k) { return Object.keys(usedFeedstocks[k] || {}).length; });
+            if (Object.keys(selectedDigesters).length) opts.push('digesters');
+            Object.keys(facilityHighlights).forEach(function(k) { if (Object.keys(facilityHighlights[k] || {}).length) opts.push(k); });
+            opts.forEach(function(opt) {
+                var layers = layersForOption(opt);
+                var anyOn = layers.some(function(k) { var cb = document.getElementById('toggle-' + k); return cb && cb.checked; });
+                if (anyOn) return;
+                changed.push({ opt: opt, only: !!onlyShowSelected[opt], layers: layers });
+                setOnlyShowSelected(opt, true);
+            });
+            return changed;
+        }
+        function mgRestoreLayers(changed) {
+            changed.forEach(function(c) {
+                if (!c.only) setOnlyShowSelected(c.opt, false);
+                c.layers.forEach(function(k) { var cb = document.getElementById('toggle-' + k); if (cb && cb.checked) cb.click(); });
+            });
+        }
+
+        function buildMicrogridReport(name) {
+            var report = document.getElementById('mg-report');
+            if (report) report.remove();
+            report = document.createElement('div');
+            report.id = 'mg-report';
+            document.body.appendChild(report);
+
+            // Charts are drawn for the page theme; draw them light for paper
+            var wasDark = document.documentElement.classList.contains('dark-mode');
+            if (wasDark) { document.documentElement.classList.remove('dark-mode'); updateCharts(); }
+            var charts = mgChartsHtml();
+            if (wasDark) { document.documentElement.classList.add('dark-mode'); updateCharts(); }
+
+            var area = document.getElementById('aoi-area-display'), areaU = document.getElementById('aoi-area-unit');
+            var dem = document.getElementById('aoi-demand-display'), demU = document.getElementById('aoi-demand-unit');
+            var pop = document.getElementById('aoi-population-display');
+            var hasAoi = hasAoiActive();
+            var date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            return mgEncode(mgSnapshot(name)).then(function(codeLines) {
+                report.innerHTML =
+                    '<div class="mg-banner">Preparing your microgrid PDF… the print window will open in a moment. ' +
+                    '<button type="button" onclick="mgReportCleanup && mgReportCleanup()" style="float:right;padding:3px 12px;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer;">Close</button></div>' +
+                    '<div class="mg-page">' +
+                    '<h1>' + mgEsc(name) + '</h1>' +
+                    '<div class="mg-sub">Anaerobic Digestion Pathways · Create A Microgrid · ' + mgEsc(date) + '</div>' +
+                    '<h2>Summary</h2><table>' +
+                    '<tr><th>Area of interest</th><td>' + mgEsc(mgAoiDescription()) + '</td></tr>' +
+                    (hasAoi ? '<tr><th>Total area</th><td>' + mgEsc(area.textContent + ' ' + areaU.textContent) + '</td></tr>' +
+                        '<tr><th>Energy demand</th><td>' + mgEsc(dem.textContent + ' ' + demU.textContent) + '</td></tr>' +
+                        '<tr><th>Estimated population</th><td>' + mgEsc(pop.textContent) + ' <span class="mg-muted">(U.S. Census Bureau estimates, July 1, 2025)</span></td></tr>' : '') +
+                    mgMetricsHtml() + '</table>' +
+                    mgModelHtml() +
+                    '<h2>Microgrid Map</h2><div class="mg-map-wrap" id="mg-map-slot"></div>' +
+                    '<p class="mg-muted">The area of interest is outlined in blue. Selected facilities are highlighted, and items placed with + Add have dashed orange outlines.</p>' +
+                    '<h2>Selected in the Area of Interest</h2>' + mgSelectionsHtml() +
+                    '<h2>Charts</h2>' + charts +
+                    '<div class="mg-code"><h2>Microgrid File Data</h2>' +
+                    '<p class="mg-muted">These lines store this microgrid\'s selections. To open it again, use Import Microgrid on the Create A Microgrid page and choose this PDF.</p>' +
+                    '<div class="mg-code-lines">' + codeLines.map(function(l) { return '<div>' + mgEsc(l) + '</div>'; }).join('') + '</div></div>' +
+                    '</div>';
+                report.classList.add('mg-preparing');
+
+                // Move the live map into the report, fit it to the microgrid, and wait for it to finish drawing
+                var mapEl = document.getElementById('microgrid-map');
+                var home = { parent: mapEl.parentNode, next: mapEl.nextSibling, center: microgridMap.getCenter(), zoom: microgridMap.getZoom() };
+                microgridMap.closePopup();
+                document.getElementById('mg-map-slot').appendChild(mapEl);
+                var changed = mgShowSelectedLayers();
+                microgridMap.invalidateSize();
+                var b = null;
+                if (aoiLayer && aoiLayer.getBounds) b = aoiLayer.getBounds();
+                Object.keys(placedItems).forEach(function(id) { var it = placedItems[id]; b = b ? b.extend([it.lat, it.lng]) : L.latLngBounds([it.lat, it.lng], [it.lat, it.lng]); });
+                if (b && b.isValid()) microgridMap.fitBounds(b, { padding: [20, 20], maxZoom: 14 });
+
+                var oldTitle = document.title;
+                function cleanup() {
+                    mgReportCleanup = null;
+                    window.removeEventListener('afterprint', cleanup);
+                    document.documentElement.classList.remove('mg-printing');
+                    home.parent.insertBefore(mapEl, home.next);
+                    report.remove();
+                    document.title = oldTitle;
+                    mgRestoreLayers(changed);
+                    microgridMap.invalidateSize();
+                    microgridMap.setView(home.center, home.zoom, { animate: false });
+                }
+                return mgWaitFor(function() {
+                    var layersReady = changed.every(function(c) { return c.layers.every(function(k) { return loadedLayers[k]; }); });
+                    var tilesReady = true;
+                    microgridMap.eachLayer(function(l) { if (l instanceof L.TileLayer && l.isLoading && l.isLoading()) tilesReady = false; });
+                    return layersReady && tilesReady;
+                }, 6000).then(function() {
+                    return new Promise(function(r) { setTimeout(r, 400); });
+                }).then(function() {
+                    document.title = name;   // the browser uses this as the PDF file name
+                    document.documentElement.classList.add('mg-printing');
+                    mgReportCleanup = cleanup;
+                    window.addEventListener('afterprint', cleanup);
+                    window.print();
+                });
+            });
+        }
+
+        // ---- Import
+        function openImportPicker() {
+            var input = document.getElementById('mg-import-input');
+            input.value = '';
+            input.click();
+        }
+
+        function mgLoadPdfJs() {
+            if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+            return new Promise(function(resolve, reject) {
+                var s = document.createElement('script');
+                s.src = PDFJS_URL;
+                s.onload = function() { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL; resolve(window.pdfjsLib); };
+                s.onerror = function() { reject(new Error('pdfjs')); };
+                document.head.appendChild(s);
+            });
+        }
+
+        function mgPdfText(buffer) {
+            return mgLoadPdfJs().then(function(pdfjs) {
+                return pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+            }).then(function(pdf) {
+                var pages = [];
+                for (var i = 1; i <= pdf.numPages; i++) pages.push(i);
+                return Promise.all(pages.map(function(n) {
+                    return pdf.getPage(n).then(function(p) { return p.getTextContent(); })
+                        .then(function(tc) { return tc.items.map(function(it) { return it.str; }).join(''); });
+                }));
+            }).then(function(texts) { return texts.join('\n'); });
+        }
+
+        function handleImportFile(input) {
+            var file = input.files && input.files[0];
+            if (!file) return;
+            var isJson = /\.json$/i.test(file.name);
+            var read = file.arrayBuffer();
+            read.then(function(buf) {
+                if (isJson) return JSON.parse(new TextDecoder().decode(buf));
+                return mgPdfText(buf).then(mgDecode);
+            }).then(function(snap) {
+                if (!snap || snap.v !== 1) throw new Error('format');
+                var hasCurrent = hasAoiActive() || hasProposedAdditions();
+                return (hasCurrent ? mgDialog({
+                    title: mapText('ac2-mg-import-title', 'Import Microgrid'),
+                    message: mgEsc('Open "' + (snap.name || 'Microgrid') + '"? This replaces the microgrid you have now.'),
+                    ok: mapText('ac2-mg-import-ok', 'Import'), cancel: mapText('ac2-mg-cancel', 'Cancel')
+                }) : Promise.resolve(true)).then(function(ok) { if (ok) return mgApplyImport(snap); });
+            }).catch(function(err) {
+                var msg = err && err.message === 'pdfjs' ? "Couldn't load the PDF reader. Check your internet connection and try again."
+                    : err && err.message === 'browser' ? 'This browser cannot read the compressed microgrid data. Try a current version of Edge, Chrome, Firefox or Safari.'
+                    : "This file doesn't contain microgrid data. Choose a PDF made with the Download button on this page (the Microgrid File Data page must be included).";
+                mgDialog({ title: mapText('ac2-mg-import-title', 'Import Microgrid'), message: mgEsc(msg), ok: 'OK' });
+            });
+        }
+
+        function mgApplyImport(snap) {
+            var aoiP = Promise.resolve(null);
+            var a = snap.aoi;
+            if (a && a.type === 'circle') aoiP = Promise.resolve({ type: 'circle', lat: a.lat, lng: a.lng, radiusKm: a.radiusKm });
+            else if (a && a.type === 'polygon') aoiP = Promise.resolve({ type: 'polygon', points: a.points });
+            else if (a && a.type === 'shape') aoiP = Promise.resolve({ type: 'municipality', polys: a.polys, info: null });
+            else if (a && a.type === 'municipality' && a.info) {
+                // Rebuild the boundary from the site's county and city files
+                aoiP = loadMuniData(a.info.kind).then(function(feats) {
+                    var polys = [];
+                    a.info.names.forEach(function(n) {
+                        var f = feats.filter(function(x) { return muniLabel(x) === n; })[0];
+                        if (f) polys = polys.concat(featureToPolys(f));
+                    });
+                    return polys.length ? { type: 'municipality', polys: polys, info: a.info } : null;
+                });
+            }
+            return aoiP.then(function(aoi) {
+                function put(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)); } catch (e) {} }
+                put('ac2Aoi', aoi);
+                put('ac2UsedFeedstocks', snap.used || {});
+                put('ac2CropAdditions', snap.crops || {});
+                put('ac2MicrogridExtras', snap.extras || {});
+                put('ac2PlacedItems', snap.placed || []);
+                put('ac2ModelAssign', snap.assign || {});
+                put('ac2ModelCapacity', snap.capacity || {});
+                if (snap.units) { put('ac2EnergyUnit', snap.units.energy); put('ac2Period', snap.units.period); }
+                if (snap.legend) put('legendState', snap.legend);
+                if (snap.ptypes) put('powerplantTypes', snap.ptypes);
+                put('ac2MicrogridName', snap.name || null);
+                put('ac2PendingImport', { name: snap.name, digesters: snap.digesters || {}, highlights: snap.highlights || {},
+                    only: snap.only || {}, unitSystem: snap.units && snap.units.system, energyUnit: snap.units && snap.units.energy });
+                location.reload();
+            });
+        }
+
+        // After an import reloads the page: restore the selections the page doesn't keep on its own
+        (function applyPendingImport() {
+            var raw = null;
+            try { raw = localStorage.getItem('ac2PendingImport'); localStorage.removeItem('ac2PendingImport'); } catch (e) {}
+            if (!raw) return;
+            try {
+                var p = JSON.parse(raw);
+                selectedDigesters = p.digesters || {};
+                facilityHighlights = p.highlights || {};
+                if (p.unitSystem === 'metric') {
+                    var r = document.querySelector('input[name="unitSystem"][value="metric"]');
+                    if (r) { r.checked = true; setUnitSystem('metric'); }
+                    if (p.energyUnit && ENERGY_UNITS[p.energyUnit]) {
+                        var r2 = document.querySelector('input[name="energyUnit"][value="' + p.energyUnit + '"]');
+                        if (r2) { r2.checked = true; energyUnit = p.energyUnit; }
+                    }
+                }
+                Object.keys(p.only || {}).forEach(function(opt) { setOnlyShowSelected(opt, true); });
+                ['digesters'].concat(AOI_FACILITY_SECTIONS.map(function(s) { return s.key; })).forEach(function(k) { selectionChanged(k); });
+                renderEnergyPanel();
+                updateCharts();
+                mgCurrentName = p.name || '';
+                if (p.name) {
+                    showAoiToast('Imported "' + p.name + '"');
+                    setTimeout(removeAoiToast, 5000);
+                }
+            } catch (e) {}
+        })();
 
 
         // Initial chart render
