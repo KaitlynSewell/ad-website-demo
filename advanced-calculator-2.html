@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261110f"></script>
+    <script src="translations.js?v=20261112a"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -1702,11 +1702,12 @@
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var count = getAoiCount(key);
                 var extras = extrasForOption(key).length;
-                if (!count && !extras) return;
+                var placedHere = placedFeedstockIds(key);
+                if (!count && !extras && !placedHere.length) return;
                 hasAny = true;
                 bgLoadFeatures(key);
                 var namedFeats = getAoiFeaturesWithNames(key);
-                var usedCount  = Object.keys(usedFeedstocks[key] || {}).length + extras;
+                var usedCount  = Object.keys(usedFeedstocks[key] || {}).length + extras + placedHere.length;
                 var isOpen     = !!openKeys[key];
 
                 var section = document.createElement('div');
@@ -1740,10 +1741,22 @@
                 list.id = 'fds-list-' + key;
                 list.style.display = isOpen ? 'block' : 'none';
 
+                // Items placed with + Add: selected from the start; unticking removes them
+                placedHere.forEach(function(id, i) {
+                    var row = document.createElement('label');
+                    row.className = 'fds-item';
+                    var box = document.createElement('input');
+                    box.type = 'checkbox';
+                    box.checked = true;
+                    box.onchange = function() { removePlacedItem(Number(id)); };
+                    row.appendChild(box);
+                    row.appendChild(document.createTextNode(' ' + placedFeedstockName(key, i)));
+                    list.appendChild(row);
+                });
                 if (namedFeats === null) {
-                    list.innerHTML = '<div class="fds-loading">Loading…</div>';
+                    list.appendChild(Object.assign(document.createElement('div'), { className: 'fds-loading', textContent: 'Loading…' }));
                 } else if (!namedFeats || !namedFeats.length) {
-                    list.innerHTML = '<div class="fds-loading">No locations found</div>';
+                    if (!placedHere.length) list.innerHTML = '<div class="fds-loading">No locations found</div>';
                 } else {
                     list.appendChild(onlySelectedControl(key));
                     namedFeats.forEach(function(f) {
@@ -1780,6 +1793,16 @@
             if (!hasAny) {
                 panel.innerHTML = '<div class="fds-loading">No feedstock sources in selected area.</div>';
             }
+        }
+
+        // Feedstock sources placed with + Add (truck washes) inside the area
+        function placedFeedstockIds(key) {
+            return Object.keys(placedItems).filter(function(id) {
+                return placedItems[id].key === key && aoiContains(placedItems[id]);
+            });
+        }
+        function placedFeedstockName(key, i) {
+            return (LAYER_LABELS[key] || key) + ' ' + (i + 1) + ' (' + mapText('ac2-proposed', 'proposed') + ')';
         }
 
         // Short number for chart labels: 1.2M, 340k, 86
@@ -2012,7 +2035,7 @@
             beef:'circle', dairy:'circle', swine:'circle', horses:'circle',
             turkeys:'circle', chickens:'circle', sheep:'circle',
             digesters:'digester', lmop:'circle',
-            biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet', truckwash:'droplet',
+            biodiesel:'droplet', ethanol:'droplet', wastewater:'droplet', truckwash:'truck',
             powerplants:'square', standbyplants:'square', windplants:'wind', solarplants:'sun', landfill:'square', foodwaste:'circle'
         };
         var LAYER_LABELS = {
@@ -2450,7 +2473,7 @@
                 extrasList().some(function(e) { return ['powerplants', 'standbyplants', 'windplants', 'solarplants'].indexOf(e.key) === -1; }) ||
                 Object.keys(placedItems).some(function(id) {
                     var it = placedItems[id];
-                    return (PROD_PER_FEAT[it.key] || 0) > 0 && aoiContains(it);
+                    return ((PROD_PER_FEAT[it.key] || 0) > 0 || FEEDSTOCK_BAR_KEYS.indexOf(it.key) !== -1) && aoiContains(it);
                 });
         }
 
@@ -2661,7 +2684,8 @@
                 var pf2  = periodFactor();
                 var upl2 = unitPeriodLabel();
                 var prodVal = Math.round(prod * eu2.factor * pf2);
-                var prodTxt = prod <= 0 ? 'Infrastructure only'
+                var prodTxt = FEEDSTOCK_BAR_KEYS.indexOf(key) !== -1 ? mapText('ac2-placed-washwater', 'Washwater amount: No Data')
+                    : prod <= 0 ? 'Infrastructure only'
                     : HAS_GENERATION_DATA ? 'Est. ' + prodVal.toLocaleString() + ' ' + upl2 : 'Energy generation: No Data';
                 return '<div style="min-width:170px;font-size:12px">' +
                     '<strong>' + label + '</strong>' +
@@ -2833,6 +2857,11 @@
                 var used = usedFeedstocks[key] || {};
                 (getAoiFeaturesWithNames(key) || []).forEach(function(f) { if (used[facIdOf(f)]) list.push(row(key, f)); });
                 extrasForOption(key).forEach(function(e) { list.push(row(key, extraFeature(e) || { lat: e.lat, lng: e.lng, name: e.name })); });
+                placedFeedstockIds(key).forEach(function(id, i) {
+                    var it = placedItems[id];
+                    list.push({ id: key + '|new|' + pointKey(it.lat, it.lng), type: key, typeLabel: FEEDSTOCK_BAR_LABELS[key] || key,
+                                name: placedFeedstockName(key, i), tons: undefined, lat: it.lat, lng: it.lng });
+                });
             });
             Object.keys(cropAdditions).forEach(function(k) {
                 var label = (CROP_RESIDUES[k] || {}).label || k;
@@ -3324,6 +3353,20 @@
                    '<ellipse cx="14.6" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/><ellipse cx="17.4" cy="16.4" rx="1" ry="1.7" fill="#4a3515"/></svg>';
         }
 
+        // Truck wash: outline of a semi tractor (no trailer), side view, in the layer color.
+        // Selected (k over 1): the same outline on a dark halo, like the thick border on other shapes.
+        function truckSvg(c, size, k) {
+            function parts(o, lineStroke, lw) {
+                return '<path d="M1.2,12.4 V8.6 L2.8,7.4 L3.8,3.2 Q4,2.2 5,2.2 H10.2 V8.8 H18.8 V12.4 Z"' + o + '/>' +
+                       '<path d="M5,3.6 H8.8 V6.6 H4.4 Z"' + o + '/>' +
+                       '<line x1="11.6" y1="8.8" x2="11.6" y2="3.2" stroke="' + lineStroke + '" stroke-width="' + lw + '" stroke-linecap="round"/>' +
+                       '<circle cx="4.6" cy="12.8" r="1.8"' + o + '/><circle cx="13.4" cy="12.8" r="1.8"' + o + '/><circle cx="16.9" cy="12.8" r="1.8"' + o + '/>';
+            }
+            var halo = k > 1 ? parts(' fill="#333" stroke="#333" stroke-width="3.6" stroke-linejoin="round"', '#333', 3.6) : '';
+            return '<svg width="' + Math.round(size * 1.25) + '" height="' + size + '" viewBox="0 0 20 16"' + (k > 1 ? ' style="overflow:visible"' : '') + '>' + halo +
+                   parts(' fill="#fff" stroke="' + c + '" stroke-width="1.4" stroke-linejoin="round"', c, 1.4) + '</svg>';
+        }
+
         // A thicker border (borderScale over 1) comes out the same width on every shape. Wind, sun and
         // food waste start with thicker lines, so they scale less and keep their fill on top of the border.
         function makeIconSvg(shape, color, size, borderScale) {
@@ -3349,6 +3392,8 @@
                 return windSvg(color, size, 0.4 * k);
             } else if (shape === 'sun') {
                 return sunSvg(color, size, 0.4 * k);
+            } else if (shape === 'truck') {
+                return truckSvg(color, size, k);
             } else if (shape === 'droplet') {
                 var w = Math.round(size * 0.75);
                 return '<svg width="' + w + '" height="' + size + '" viewBox="-1 -1 14 18">' +
@@ -3360,14 +3405,14 @@
         }
 
         function makeMarkerIcon(shape, color, borderScale) {
-            var h = 14, w = shape === 'droplet' ? 11 : 14;
+            var h = 14, w = shape === 'droplet' ? 11 : shape === 'truck' ? 18 : 14;
             return L.divIcon({ html: makeIconSvg(shape, color, h, borderScale), className: 'custom-marker-icon',
                                iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
         }
 
         function makeClusterIcon(shape, color, count) {
             var base = count < 10 ? 20 : count < 50 ? 26 : 32;
-            var w = shape === 'droplet' ? Math.round(base * 0.75) : base;
+            var w = shape === 'droplet' ? Math.round(base * 0.75) : shape === 'truck' ? Math.round(base * 1.25) : base;
             return L.divIcon({ html: makeIconSvg(shape, color, base), className: 'custom-marker-icon',
                                iconSize: [w, base], iconAnchor: [w / 2, base / 2] });
         }
@@ -3865,7 +3910,7 @@
             chickens:    { file: 'geojson/chickens.geojson',    color: '#ffd700', shape: 'circle',  label: 'Chickens' },
             biodiesel:   { file: 'geojson/biodiesel.geojson',   color: '#1abc9c', shape: 'droplet', label: 'Biodiesel Plants' },
             ethanol:     { file: 'geojson/ethanol.geojson',     color: '#e6c229', shape: 'droplet', label: 'Ethanol Plants' },
-            truckwash:   { file: 'geojson/truckwash.geojson',   color: '#6c5ce7', shape: 'droplet', label: 'Truck Washes' },
+            truckwash:   { file: 'geojson/truckwash.geojson',   color: '#6c5ce7', shape: 'truck', label: 'Truck Washes' },
             wastewater:  { file: 'geojson/wastewater.geojson',  color: '#3498db', shape: 'droplet', label: 'Wastewater Treatment' },
             powerplants: { file: 'geojson/powerplants.geojson', color: '#9a0f0f', shape: 'square',  label: 'Power Plants' },
             standbyplants: { file: 'geojson/standbyplants.geojson', color: '#c98585', shape: 'square', label: 'Standby Power Plants' },
@@ -3913,7 +3958,7 @@
                 li('toggle-swine',       circ('#ff9eb5'), 'Swine', 'legend-swine') +
                 li('toggle-turkeys',     circ('#f4a460'), 'Turkeys', 'legend-turkeys') +
                 li('toggle-chickens',    circ('#ffd700'), 'Chickens', 'legend-chickens') +
-                li('toggle-truckwash',   drop('#6c5ce7'), 'Truck Washes', 'legend-truckwash') +
+                li('toggle-truckwash',   truckSvg('#6c5ce7', 16, 1), 'Truck Washes', 'legend-truckwash') +
                 grp('Anaerobic Digesters', false, 'sec-ad', 'legend-ad-group') +
                 li('toggle-digesters-ww',   digesterSvg('#3498db', 16, 1), 'Wastewater Treatment Digesters', 'legend-ad-ww') +
                 li('toggle-digesters-farm', digesterSvg('#c87533', 16, 1), 'On-Farm Digesters', 'legend-ad-farm') +
