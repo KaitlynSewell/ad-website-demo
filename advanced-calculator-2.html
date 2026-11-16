@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <script>if(window.location.protocol==='file:'){var _p=window.location.pathname.split('/').pop()||'index.html';window.location.replace('https://kaitlynsewell.github.io/ad-website-demo/'+_p);}</script>
+    <script src="fresh-start.js?v=20261116a"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AD.Website.Demo - Create A Microgrid</title>
@@ -2141,6 +2142,7 @@
                         if (props.OnSiteAD === 'Yes') item.onsiteAD = true;   // already has an anaerobic digester
                         if (props.MWhYear != null) item.mwh = Number(props.MWhYear) || 0;
                         if (props.PlantType) item.plantType = props.PlantType;
+                        if (props.StorageForm) item.storageForm = props.StorageForm;   // farm's manure storage (DNR page)
                         if (AOI_FACILITY_SECTIONS.some(function(sec) { return sec.key === key; })) {
                             item.county = props.County || '';
                             item.detail = facilityDetail(key, props);
@@ -2851,7 +2853,8 @@
             var list = [];
             function row(key, f) {
                 return { id: key + '|' + facIdOf(f), type: key, typeLabel: FEEDSTOCK_BAR_LABELS[key] || key,
-                         name: (f.name || 'Unknown') + (f.city ? ' — ' + f.city : ''), tons: f.tons, lat: f.lat, lng: f.lng };
+                         name: (f.name || 'Unknown') + (f.city ? ' — ' + f.city : ''), tons: f.tons, lat: f.lat, lng: f.lng,
+                         storageForm: f.storageForm };
             }
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var used = usedFeedstocks[key] || {};
@@ -2909,7 +2912,8 @@
                         return out;
                     })(),
                     feedstocks: feeds.filter(function(f) { return modelAssign[f.id] === d.id; }).map(function(f) {
-                        return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null };
+                        return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null,
+                                 storage_form: f.storageForm || null };
                     })
                 };
             }).filter(function(r) { return r.feedstocks.length > 0; });
