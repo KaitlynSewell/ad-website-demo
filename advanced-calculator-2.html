@@ -2143,6 +2143,7 @@
                         if (props.MWhYear != null) item.mwh = Number(props.MWhYear) || 0;
                         if (props.PlantType) item.plantType = props.PlantType;
                         if (props.StorageForm) item.storageForm = props.StorageForm;   // farm's manure storage (DNR page)
+                        if (props.Storage) item.storage = props.Storage;
                         if (AOI_FACILITY_SECTIONS.some(function(sec) { return sec.key === key; })) {
                             item.county = props.County || '';
                             item.detail = facilityDetail(key, props);
@@ -2854,7 +2855,7 @@
             function row(key, f) {
                 return { id: key + '|' + facIdOf(f), type: key, typeLabel: FEEDSTOCK_BAR_LABELS[key] || key,
                          name: (f.name || 'Unknown') + (f.city ? ' — ' + f.city : ''), tons: f.tons, lat: f.lat, lng: f.lng,
-                         storageForm: f.storageForm };
+                         storageForm: f.storageForm, storage: f.storage };
             }
             FEEDSTOCK_BAR_KEYS.forEach(function(key) {
                 var used = usedFeedstocks[key] || {};
@@ -2913,7 +2914,7 @@
                     })(),
                     feedstocks: feeds.filter(function(f) { return modelAssign[f.id] === d.id; }).map(function(f) {
                         return { id: f.id, type: f.type, name: f.name, tons_yr: f.tons, lat: f.lat != null ? f.lat : null, lng: f.lng != null ? f.lng : null,
-                                 storage_form: f.storageForm || null };
+                                 storage_form: f.storageForm || null, storage: f.storage || null };
                     })
                 };
             }).filter(function(r) { return r.feedstocks.length > 0; });
