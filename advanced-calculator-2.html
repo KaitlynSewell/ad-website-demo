@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css?v=20261104f" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <script src="translations.js?v=20261112a"></script>
+    <script src="translations.js?v=20261116a"></script>
     <style>
         .calc-container {
             max-width: 820px;
@@ -1444,7 +1444,8 @@
                 if (!Object.keys(usedFeedstocks[key]).length) delete usedFeedstocks[key];
             } else {
                 usedFeedstocks[key][facId] = true;
-                warnOnsiteDigesters(key, (bgFeatureCache[key] || []).filter(function(f) { return facIdOf(f) === facId; }));
+                warnOnsiteDigesters(key, (bgFeatureCache[key] || []).filter(function(f) { return facIdOf(f) === facId; }),
+                    function() { if (usedFeedstocks[key] && usedFeedstocks[key][facId]) toggleFacility(key, facId); });
             }
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
@@ -1459,7 +1460,16 @@
             var before = usedFeedstocks[key] || {};
             usedFeedstocks[key] = {};
             feats.forEach(function(f) { usedFeedstocks[key][facIdOf(f)] = true; });
-            warnOnsiteDigesters(key, feats.filter(function(f) { return !before[facIdOf(f)]; }));
+            warnOnsiteDigesters(key, feats.filter(function(f) { return !before[facIdOf(f)]; }), function(hits) {
+                if (!usedFeedstocks[key]) return;
+                hits.forEach(function(f) { delete usedFeedstocks[key][facIdOf(f)]; });
+                if (!Object.keys(usedFeedstocks[key]).length) delete usedFeedstocks[key];
+                try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
+                renderAoiFeedstockPanel();
+                drawFeedstockBar();
+                drawEnergyBalance();
+                selectionChanged(key);
+            });
             try { localStorage.setItem('ac2UsedFeedstocks', JSON.stringify(usedFeedstocks)); } catch(e) {}
             renderAoiFeedstockPanel();
             drawFeedstockBar();
@@ -2874,8 +2884,9 @@
             return list;
         }
 
-        // Warn when newly selected facilities already have an anaerobic digester on site
-        function warnOnsiteDigesters(key, feats) {
+        // Warn when newly selected facilities already have an anaerobic digester on site, and ask whether to
+        // add them anyway. No (or Escape / clicking outside) calls onNo(hits) to undo the selection.
+        function warnOnsiteDigesters(key, feats, onNo) {
             var hits = (feats || []).filter(function(f) { return f && f.onsiteAD; });
             if (!hits.length) return;
             var names = hits.slice(0, 5).map(function(f) { return '<li>' + mgEsc(f.name + (f.city ? ' — ' + f.city : '')) + '</li>'; }).join('');
@@ -2885,9 +2896,13 @@
                 message: mgEsc(hits.length === 1
                     ? mapText('ac2-onsite-ad-one', 'This facility already has an anaerobic digester on site, so its waste may already be used there and may not be available for your microgrid:')
                     : mapText('ac2-onsite-ad-many', 'These facilities already have an anaerobic digester on site, so their waste may already be used there and may not be available for your microgrid:')) +
-                    '<ul style="margin:8px 0 0 18px;padding:0;">' + names + more + '</ul>',
-                ok: 'OK'
-            });
+                    '<ul style="margin:8px 0 0 18px;padding:0;">' + names + more + '</ul>' +
+                    '<p style="margin:10px 0 0;font-weight:600;">' + mgEsc(hits.length === 1
+                        ? mapText('ac2-onsite-ad-ask-one', 'Do you want to add this farm anyway?')
+                        : mapText('ac2-onsite-ad-ask-many', 'Do you want to add these farms anyway?')) + '</p>',
+                ok: mapText('ac2-yes', 'Yes'),
+                cancel: mapText('ac2-no', 'No')
+            }).then(function(yes) { if (!yes && onNo) onNo(hits); });
         }
 
         // Tons already assigned to each digester
@@ -3693,7 +3708,14 @@
                 else {
                     microgridExtras[id] = { id: id, key: m.layerKey, lat: c.lat, lng: c.lng, name: m.facName };
                     bgLoadFeatures(m.layerKey);
-                    warnOnsiteDigesters(m.layerKey, [featureAt(m.layerKey, c) || { name: m.facName, onsiteAD: m.onsiteAD }]);
+                    warnOnsiteDigesters(m.layerKey, [featureAt(m.layerKey, c) || { name: m.facName, onsiteAD: m.onsiteAD }], function() {
+                        if (!microgridExtras[id]) return;
+                        delete microgridExtras[id];
+                        saveExtras();
+                        refreshSelectedIcons(optionForLayer(m.layerKey));
+                        if (m.getPopup()) m.getPopup().update();
+                        updateCharts();
+                    });
                 }
                 saveExtras();
                 refreshSelectedIcons(optionForLayer(m.layerKey));
